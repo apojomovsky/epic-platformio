@@ -1,11 +1,11 @@
-# platform-pic8
+# platform-epic8
 
 **A PlatformIO platform for 8-bit Microchip PIC microcontrollers, built on the
 open-source epic-cc toolchain.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-`platform-pic8` makes `pio run` compile a project with
+`platform-epic8` makes `pio run` compile a project with
 [epic-cc](https://github.com/apojomovsky/epic-cc), the whole-program C compiler
 for PIC14/PIC18, instead of Microchip's licence-gated XC8. It is the PlatformIO
 glue: the platform manifest, the SCons builder, and the board definitions. It is
@@ -13,7 +13,7 @@ glue: the platform manifest, the SCons builder, and the board definitions. It is
 
 | Piece | Repo | Role |
 |---|---|---|
-| `platform-pic8` | this repo | PlatformIO platform: `platform.json`, `builder/main.py`, `boards/*.json` |
+| `platform-epic8` | this repo | PlatformIO platform (registry id `epic8`): `platform.json`, `builder/main.py`, `boards/*.json` |
 | `toolchain-epiccc` | epic-cc | The compiler, cut from epic-cc release bundles |
 | `framework-epichal` | epic-hal | The register-level HAL and module shelf, cut from epic-hal releases |
 
@@ -34,7 +34,10 @@ has no backend for that core, and adding one is a separate decision
 ## Status
 
 Bootstrap. The scaffolding in this repository (README, license, agent rules,
-CI skeleton) is in place; the platform itself is not yet. The work is tracked
+CI skeleton) is in place; the platform itself is not yet. The platform name is
+`platform-epic8` (registry id `epic8`), decided 2026-08-26, replacing the
+`platform-pic8` working name in earlier issues; this repository on GitHub is
+`epic-platformio`. The work is tracked
 as PIO-1 through PIO-3 in the
 [epic-platformio issues](https://github.com/apojomovsky/epic-platformio/issues),
 part of the 14-piece decomposition in
@@ -47,9 +50,13 @@ Once PIO-1 to PIO-3 land, a project with a `platformio.ini` pointing at this
 platform builds with no Microchip download and no XC8:
 
 ```bash
-platformio platform install https://github.com/apojomovsky/platform-pic8
+platformio platform install https://github.com/apojomovsky/epic-platformio
 pio run
 ```
+
+Published to the PlatformIO registry (PIO-3), the platform id is `epic8`, so
+the same story becomes `platform = epic8` in `platformio.ini` or
+`pio pkg install -p epic8`.
 
 That is the goal this repository exists for: a fully open-source 8-bit PIC
 toolchain reachable from PlatformIO, touching nothing on Microchip's servers.
