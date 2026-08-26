@@ -22,7 +22,10 @@ jobs:
       - name: Lint JSON manifests
         run: |
           shopt -s nullglob
-          files=(platform.json boards/*.json)
+          files=(boards/*.json)
+          if [ -f platform.json ]; then
+            files+=(platform.json)
+          fi
           if [ ${#files[@]} -eq 0 ]; then
             echo "no JSON manifests yet (PIO-1)"
           else
