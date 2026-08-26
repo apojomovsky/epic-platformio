@@ -1,0 +1,15 @@
+# Python bytecode cache (builder/ is run by PlatformIO's SCons, no venv or
+# install step, so a stray __pycache__/ can appear next to it on any local run)
+__pycache__/
+*.pyc
+
+# SCons build detritus (PlatformIO keeps its own build/ dirs, but a stray
+# .sconsign or .sconf_temp can appear in a checkout used for local testing)
+.sconsign*
+.sconf_temp/
+
+# Agent worktrees
+/.worktrees/
+
+# Claude Code local state (personal settings, session/lock files)
+.claude/
