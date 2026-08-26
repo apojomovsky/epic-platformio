@@ -1,0 +1,43 @@
+name: ci
+
+# Skeleton gate: lints the JSON manifests and byte-compiles the builder
+# Python. Both are conditional on the files existing, so master stays
+# green with the bootstrap scaffolding alone and the gate activates
+# automatically when PIO-1 lands the platform core.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint JSON manifests
+        run: |
+          shopt -s nullglob
+          files=(boards/*.json)
+          if [ -f platform.json ]; then
+            files+=(platform.json)
+          fi
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "no JSON manifests yet (PIO-1)"
+          else
+            for f in "${files[@]}"; do
+              python3 -m json.tool "$f" >/dev/null
+            done
+          fi
+
+      - name: Byte-compile builder Python
+        run: |
+          if [ -d builder ]; then
+            python3 -m compileall -q builder
+          else
+            echo "no builder/ yet (PIO-1)"
+          fi
