@@ -65,8 +65,9 @@ For every ticket:
    ```
    Heal an existing PR with ``gh pr edit --body-file - <<'EOF'`` or
    ``python3 -c 'from epic_tasks.gh import normalize_pr_body; print(normalize_pr_body(open("body.txt").read()))'``.
-   The local ``check_pr_body`` gate (``epic_tasks/takeoff.py``) warns (advisory) and
-   ``.github/workflows/pr-body.yml`` fails in CI when the body contains literal ``\n``/``\r``.
+   The local ``check_pr_body`` gate (``epic_tasks/takeoff.py``) warns (advisory);
+   the ``pr-body.yml`` CI workflow that fails on literal ``\n``/``\r`` exists in
+   epic-cc and epic-hal, not here yet, so CI does not enforce it.
 5. After the PR merges, remove the worktree:
    `git worktree remove .worktrees/<name>`. Never remove a worktree before
    merge, the branch must stay reachable for review.
@@ -127,14 +128,15 @@ by every epic repository (canonical checks live in
    actual newlines (``gh pr create --body-file <file>`` or a heredoc),
    never an inline ``"a\n\n- b"`` that renders literally as ``\n`` on
    GitHub (epic-cc#129). The takeoff ritual (``check_pr_body`` in
-   ``epic_tasks/takeoff.py`` + ``epic_tasks.gh:normalize_pr_body``) warns (advisory) and
-   the ``.github/workflows/pr-body.yml`` CI workflow fails in CI when a body
-   contains literal ``\n``/``\r``; heal with ``gh pr edit --body-file``.
+   ``epic_tasks/takeoff.py`` + ``epic_tasks.gh:normalize_pr_body``) warns (advisory);
+   the ``pr-body.yml`` CI workflow that fails on literal ``\n``/``\r`` exists in
+   epic-cc and epic-hal, not here yet, so CI does not enforce it. Heal with
+   ``gh pr edit --body-file``.
 
 The ritual exits 1 with the exact fix list while blocking items are
-outstanding. Don't skip it; the CI gate only covers the suite, not the
-ritual. The prose step is a hard gate: a block that violates the
-mechanical rules fails the ritual and blocks the push.
+outstanding. Don't skip it; the CI gate does not cover the ritual. The
+prose step is a hard gate: a block that violates the mechanical rules
+fails the ritual and blocks the push.
 
 ## Commit hygiene
 
@@ -143,12 +145,13 @@ mechanical rules fails the ritual and blocks the push.
   `build(...)`, `ci(...)`, `test(...)`. Scope is usually the crate
   (`builder`, `boards`) or `ci`.
 - **Never `Co-Authored-By:` or any other trailer, and no em-dashes
-  (,).** The commit-msg hook rejects both. Use a comma, a colon, or a
-  period instead. Git history is the record; the commit message is
-  yours.
+  (,).** The commit-msg hook from epic-tasks (installed via
+  `make setup-hooks` in the epic-tasks clone) rejects both. Use a
+  comma, a colon, or a period instead. Git history is the record; the
+  commit message is yours.
 - **PR bodies use real newlines.** ``gh pr create --body-file`` or a
   heredoc, never ``--body "line\nnext"``. Literal ``\n`` is rejected by
-  takeoff and by ``.github/workflows/pr-body.yml`` (epic-cc#129).
+  takeoff (epic-cc#129).
 - Commit whenever a piece of work is finished; don't batch unrelated
   changes.
 - Update the docs a change touches before calling it done.
@@ -160,8 +163,9 @@ mechanical rules fails the ritual and blocks the push.
   work that looks small.
 - **No force pushes.** Rewriting a branch that already exists on the
   remote drops it for every other agent and clone; the pre-push hook
-  refuses it. If the guard is triggered, rebase onto master and get
-  the human's explicit go-ahead before re-running with
+  from epic-tasks (installed via `make setup-hooks` in the epic-tasks
+  clone) refuses it. If the guard is triggered, rebase onto master and
+  get the human's explicit go-ahead before re-running with
   `EPIC_FORCE_PUSH_APPROVED=1 git push --force-with-lease`.
 
 ## Expression conventions (comments and docs)
@@ -182,7 +186,7 @@ mechanical rules fails the ritual and blocks the push.
 6. **No em-dashes (,) in prose.** Not in comments, docs, or commit
    messages: use a comma, a colon, or a period and a new sentence.
    The exception is ascii-art diagrams, where alignment may force
-   them. The pre-pr-check and commit-msg hook enforce this.
+   them. The takeoff ritual and the commit-msg hook enforce this.
    Replacing an em-dash is a judgment call, not a swap: pick the
    replacement (and split or reorder the sentence when needed) so
    the result reads as prose.
