@@ -1,0 +1,116 @@
+name: package
+
+# Cuts PlatformIO packages from upstream release assets. No hand repacking.
+# Triggered manually or when epic-cc publishes a release; the dispatch path
+# notes that the board is unreachable is not used here, the workflow is
+# explicitly invoked.
+
+on:
+  workflow_dispatch:
+    inputs:
+      epic_cc_version:
+        description: "epic-cc tag, e.g. v0.0.3"
+        required: true
+        type: string
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  toolchain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: ver
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ inputs.epic_cc_version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
+          fi
+          tag="${{ inputs.epic_cc_version || github.event.release.tag_name }}"
+          ver="${tag#v}"
+          echo "ver=$ver" >> "$GITHUB_OUTPUT"
+
+      - name: Download epic-cc bundles
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${{ steps.ver.outputs.tag }}"
+          ver="${{ steps.ver.outputs.ver }}"
+          gh release download "$tag" --repo apojomovsky/epic-cc \
+            --pattern "epic-cc-${ver}-x86_64-linux.zip" \
+            --pattern "epic-cc-${ver}-x86_64-windows.zip"
+          ls -lh epic-cc-*.zip
+
+      - name: Build PlatformIO toolchain packages
+        run: |
+          ver="${{ steps.ver.outputs.ver }}"
+          mkdir -p dist
+          python3 scripts/package_toolchain.py \
+            --zip "epic-cc-${ver}-x86_64-linux.zip" \
+            --system linux_x86_64 \
+            --version "$ver" \
+            --out "dist/toolchain-epiccc-linux_x86_64-${ver}.tar.gz"
+          python3 scripts/package_toolchain.py \
+            --zip "epic-cc-${ver}-x86_64-windows.zip" \
+            --system windows_amd64 \
+            --version "$ver" \
+            --out "dist/toolchain-epiccc-windows_amd64-${ver}.tar.gz"
+          ls -lh dist/
+
+      - name: Smoke test from repacked packages
+        run: |
+          ver="${{ steps.ver.outputs.ver }}"
+          tmp="$(mktemp -d)"
+          # linux package smoke: compile add.c via bundled discovery
+          tar -xzf "dist/toolchain-epiccc-linux_x86_64-${ver}.tar.gz" -C "$tmp"
+          fixture=""
+          if [ -f "/tmp/add.c" ]; then
+            fixture="/tmp/add.c"
+          elif [ -f "crates/driver/tests/fixtures/add.c" ]; then
+            fixture="crates/driver/tests/fixtures/add.c"
+          fi
+          # Always check binary runs; compile only when fixture is reachable.
+          "$tmp/epic-cc" --version
+          if [ -n "$fixture" ]; then
+            "$tmp/epic-cc" "$fixture" -o "$tmp/smoke.hex"
+            test -s "$tmp/smoke.hex"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: toolchain-packages
+          path: dist/*.tar.gz
+
+      # Create a GitHub Release in this repo so platform.json can pin a URL
+      # until the PlatformIO registry publication (PIO-3).
+      - name: Publish to this repo's releases
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ver="${{ steps.ver.outputs.ver }}"
+          tag="toolchain-epiccc-v${ver}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "release $tag already exists, uploading assets"
+            gh release upload "$tag" dist/*.tar.gz --clobber
+          else
+            gh release create "$tag" dist/*.tar.gz \
+              --title "toolchain-epiccc $ver (from epic-cc v$ver)" \
+              --notes "Built from https://github.com/apojomovsky/epic-cc/releases/tag/v$ver"
+          fi
+
+  framework:
+    # Scaffold only, gated by HAL-5. Framework packaging validates the
+    # repacking tooling against the current family bundles but does not
+    # publish until HAL-5 flips the distribution.
+    runs-on: ubuntu-latest
+    if: false
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "framework-epichal blocked by HAL-5"
