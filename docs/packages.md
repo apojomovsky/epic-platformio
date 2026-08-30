@@ -39,13 +39,16 @@ python3 scripts/package_framework.py \
 ```
 
 Each command validates the repacked archive: `package.json` parses, the
-toolchain binary runs `--version`, and when the `add.c` fixture is reachable
-it compiles to HEX via the bundled discovery path (no env vars).
+toolchain binary runs `--version`, and it compiles a minimal fixture to HEX
+via the bundled discovery path (no env vars). The Windows artifact skips
+execution on Linux hosts, where the PE format cannot be run.
 
 ## Publishing
 
-`gh workflow run package.yml -f epic_cc_version=v0.0.3` cuts both toolchain
+`gh workflow run package.yml -f epic_cc_version=v0.0.3` cuts the toolchain
 packages from the upstream release assets and publishes them as a GitHub
 Release in this repository. The release URL is what PIO-1's `platform.json`
 will reference until the packages are uploaded to the PlatformIO registry
-(PIO-3).
+(PIO-3). For a packaging-only fix without a new compiler tag, pass the
+override: `-f epic_cc_version=v0.0.3 -f package_version=0.0.4`. Framework
+publishing stays blocked by HAL-5 and is not triggered by this workflow.

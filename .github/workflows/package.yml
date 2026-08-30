@@ -1,9 +1,9 @@
 name: package
 
 # Cuts PlatformIO packages from upstream release assets. No hand repacking.
-# Triggered manually or when epic-cc publishes a release; the dispatch path
-# notes that the board is unreachable is not used here, the workflow is
-# explicitly invoked.
+# Triggered manually with the epic-cc tag that should be wrapped. The mapping
+# between package version and upstream tag lives in packages/versions.json
+# (D-6), so a packaging-only bump does not need a new compiler release.
 
 on:
   workflow_dispatch:
@@ -12,8 +12,10 @@ on:
         description: "epic-cc tag, e.g. v0.0.3"
         required: true
         type: string
-  release:
-    types: [published]
+      package_version:
+        description: "package version override for packaging-only bumps (default: epic tag without v)"
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -24,86 +26,81 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Resolve version
+      - name: Resolve versions
         id: ver
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "tag=${{ inputs.epic_cc_version }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "tag=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
-          fi
-          tag="${{ inputs.epic_cc_version || github.event.release.tag_name }}"
-          ver="${tag#v}"
-          echo "ver=$ver" >> "$GITHUB_OUTPUT"
+          tag="${{ inputs.epic_cc_version }}"
+          if [ -z "$tag" ]; then echo "epic_cc_version required"; exit 1; fi
+          upstream_ver="${tag#v}"
+          pkg_ver="${{ inputs.package_version }}"
+          if [ -z "$pkg_ver" ]; then pkg_ver="$upstream_ver"; fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "upstream_ver=$upstream_ver" >> "$GITHUB_OUTPUT"
+          echo "pkg_ver=$pkg_ver" >> "$GITHUB_OUTPUT"
+          echo "Resolved tag=$tag upstream=$upstream_ver package=$pkg_ver"
 
       - name: Download epic-cc bundles
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tag="${{ steps.ver.outputs.tag }}"
-          ver="${{ steps.ver.outputs.ver }}"
+          upstream_ver="${{ steps.ver.outputs.upstream_ver }}"
           gh release download "$tag" --repo apojomovsky/epic-cc \
-            --pattern "epic-cc-${ver}-x86_64-linux.zip" \
-            --pattern "epic-cc-${ver}-x86_64-windows.zip"
+            --pattern "epic-cc-${upstream_ver}-x86_64-linux.zip" \
+            --pattern "epic-cc-${upstream_ver}-x86_64-windows.zip"
           ls -lh epic-cc-*.zip
 
       - name: Build PlatformIO toolchain packages
         run: |
-          ver="${{ steps.ver.outputs.ver }}"
+          upstream_ver="${{ steps.ver.outputs.upstream_ver }}"
+          pkg_ver="${{ steps.ver.outputs.pkg_ver }}"
           mkdir -p dist
           python3 scripts/package_toolchain.py \
-            --zip "epic-cc-${ver}-x86_64-linux.zip" \
+            --zip "epic-cc-${upstream_ver}-x86_64-linux.zip" \
             --system linux_x86_64 \
-            --version "$ver" \
-            --out "dist/toolchain-epiccc-linux_x86_64-${ver}.tar.gz"
+            --version "$pkg_ver" \
+            --out "dist/toolchain-epiccc-linux_x86_64-${pkg_ver}.tar.gz"
           python3 scripts/package_toolchain.py \
-            --zip "epic-cc-${ver}-x86_64-windows.zip" \
+            --zip "epic-cc-${upstream_ver}-x86_64-windows.zip" \
             --system windows_amd64 \
-            --version "$ver" \
-            --out "dist/toolchain-epiccc-windows_amd64-${ver}.tar.gz"
+            --version "$pkg_ver" \
+            --out "dist/toolchain-epiccc-windows_amd64-${pkg_ver}.tar.gz"
           ls -lh dist/
 
       - name: Smoke test from repacked packages
         run: |
-          ver="${{ steps.ver.outputs.ver }}"
+          pkg_ver="${{ steps.ver.outputs.pkg_ver }}"
           tmp="$(mktemp -d)"
-          # linux package smoke: compile add.c via bundled discovery
-          tar -xzf "dist/toolchain-epiccc-linux_x86_64-${ver}.tar.gz" -C "$tmp"
-          fixture=""
-          if [ -f "/tmp/add.c" ]; then
-            fixture="/tmp/add.c"
-          elif [ -f "crates/driver/tests/fixtures/add.c" ]; then
-            fixture="crates/driver/tests/fixtures/add.c"
-          fi
-          # Always check binary runs; compile only when fixture is reachable.
+          tar -xzf "dist/toolchain-epiccc-linux_x86_64-${pkg_ver}.tar.gz" -C "$tmp"
+          chmod +x "$tmp/epic-cc"
+          chmod +x "$tmp/clang/bin/"* 2>/dev/null || true
           "$tmp/epic-cc" --version
-          if [ -n "$fixture" ]; then
-            "$tmp/epic-cc" "$fixture" -o "$tmp/smoke.hex"
-            test -s "$tmp/smoke.hex"
-          fi
+          cat > "$tmp/min.c" <<'EOF'
+          void main(void) {}
+          EOF
+          "$tmp/epic-cc" "$tmp/min.c" -o "$tmp/smoke.hex"
+          test -s "$tmp/smoke.hex"
+          echo "smoke passed: $tmp/smoke.hex $(wc -c < "$tmp/smoke.hex") bytes"
 
       - uses: actions/upload-artifact@v4
         with:
           name: toolchain-packages
           path: dist/*.tar.gz
 
-      # Create a GitHub Release in this repo so platform.json can pin a URL
-      # until the PlatformIO registry publication (PIO-3).
       - name: Publish to this repo's releases
-        if: github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ver="${{ steps.ver.outputs.ver }}"
-          tag="toolchain-epiccc-v${ver}"
+          pkg_ver="${{ steps.ver.outputs.pkg_ver }}"
+          upstream_tag="${{ steps.ver.outputs.tag }}"
+          tag="toolchain-epiccc-v${pkg_ver}"
           if gh release view "$tag" >/dev/null 2>&1; then
             echo "release $tag already exists, uploading assets"
             gh release upload "$tag" dist/*.tar.gz --clobber
           else
             gh release create "$tag" dist/*.tar.gz \
-              --title "toolchain-epiccc $ver (from epic-cc v$ver)" \
-              --notes "Built from https://github.com/apojomovsky/epic-cc/releases/tag/v$ver"
-          fi
+              --title "toolchain-epiccc $pkg_ver (from epic-cc $upstream_tag)" \
+              --notes "Built from https://github.com/apojomovsky/epic-cc/releases/tag/$upstream_tag"
 
   framework:
     # Scaffold only, gated by HAL-5. Framework packaging validates the

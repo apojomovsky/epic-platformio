@@ -95,7 +95,11 @@ def validate(tgz: pathlib.Path):
             for p in clang_bin.iterdir():
                 if p.is_file():
                     p.chmod(p.stat().st_mode | 0o111)
-        try:
+        # Windows binaries cannot be executed on Linux, so skip the
+        # --version probe for .exe packages. The failure is expected and
+        # does not mean the package is broken.
+        is_windows = binary.name.endswith(".exe")
+        if not is_windows:
             result = subprocess.run(
                 [str(binary), "--version"],
                 capture_output=True,
@@ -103,23 +107,28 @@ def validate(tgz: pathlib.Path):
                 timeout=5,
             )
             if result.returncode != 0:
-                print(f"warning: {binary} --version failed: {result.stderr}", file=sys.stderr)
-        except Exception as exc:
-            print(f"warning: smoke --version failed: {exc}", file=sys.stderr)
-
-        fixture = pathlib.Path(__file__).resolve().parents[2] / "epic-cc" / "crates" / "driver" / "tests" / "fixtures" / "add.c"
-        if fixture.exists():
-            out_hex = td / "smoke.hex"
-            result = subprocess.run(
-                [str(binary), str(fixture), "-o", str(out_hex)],
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
-            if result.returncode != 0:
-                raise SystemExit(f"smoke compile failed: {result.stderr}")
-            if not out_hex.exists() or out_hex.stat().st_size == 0:
-                raise SystemExit("smoke compile produced no output")
+                raise SystemExit(f"smoke --version failed: {result.stderr.strip()}")
+        # Always compile a minimal fixture via bundled discovery. A
+        # synthetic file is used so the test never silently skips when
+        # the upstream repo is absent.
+        if is_windows:
+            # Cannot run Windows binary on this host, skip compile smoke
+            # for that artifact. The Linux artifact already proves the
+            # workflow.
+            return
+        min_c = td / "_smoke_min.c"
+        min_c.write_text("void main(void) {}\n")
+        out_hex = td / "smoke.hex"
+        result = subprocess.run(
+            [str(binary), str(min_c), "-o", str(out_hex)],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if result.returncode != 0:
+            raise SystemExit(f"smoke compile failed: {result.stderr.strip()}")
+        if not out_hex.exists() or out_hex.stat().st_size == 0:
+            raise SystemExit("smoke compile produced no output")
 
 
 def main():

@@ -47,3 +47,11 @@ jobs:
           else
             echo "no builder/ yet (PIO-1)"
           fi
+
+      - name: Byte-compile packaging scripts
+        run: |
+          if [ -d scripts ]; then
+            python3 -m compileall -q scripts
+          else
+            echo "no scripts/ yet"
+          fi
