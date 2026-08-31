@@ -1,0 +1,15 @@
+{
+  "toolchain-epiccc": {
+    "0.0.3": {
+      "upstream": "v0.0.3",
+      "upstream_url_linux": "https://github.com/apojomovsky/epic-cc/releases/download/v0.0.3/epic-cc-0.0.3-x86_64-linux.zip",
+      "upstream_url_windows": "https://github.com/apojomovsky/epic-cc/releases/download/v0.0.3/epic-cc-0.0.3-x86_64-windows.zip"
+    }
+  },
+  "framework-epichal": {
+    "0.4.0": {
+      "upstream": "v0.4.0",
+      "note": "scaffold only, blocked by HAL-5"
+    }
+  }
+}

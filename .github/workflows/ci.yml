@@ -26,10 +26,16 @@ jobs:
           if [ -f platform.json ]; then
             files+=(platform.json)
           fi
+          for f in packages/*/package.json packages/versions.json; do
+            if [ -f "$f" ]; then
+              files+=("$f")
+            fi
+          done
           if [ ${#files[@]} -eq 0 ]; then
             echo "no JSON manifests yet (PIO-1)"
           else
             for f in "${files[@]}"; do
+              echo "lint $f"
               python3 -m json.tool "$f" >/dev/null
             done
           fi
@@ -40,4 +46,12 @@ jobs:
             python3 -m compileall -q builder
           else
             echo "no builder/ yet (PIO-1)"
+          fi
+
+      - name: Byte-compile packaging scripts
+        run: |
+          if [ -d scripts ]; then
+            python3 -m compileall -q scripts
+          else
+            echo "no scripts/ yet"
           fi

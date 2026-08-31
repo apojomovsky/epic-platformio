@@ -1,0 +1,18 @@
+{
+  "name": "framework-epichal",
+  "version": "0.4.0",
+  "description": "epic-hal register-level HAL and module shelf for PIC14/PIC18",
+  "keywords": [
+    "framework",
+    "hal",
+    "pic",
+    "epic-hal"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/apojomovsky/epic-hal",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/apojomovsky/epic-hal.git"
+  },
+  "system": "*"
+}
