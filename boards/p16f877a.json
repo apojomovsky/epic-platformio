@@ -1,0 +1,13 @@
+{
+  "build": {
+    "f_cpu": "4000000L",
+    "mcu": "p16f877a"
+  },
+  "name": "Microchip PIC16F877A",
+  "upload": {
+    "maximum_ram_size": 368,
+    "maximum_size": 16384
+  },
+  "url": "https://www.microchip.com/en-us/product/PIC16F877A",
+  "vendor": "Microchip"
+}
