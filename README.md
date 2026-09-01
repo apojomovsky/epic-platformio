@@ -33,12 +33,13 @@ has no backend for that core, and adding one is a separate decision
 
 ## Status
 
-Bootstrap. The scaffolding in this repository (README, license, agent rules,
-CI skeleton) is in place; the platform itself is not yet. The platform name is
-`platform-epic8` (registry id `epic8`), decided 2026-08-26, replacing the
-`platform-pic8` working name in earlier issues; this repository on GitHub is
-`epic-platformio`. The work is tracked
-as PIO-1 through PIO-3 in the
+The platform core (PIO-1) is in place: `platform.json`, the SCons builder
+and the board definitions for `p16f877a`, `p16f887` and `p18f4550`. A
+project pointing at this repository builds with `pio run` and no Microchip
+download. Upload is not supported in v1 (the HEX is the deliverable) and
+size reporting waits on epic-cc CC-6; both decisions are recorded in
+[`docs/platform-decisions.md`](docs/platform-decisions.md). The work is
+tracked as PIO-1 through PIO-3 in the
 [epic-platformio issues](https://github.com/apojomovsky/epic-platformio/issues),
 part of the 14-piece decomposition in
 [`epic-cc/docs/31-ecosystem-integration-design.md`](https://github.com/apojomovsky/epic-cc/blob/master/docs/31-ecosystem-integration-design.md)

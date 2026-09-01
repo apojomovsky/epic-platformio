@@ -101,6 +101,7 @@ jobs:
             gh release create "$tag" dist/*.tar.gz \
               --title "toolchain-epiccc $pkg_ver (from epic-cc $upstream_tag)" \
               --notes "Built from https://github.com/apojomovsky/epic-cc/releases/tag/$upstream_tag"
+          fi
 
   framework:
     # Scaffold only, gated by HAL-5. Framework packaging validates the

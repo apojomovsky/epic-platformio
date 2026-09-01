@@ -1,0 +1,13 @@
+{
+  "build": {
+    "f_cpu": "20000000L",
+    "mcu": "p18f4550"
+  },
+  "name": "Microchip PIC18F4550",
+  "upload": {
+    "maximum_ram_size": 2048,
+    "maximum_size": 32768
+  },
+  "url": "https://www.microchip.com/en-us/product/PIC18F4550",
+  "vendor": "Microchip"
+}
