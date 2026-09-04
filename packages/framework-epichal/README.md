@@ -2,11 +2,7 @@
 
 PlatformIO package wrapping the `epic-hal` family bundles.
 
-Blocked by HAL-5 (distribution flip) for the final shape. Until that lands
-the package scaffolding and tooling are in place but no framework package is
-published.
-
-## Layout (after HAL-5)
+## Layout
 
 ```
 framework-epichal/
@@ -17,9 +13,19 @@ framework-epichal/
   pic16f87xa-hal/
   pic16f88x-hal/
   pic18fxx5x-hal/
-  epic-hal-sources.json
+  epic-hal-sources-pic16f87xa.json
+  epic-hal-sources-pic16f88x.json
+  epic-hal-sources-pic18fxx5x.json
   VERSION
 ```
+
+The package is the union of every supported family bundle: the shared
+modules are copied once, each family's hal dir is kept separate, and each
+family's source manifest is renamed per family so the builder can pick the
+one matching the board's MCU. Each source manifest also carries the
+`epiccc_sources` slice, the epic-cc conformant source set, and the
+`src/epiccc/` files are copied in from the epic-hal checkout (the release
+bundles omit them).
 
 The builder wires the framework into the include path and sources; no
 compilation happens inside the package itself.
