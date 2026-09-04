@@ -20,29 +20,29 @@ a board-definition fix landing here never forces a compiler release.
 ```bash
 # toolchain, per-system from the upstream bundles
 python3 scripts/package_toolchain.py \
-  --zip epic-cc-0.0.3-x86_64-linux.zip \
+  --zip epic-cc-0.1.0-x86_64-linux.zip \
   --system linux_x86_64 \
-  --version 0.0.3 \
-  --out dist/toolchain-epiccc-linux_x86_64-0.0.3.tar.gz
+  --version 0.1.0 \
+  --out dist/toolchain-epiccc-linux_x86_64-0.1.0.tar.gz
 
 python3 scripts/package_toolchain.py \
-  --zip epic-cc-0.0.3-x86_64-windows.zip \
+  --zip epic-cc-0.1.0-x86_64-windows.zip \
   --system windows_amd64 \
-  --version 0.0.3 \
-  --out dist/toolchain-epiccc-windows_amd64-0.0.3.tar.gz
+  --version 0.1.0 \
+  --out dist/toolchain-epiccc-windows_amd64-0.1.0.tar.gz
 
 # framework: the union of every family bundle, plus the epic-cc source
 # slice (epiccc_sources) and the epic-cc source files, which the release
 # bundles do not carry. --manifest and --hal-repo point at the epic-hal
 # checkout.
 python3 scripts/package_framework.py \
-  --tar epic-hal-pic16f87xa-v0.4.0.tar.gz \
-  --tar epic-hal-pic16f88x-v0.4.0.tar.gz \
-  --tar epic-hal-pic18fxx5x-v0.4.0.tar.gz \
+  --tar epic-hal-pic16f87xa-v0.5.0.tar.gz \
+  --tar epic-hal-pic16f88x-v0.5.0.tar.gz \
+  --tar epic-hal-pic18fxx5x-v0.5.0.tar.gz \
   --manifest /path/to/epic-hal/epic-common/manifest/modules.toml \
   --hal-repo /path/to/epic-hal \
-  --version 0.4.0 \
-  --out dist/framework-epichal-0.4.0.tar.gz
+  --version 0.5.0 \
+  --out dist/framework-epichal-0.5.0.tar.gz
 ```
 
 Each command validates the repacked archive: `package.json` parses, the
@@ -61,7 +61,7 @@ epic-hal checkout. The builder uses the slice when present.
 
 ## Publishing
 
-`gh workflow run package.yml -f epic_cc_version=v0.0.3` cuts the toolchain
+`gh workflow run package.yml -f epic_cc_version=v0.1.0` cuts the toolchain
 packages from the upstream release assets and publishes them as a GitHub
 Release in this repository. The release URL is what `platform.json` references
 until the packages are uploaded to the PlatformIO registry (PIO-3). For a
@@ -69,6 +69,6 @@ packaging-only fix without a new compiler tag, pass the override:
 `-f epic_cc_version=v0.0.3 -f package_version=0.0.4`.
 
 The framework package is published by hand from the build command above
-(`gh release create framework-epichal-v0.4.0 dist/framework-epichal-0.4.0.tar.gz`),
+(`gh release create framework-epichal-v0.5.0 dist/framework-epichal-0.5.0.tar.gz`),
 since it combines several family bundles and the epic-cc source slice rather
 than wrapping a single upstream asset.
