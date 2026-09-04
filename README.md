@@ -34,10 +34,12 @@ has no backend for that core, and adding one is a separate decision
 ## Status
 
 The platform core (PIO-1) is in place: `platform.json`, the SCons builder
-and the board definitions for `p16f877a`, `p16f887` and `p18f4550`. A
-project pointing at this repository builds with `pio run` and no Microchip
-download. Upload is not supported in v1 (the HEX is the deliverable) and
-size reporting waits on epic-cc CC-6; both decisions are recorded in
+and the board definitions for `p16f877a`, `p16f887` and `p18f4550`. PIO-2
+cut the `toolchain-epiccc` and `framework-epichal` packages, and PIO-3 adds
+the worked examples and this documentation. A project pointing at this
+repository builds with `pio run` and no Microchip download. Upload is not
+supported in v1 (the HEX is the deliverable) and size reporting waits on
+epic-cc CC-6; both decisions are recorded in
 [`docs/platform-decisions.md`](docs/platform-decisions.md). The work is
 tracked as PIO-1 through PIO-3 in the
 [epic-platformio issues](https://github.com/apojomovsky/epic-platformio/issues),
@@ -45,10 +47,16 @@ part of the 14-piece decomposition in
 [`epic-cc/docs/31-ecosystem-integration-design.md`](https://github.com/apojomovsky/epic-cc/blob/master/docs/31-ecosystem-integration-design.md)
 (D-6, section 3).
 
+## Getting started
+
+See [`docs/getting-started.md`](docs/getting-started.md): install the
+platform, write a minimal project, use the HAL, and the worked examples
+under `examples/`.
+
 ## The one-line install story
 
-Once PIO-1 to PIO-3 land, a project with a `platformio.ini` pointing at this
-platform builds with no Microchip download and no XC8:
+A project with a `platformio.ini` pointing at this platform builds with no
+Microchip download and no XC8:
 
 ```bash
 platformio platform install https://github.com/apojomovsky/epic-platformio
@@ -78,6 +86,10 @@ toolchain reachable from PlatformIO, touching nothing on Microchip's servers.
 platform.json      # platform metadata and package references (PIO-1)
 builder/main.py    # SCons builder: sources through epic-cc in one invocation (PIO-1)
 boards/*.json      # board definitions for the supported parts (PIO-1)
+packages/          # package manifests and the version mapping (PIO-2)
+scripts/           # package build tooling (PIO-2)
+examples/          # worked examples, one per supported board (PIO-3)
+docs/              # getting started and platform decisions (PIO-3)
 ```
 
 ## License

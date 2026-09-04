@@ -6,6 +6,7 @@ linker. This script collects the project sources and hands them to epic-cc
 in a single command.
 """
 
+import json
 import subprocess
 import sys
 from os.path import join
@@ -31,6 +32,76 @@ if not toolchain_dir:
     env.Exit(1)
 epiccc = join(toolchain_dir, "epic-cc")
 
+# Framework wiring. When `framework = epichal` is set, the epic-hal
+# framework package joins the build: the board's MCU picks the family,
+# and EPIC_HAL_MODULES (a comma-separated build flag) picks the modules.
+# epic-cc is a whole-program compiler, so the framework sources are
+# compiled in, not linked (docs/31 D-7).
+FRAMEWORK_FAMILY = {
+    "p16f877a": "pic16f87xa",
+    "p16f887": "pic16f88x",
+    "p18f4550": "pic18fxx5x",
+}
+
+
+def _framework(env, mcu):
+    if "epichal" not in env.get("PIOFRAMEWORK", []):
+        return [], [], []
+    fw_dir = env.PioPlatform().get_package_dir("framework-epichal")
+    if not fw_dir:
+        # Fall back to the shared packages dir: a locally installed or
+        # manually placed framework package is not in the platform's
+        # package registry, but still lives under ~/.platformio/packages.
+        import os
+        fw_dir = join(os.path.expanduser("~"), ".platformio", "packages", "framework-epichal")
+    if not os.path.isdir(fw_dir):
+        sys.stderr.write("Error: framework-epichal is not installed\n")
+        env.Exit(1)
+    slug = FRAMEWORK_FAMILY.get(mcu)
+    if not slug:
+        sys.stderr.write("Error: no epic-hal family for board MCU %s\n" % mcu)
+        env.Exit(1)
+    manifest = json.load(open(join(fw_dir, "epic-hal-sources-%s.json" % slug)))
+    # Family includes, /target -> /epiccc for the epic-cc path (the
+    # epic-cc SFR layer lives under include/epiccc, not include/target).
+    includes = [
+        join(fw_dir, d.replace("/target", "/epiccc"))
+        for d in manifest["family_includes"]
+    ]
+    # The epic-cc path links the conformant source slice, not the full
+    # XC8 set (which uses XC8-only syntax and exceeds the 877A's GPR
+    # capacity). The framework package records it as epiccc_sources.
+    hal_sources = manifest.get("epiccc_sources") or manifest["hal_sources"]
+    sources = [join(fw_dir, s) for s in hal_sources]
+    # Selected modules come from -DEPIC_HAL_MODULES=a,b; the framework
+    # package is optional, so a project that never sets it stays bare.
+    selected = []
+    for d in env.get("CPPDEFINES", []):
+        if isinstance(d, (tuple, list)) and d[0] == "EPIC_HAL_MODULES":
+            selected = [m.strip() for m in d[1].split(",") if m.strip()]
+    if not selected:
+        sys.stderr.write(
+            "Error: framework=epichal needs -DEPIC_HAL_MODULES=<modules>\n"
+        )
+        env.Exit(1)
+    modules = manifest["modules"]
+    resolved = set()
+    for name in selected:
+        key = name if name.startswith("epic-") else "epic-" + name
+        if key not in modules:
+            sys.stderr.write("Error: unknown epic-hal module %s\n" % name)
+            env.Exit(1)
+        resolved.update(modules[key]["resolved"])
+    for key in sorted(resolved):
+        sources += [join(fw_dir, s) for s in modules[key]["sources"]]
+        includes += [join(fw_dir, d) for d in modules[key]["includes"]]
+    # The HAL picks the device and the epic-cc SFR layer from these.
+    defines = ["-DPIC%s" % mcu.upper(), "-D__EPIC_CC__"]
+    return sources, includes, defines
+
+
+fw_sources, fw_includes, fw_defines = _framework(env, mcu)
+
 # Real source paths, not variant-dir copies: epic-cc reads the files
 # directly, there is no per-object step to land in the build dir. The
 # project lib/ dir joins the sources: a whole-program compiler takes every
@@ -44,6 +115,7 @@ sources += [
     env.File(join(lib_dir, item))
     for item in env.MatchSourceFiles(lib_dir, env.get("SRC_FILTER"), ["c"])
 ]
+sources += [env.File(s) for s in fw_sources]
 if not sources:
     sys.stderr.write(
         "Error: no C sources found in %s\n" % env.subst("$PROJECT_SRC_DIR")
@@ -56,6 +128,7 @@ for d in env.get("CPPDEFINES", []):
         defines.append("-D%s=%s" % (d[0], d[1]))
     else:
         defines.append("-D%s" % d)
+defines += fw_defines
 
 # Include dirs: the project include/, src/ and lib/ dirs plus every
 # CPPPATH entry, where build_flags -I lands. Deduped so a dir listed twice
@@ -68,6 +141,9 @@ include_dirs = [
 for d in env.get("CPPPATH", []):
     d = env.subst(str(d))
     if d and d not in include_dirs:
+        include_dirs.append(d)
+for d in fw_includes:
+    if d not in include_dirs:
         include_dirs.append(d)
 
 
@@ -98,6 +174,13 @@ def _headers(env, src_dir):
 
 header_deps = _headers(env, "$PROJECT_INCLUDE_DIR") + _headers(env, "$PROJECT_SRC_DIR")
 header_deps += _headers(env, lib_dir)
+# Framework headers too: the HAL and module headers live in the framework
+# package, and an edit there must rebuild the HEX.
+for d in fw_includes:
+    header_deps += [
+        env.File(join(d, item))
+        for item in env.MatchSourceFiles(d, env.get("SRC_FILTER"), ["h"])
+    ]
 env.Depends(firmware, header_deps)
 
 AlwaysBuild(env.Alias("buildprog", firmware, firmware))

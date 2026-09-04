@@ -4,12 +4,16 @@
       "upstream": "v0.0.3",
       "upstream_url_linux": "https://github.com/apojomovsky/epic-cc/releases/download/v0.0.3/epic-cc-0.0.3-x86_64-linux.zip",
       "upstream_url_windows": "https://github.com/apojomovsky/epic-cc/releases/download/v0.0.3/epic-cc-0.0.3-x86_64-windows.zip"
+    },
+    "0.0.4": {
+      "upstream": "0.1.0 (master 29abbbc)",
+      "note": "packaging bump wrapping a newer epic-cc with function-pointer support (epic-cc#73), needed by the HAL example; linux only until a windows bundle is cut"
     }
   },
   "framework-epichal": {
     "0.4.0": {
       "upstream": "v0.4.0",
-      "note": "scaffold only, blocked by HAL-5"
+      "note": "combined family bundles plus the epic-cc source slice (epiccc_sources)"
     }
   }
 }

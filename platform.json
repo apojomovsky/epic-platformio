@@ -22,12 +22,18 @@
   "packages": {
     "toolchain-epiccc": {
       "type": "toolchain",
-      "version": "https://github.com/apojomovsky/epic-platformio/releases/download/toolchain-epiccc-v0.0.3/toolchain-epiccc-linux_x86_64-0.0.3.tar.gz"
+      "version": "https://github.com/apojomovsky/epic-platformio/releases/download/toolchain-epiccc-v0.0.4/toolchain-epiccc-linux_x86_64-0.0.4.tar.gz"
     },
     "framework-epichal": {
       "type": "framework",
       "optional": true,
       "version": "https://github.com/apojomovsky/epic-platformio/releases/download/framework-epichal-v0.4.0/framework-epichal-0.4.0.tar.gz"
     }
-  }
+  },
+  "examples": [
+    "examples/blink-p16f877a",
+    "examples/blink-p16f887",
+    "examples/blink-p18f4550",
+    "examples/hal-tick-p16f877a"
+  ]
 }
