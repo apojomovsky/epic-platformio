@@ -1,6 +1,6 @@
 {
   "name": "framework-epichal",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "epic-hal register-level HAL and module shelf for PIC14/PIC18",
   "keywords": [
     "framework",
