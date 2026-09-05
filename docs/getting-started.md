@@ -138,15 +138,55 @@ If `minipro` is not on `PATH`, point the platform at it explicitly:
 EPIC8_MINIPRO_PATH=/path/to/minipro pio run -t upload
 ```
 
-PICkit2/PICkit3/"PICkit3.5" clones (via a `pk2cmd`-family tool) are not
-supported yet; tracked in
-[epic-platformio#12](https://github.com/apojomovsky/epic-platformio/issues/12).
-The exact `minipro` device-name mapping (`upload.minipro_device` in each
-board's JSON) is built from `minipro`'s documented `-p <name> -w <file>`
-invocation shape and has not been confirmed against real silicon; if
-`minipro -l` reports a different spelling for your device, that is the
-bug to file. The full history, including the rejected `pk2cmd`/`ipecmd`
-alternatives for v1, is in
+**PICkit2, PICkit3 and "PICkit3.5" clones** (PKOB too) are driven by
+[`pk2cmd`](https://github.com/jaka-fi/pk2cmd), a maintained fork of
+Microchip's own tool. Read
+[`docs/pk2cmd-LICENSE.md`](pk2cmd-LICENSE.md) before using it: unlike
+`minipro`, this is Microchip's own licensed software, not MIT, fetched
+here unmodified. Install it with:
+
+```bash
+scripts/install-pk2cmd.sh
+```
+
+which downloads a checksum-pinned release, extracts it (AppImages need
+FUSE, which not every environment has, so the script extracts rather
+than running the AppImage directly), and prints the `udev` rule you need
+for USB access without root. Then select the protocol and upload:
+
+```ini
+[env:epic8]
+platform = epic8
+board = p16f877a
+upload_protocol = pk2cmd
+```
+
+```bash
+pio run -t upload
+```
+
+**PICkit3/PKOB-specific gotcha.** These need a one-time "scripting
+firmware" update before any Linux tool can drive them at all; `pk2cmd`
+does not support pushing that update itself. If yours doesn't have it
+already, you need the Windows GUI once, first, to update the firmware.
+PICkit2 has no such requirement.
+
+If `pk2cmd` is not where the install script put it, point the platform
+at it explicitly:
+
+```bash
+EPIC8_PK2CMD_PATH=/path/to/pk2cmd EPIC8_PK2CMD_DIR=/path/to/its/PK2DeviceFile.dat/dir pio run -t upload
+```
+
+The exact device-name mappings (`upload.minipro_device`,
+`upload.pk2cmd_device` in each board's JSON) were confirmed directly
+against the real tools (`minipro`'s documented `-p <name> -w <file>`
+shape; `pk2cmd`'s device database was grepped directly for
+`PIC16F877A`/`PIC16F887`/`PIC18F4550`) but not against real silicon,
+since neither tool run here has hardware attached. If programming fails
+with a device-not-recognized error, that mapping is the first thing to
+check. The full history, including the original "not supported in v1"
+call and why it changed, is in
 [`docs/platform-decisions.md`](platform-decisions.md).
 
 ## Supported parts

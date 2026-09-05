@@ -1,37 +1,61 @@
 # Platform decisions
 
-## Upload: minipro (TL866) landed, pk2cmd (PICkit2/3) tracked separately
+## Upload: minipro (TL866) and pk2cmd (PICkit2/3/3.5) both landed
 
 **Superseded 2026-09-05.** The original v1 call below rejected `pk2cmd`
 and `ipecmd` because both are Microchip's own tools, and the platform's
 reason to exist is a build path with no Microchip downloads (design doc
 31 D-5). It did not anticipate genuinely independent, non-Microchip open
-source flashing tools for hardware hobbyists already own: cheap
-"hacker's" programmers sold on AliExpress split cleanly by how
-independent their host-side tooling is from Microchip.
+source flashing tools for hardware hobbyists already own, and it did not
+distinguish "a download from Microchip's own servers" from "a
+community-maintained GitHub fork we point a script at."
 
 | Device | Tool | License | Independent of Microchip |
 |---|---|---|---|
 | TL866A / TL866II Plus (not TL866CS, no ICSP header) | [`minipro`](https://gitlab.com/DavidGriffith/minipro) | GPL | Yes, fully (XGecu hardware, independent reimplementation) |
-| PICkit2 / PICkit3 / "PICkit3.5" clones ("3.5" is clone-vendor branding for the PICkit3 protocol, not a Microchip designation) | `pk2cmd`-family (`pk2cmd-minus`, `PICkitminus`) | Microchip's own restrictive license | No, but the restriction reads as being about the *target chip* being genuine Microchip silicon, not the programmer's brand, and every board here targets genuine Microchip parts. Decided: full first-class support, not a bring-your-own-binary carve-out, revisited only if something concrete (redistribution terms on a specific fork) forces it. |
+| PICkit2 / PICkit3 / "PICkit3.5" clones ("3.5" is clone-vendor branding for the PICkit3 protocol, not a Microchip designation) / PKOB | [`jaka-fi/pk2cmd`](https://github.com/jaka-fi/pk2cmd) | Microchip's own license (reproduced in full in `docs/pk2cmd-LICENSE.md`) | No, and not treated as if it were. Decided: full first-class support anyway, not a bring-your-own-binary carve-out, on the reasoning recorded in `docs/pk2cmd-LICENSE.md`; not a Microchip download in the D-5 sense, since it is a third-party-maintained fork we fetch from GitHub, never Microchip's own site or an account/EULA click-through. |
 
-`minipro`/TL866 landed first as the pathfinder (`epic-platformio#11`): the
-cleanest of the two, one unambiguous tool, no firmware-bootstrap gotchas.
-`pk2cmd`/PICkit2+3 is tracked in `epic-platformio#12`; a known gotcha
-there is that some PICkit3 clones need a one-time Windows-only firmware
-update before any Linux tool can drive them.
+`minipro`/TL866 landed first as the pathfinder (`epic-platformio#11`):
+the cleanest of the two, one unambiguous tool, no firmware-bootstrap
+gotchas. `pk2cmd`/PICkit2+3+3.5 followed (`epic-platformio#12`), picking
+`jaka-fi/pk2cmd` specifically: most actively maintained fork found (most
+stars, most recent commits of the candidates checked), explicit
+PICkit2+3+PKOB support, and its own README already states its license
+situation as plainly as we'd want to ourselves ("THE CODE IN THIS
+REPOSITORY IS NOT FREE SOFTWARE"). Known gotcha, load-bearing enough to
+repeat here: PICkit3/PKOB need a one-time Windows-only "scripting
+firmware" update before any Linux tool, including this one, can drive
+them at all.
 
-**Neither tool is vendored.** Neither `minipro` nor `pk2cmd` has a
-Debian/Ubuntu package (checked directly: absent from `apt-cache`), and
-building/hosting our own prebuilt cross-platform binaries is a
-distribution project on the scale of epic-cc's
-`docs/30-distribution-design.md`, not something to fold into wiring an
-upload target. `builder/main.py` finds a binary the user already built,
-on `PATH` or via an env var override, and the build steps are documented
-in `docs/getting-started.md#upload`. This is a deliberate amendment to
-the "belongs in a `tool-*` package" note below: a `tool-*` package that
-vendors a real prebuilt binary is a later, separate effort, not part of
-landing the upload target itself.
+**Neither tool is vendored as a PlatformIO package**, meaning neither
+ships inside a `tool-*` package installed automatically by `pio pkg
+install`, the shape `framework-epichal`/`toolchain-epiccc` use. Both
+still need a separate step:
+
+- `minipro`: no Debian/Ubuntu package exists (checked directly, absent
+  from `apt-cache`); build it from source, documented in
+  `docs/getting-started.md#upload`. `builder/main.py` finds it on `PATH`
+  or via `EPIC8_MINIPRO_PATH`.
+- `pk2cmd`: `scripts/install-pk2cmd.sh` downloads a checksum-pinned
+  release from `jaka-fi/pk2cmd`, verified against a hash recorded in the
+  script, and installs it without a build step. This is a real, tested
+  step up from "build it yourself": the script was run end to end
+  against the real v1.27.01 release during development, including the
+  real binary's `-B`/`-P`/`-F`/`-M` invocation confirmed by reading its
+  own `--help` output and its device database directly (grepped for
+  `PIC16F877A`/`PIC16F887`/`PIC18F4550`), not assumed from documentation
+  alone. `builder/main.py` finds it at the script's install location by
+  default, or via `EPIC8_PK2CMD_PATH`/`EPIC8_PK2CMD_DIR`.
+
+A real `tool-*` package (an epic-platformio-hosted release, installed
+automatically by `pio pkg install`, matching PIO-2's shape exactly) is a
+later, separate effort for either tool, not part of landing the upload
+target itself: it means standing up a packaging workflow like
+`.github/workflows/package.yml` already does for `toolchain-epiccc`, and
+for `pk2cmd` specifically, re-hosting a copy of Microchip-licensed
+software under our own releases rather than pointing at upstream's,
+which deserves its own deliberate decision rather than arriving as a
+side effect of this one.
 
 **A bootloader protocol** remains rejected: real work with no hardware to
 validate against in this repo, and no consumer asking for it.

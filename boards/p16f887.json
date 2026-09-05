@@ -8,7 +8,9 @@
     "maximum_ram_size": 368,
     "maximum_size": 16384,
     "protocol": "minipro",
-    "minipro_device": "PIC16F887"
+    "protocols": ["minipro", "pk2cmd"],
+    "minipro_device": "PIC16F887",
+    "pk2cmd_device": "PIC16F887"
   },
   "url": "https://www.microchip.com/en-us/product/PIC16F887",
   "vendor": "Microchip"
