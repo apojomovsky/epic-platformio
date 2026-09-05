@@ -113,10 +113,40 @@ EPIC_CONFIG("osc=hs, xtal_hz=4000000, cpudiv=div1, plldiv=noprescale, usbdiv=off
 
 ## Upload
 
-`pio run -t upload` is not supported in v1: the HEX is the deliverable, and
-flashing is left to your own programmer (pk2cmd, ipecmd, a bootloader).
-The platform fails upload with a clear message rather than pretending to
-flash. The decision and its rejected alternatives are recorded in
+`pio run -t upload` drives a **TL866A or TL866II Plus** universal
+programmer via [`minipro`](https://gitlab.com/DavidGriffith/minipro) (GPL,
+fully independent of Microchip). TL866CS has no ICSP header and cannot be
+used.
+
+`minipro` has no Debian/Ubuntu package. Build it from source:
+
+```bash
+git clone https://gitlab.com/DavidGriffith/minipro.git
+cd minipro && make && sudo make install
+```
+
+Then, with the programmer's ICSP header wired to the target (or the
+target seated in a supported ZIF adapter):
+
+```bash
+pio run -t upload
+```
+
+If `minipro` is not on `PATH`, point the platform at it explicitly:
+
+```bash
+EPIC8_MINIPRO_PATH=/path/to/minipro pio run -t upload
+```
+
+PICkit2/PICkit3/"PICkit3.5" clones (via a `pk2cmd`-family tool) are not
+supported yet; tracked in
+[epic-platformio#12](https://github.com/apojomovsky/epic-platformio/issues/12).
+The exact `minipro` device-name mapping (`upload.minipro_device` in each
+board's JSON) is built from `minipro`'s documented `-p <name> -w <file>`
+invocation shape and has not been confirmed against real silicon; if
+`minipro -l` reports a different spelling for your device, that is the
+bug to file. The full history, including the rejected `pk2cmd`/`ipecmd`
+alternatives for v1, is in
 [`docs/platform-decisions.md`](platform-decisions.md).
 
 ## Supported parts
