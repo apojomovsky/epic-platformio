@@ -1,16 +1,10 @@
 #!/usr/bin/env bash
-# Installs pk2cmd (jaka-fi/pk2cmd, a maintained fork of Microchip's own
-# tool driving PICkit2/PICkit3/PICkit3.5/PKOB clones) for platform-epic8's
-# upload target. See docs/pk2cmd-LICENSE.md before running this: pk2cmd
-# is Microchip's own licensed software, not MIT, fetched here unmodified.
-#
-# Downloads the exact release we've verified (checksum below), extracts
-# the AppImage rather than running it directly (many environments lack
-# FUSE), and installs the binary plus its device database to
-# ~/.local/share/epic8/pk2cmd/. The builder always passes -B<path> to
-# pk2cmd, so the install location does not need to be on PATH itself,
-# only EPIC8_PK2CMD_PATH needs to point at the binary (or leave PATH to
-# find it if you also symlink it yourself).
+# Installs jaka-fi/pk2cmd (PICkit2/3/3.5/PKOB clones) for the upload
+# target. See docs/pk2cmd-LICENSE.md first: Microchip's own license, not
+# MIT, fetched here unmodified. Extracts the AppImage rather than running
+# it directly, since many environments (this one included) lack FUSE.
+# The builder passes -B<dir> to pk2cmd, so the install directory need not
+# be on PATH; only EPIC8_PK2CMD_PATH must point at the binary.
 
 set -euo pipefail
 
