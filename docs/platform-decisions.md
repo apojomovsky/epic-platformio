@@ -13,7 +13,7 @@ independent their host-side tooling is from Microchip.
 | Device | Tool | License | Independent of Microchip |
 |---|---|---|---|
 | TL866A / TL866II Plus (not TL866CS, no ICSP header) | [`minipro`](https://gitlab.com/DavidGriffith/minipro) | GPL | Yes, fully (XGecu hardware, independent reimplementation) |
-| PICkit2 / PICkit3 / "PICkit3.5" clones ("3.5" is clone-vendor branding for the PICkit3 protocol, not a Microchip designation) | `pk2cmd`-family (`pk2cmd-minus`, `PICkitminus`) | Microchip's own restrictive license | No — but the restriction reads as being about the *target chip* being genuine Microchip silicon, not the programmer's brand, and every board here targets genuine Microchip parts. Decided: full first-class support, not a bring-your-own-binary carve-out, revisited only if something concrete (redistribution terms on a specific fork) forces it. |
+| PICkit2 / PICkit3 / "PICkit3.5" clones ("3.5" is clone-vendor branding for the PICkit3 protocol, not a Microchip designation) | `pk2cmd`-family (`pk2cmd-minus`, `PICkitminus`) | Microchip's own restrictive license | No, but the restriction reads as being about the *target chip* being genuine Microchip silicon, not the programmer's brand, and every board here targets genuine Microchip parts. Decided: full first-class support, not a bring-your-own-binary carve-out, revisited only if something concrete (redistribution terms on a specific fork) forces it. |
 
 `minipro`/TL866 landed first as the pathfinder (`epic-platformio#11`): the
 cleanest of the two, one unambiguous tool, no firmware-bootstrap gotchas.
