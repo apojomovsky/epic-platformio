@@ -8,7 +8,8 @@
     "maximum_ram_size": 2048,
     "maximum_size": 32768,
     "protocol": "minipro",
-    "minipro_device": "PIC18F4550"
+    "minipro_device": "PIC18F4550",
+    "pk2cmd_device": "PIC18F4550"
   },
   "url": "https://www.microchip.com/en-us/product/PIC18F4550",
   "vendor": "Microchip"

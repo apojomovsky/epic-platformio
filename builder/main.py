@@ -218,7 +218,31 @@ def _upload_minipro(source):
     return subprocess.call(cmd)
 
 
-UPLOAD_PROTOCOLS = {"minipro": _upload_minipro}
+def _upload_pk2cmd(source):
+    binary = os.environ.get("EPIC8_PK2CMD_PATH") or shutil.which("pk2cmd")
+    if not binary:
+        sys.stderr.write(
+            "Error: pk2cmd not found on PATH. Build it from "
+            "https://github.com/cjacker/pk2cmd-minus (no Debian/Ubuntu "
+            "package exists) and either put it on PATH or point "
+            "EPIC8_PK2CMD_PATH at the binary. See "
+            "docs/getting-started.md#upload.\n"
+        )
+        return 1
+    device = board.get("upload.pk2cmd_device", "")
+    if not device:
+        sys.stderr.write(
+            "Error: board %s has no upload.pk2cmd_device\n" % board.id
+        )
+        return 1
+    # `pk2cmd -P<part> -F <hex> -M -E` programs the whole chip (program +
+    # config, and erase first), the same one-shot shape minipro's `-w` uses.
+    cmd = [binary, "-P" + device, "-F", str(source[0]), "-M", "-E"]
+    print("pk2cmd %s" % " ".join(cmd[1:]))
+    return subprocess.call(cmd)
+
+
+UPLOAD_PROTOCOLS = {"minipro": _upload_minipro, "pk2cmd": _upload_pk2cmd}
 
 
 def _upload(target, source, env):

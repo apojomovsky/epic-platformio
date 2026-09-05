@@ -1,6 +1,6 @@
 # Platform decisions
 
-## Upload: minipro (TL866) landed, pk2cmd (PICkit2/3) tracked separately
+## Upload: minipro (TL866) and pk2cmd (PICkit2/3) both landed
 
 **Superseded 2026-09-05.** The original v1 call below rejected `pk2cmd`
 and `ipecmd` because both are Microchip's own tools, and the platform's
@@ -17,9 +17,10 @@ independent their host-side tooling is from Microchip.
 
 `minipro`/TL866 landed first as the pathfinder (`epic-platformio#11`): the
 cleanest of the two, one unambiguous tool, no firmware-bootstrap gotchas.
-`pk2cmd`/PICkit2+3 is tracked in `epic-platformio#12`; a known gotcha
-there is that some PICkit3 clones need a one-time Windows-only firmware
-update before any Linux tool can drive them.
+`pk2cmd`/PICkit2+3 landed as `epic-platformio#12`, wire-compatible with
+the same dispatcher shape. A known gotcha there is that some PICkit3 clones
+need a one-time Windows-only firmware update before any Linux tool can
+drive them, documented in `docs/getting-started.md#upload`.
 
 **Neither tool is vendored.** Neither `minipro` nor `pk2cmd` has a
 Debian/Ubuntu package (checked directly: absent from `apt-cache`), and
@@ -27,8 +28,9 @@ building/hosting our own prebuilt cross-platform binaries is a
 distribution project on the scale of epic-cc's
 `docs/30-distribution-design.md`, not something to fold into wiring an
 upload target. `builder/main.py` finds a binary the user already built,
-on `PATH` or via an env var override, and the build steps are documented
-in `docs/getting-started.md#upload`. This is a deliberate amendment to
+on `PATH` or via an env var override (`EPIC8_MINIPRO_PATH` /
+`EPIC8_PK2CMD_PATH`), and the build steps are documented in
+`docs/getting-started.md#upload`. This is a deliberate amendment to
 the "belongs in a `tool-*` package" note below: a `tool-*` package that
 vendors a real prebuilt binary is a later, separate effort, not part of
 landing the upload target itself.
