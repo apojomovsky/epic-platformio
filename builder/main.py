@@ -185,14 +185,16 @@ env.Depends(firmware, header_deps)
 
 AlwaysBuild(env.Alias("buildprog", firmware, firmware))
 
-# Upload. `minipro` drives a TL866A / TL866II Plus universal programmer
-# (docs/platform-decisions.md): fully independent of Microchip (XGecu
-# hardware, GPL tool), unlike pk2cmd/ipecmd, which is why it is the first
-# protocol wired here rather than either of those. Neither minipro nor
-# pk2cmd has a Debian/Ubuntu package, and vendoring our own prebuilt
-# binaries is a distribution project on the scale of epic-cc's
-# docs/30-distribution-design.md, so v1 finds a binary the user already
-# built, on PATH or via EPIC8_MINIPRO_PATH, rather than shipping one.
+# Upload. Two independent paths, chosen by board.upload.protocol (or
+# UPLOAD_PROTOCOL in platformio.ini): `minipro` for a TL866A / TL866II
+# Plus (GPL, fully independent of Microchip), `pk2cmd` for PICkit2 /
+# PICkit3 / "PICkit3.5" / PKOB clones (Microchip's own licensed tool,
+# see docs/pk2cmd-LICENSE.md: not MIT, fetched unmodified, never
+# vendored into this repo's own code, same posture this project already
+# takes with gpasm). Neither tool has a Debian/Ubuntu package. minipro
+# finds a binary the user already built; pk2cmd defaults to where
+# scripts/install-pk2cmd.sh installs it, since that script exists
+# specifically to make setup straightforward without a build step.
 import shutil
 
 
@@ -218,7 +220,49 @@ def _upload_minipro(source):
     return subprocess.call(cmd)
 
 
-UPLOAD_PROTOCOLS = {"minipro": _upload_minipro}
+# scripts/install-pk2cmd.sh's install location; the device database
+# (PK2DeviceFile.dat) lives alongside the binary there, and pk2cmd's -B
+# flag points it at that directory explicitly so it works regardless of
+# the caller's cwd or where the binary itself is invoked from.
+PK2CMD_DEFAULT_DIR = join(
+    os.path.expanduser("~"), ".local", "share", "epic8", "pk2cmd"
+)
+
+
+def _upload_pk2cmd(source):
+    device_dir = os.environ.get("EPIC8_PK2CMD_DIR", PK2CMD_DEFAULT_DIR)
+    binary = (
+        os.environ.get("EPIC8_PK2CMD_PATH")
+        or shutil.which("pk2cmd")
+        or join(device_dir, "pk2cmd")
+    )
+    if not os.path.isfile(binary):
+        sys.stderr.write(
+            "Error: pk2cmd not found. Run scripts/install-pk2cmd.sh "
+            "(reads docs/pk2cmd-LICENSE.md before you use it: pk2cmd is "
+            "Microchip's own licensed tool, not MIT), or point "
+            "EPIC8_PK2CMD_PATH at a binary you already have. See "
+            "docs/getting-started.md#upload.\n"
+        )
+        return 1
+    device = board.get("upload.pk2cmd_device", "")
+    if not device:
+        sys.stderr.write(
+            "Error: board %s has no upload.pk2cmd_device\n" % board.id
+        )
+        return 1
+    cmd = [
+        binary,
+        "-B" + device_dir,
+        "-P" + device,
+        "-F" + str(source[0]),
+        "-M",
+    ]
+    print("pk2cmd %s" % " ".join(cmd[1:]))
+    return subprocess.call(cmd)
+
+
+UPLOAD_PROTOCOLS = {"minipro": _upload_minipro, "pk2cmd": _upload_pk2cmd}
 
 
 def _upload(target, source, env):

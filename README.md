@@ -38,10 +38,11 @@ and the board definitions for `p16f877a`, `p16f887` and `p18f4550`. PIO-2
 cut the `toolchain-epiccc` and `framework-epichal` packages, and PIO-3 adds
 the worked examples and this documentation. A project pointing at this
 repository builds with `pio run` and no Microchip download. `pio run -t
-upload` flashes a TL866A/TL866II Plus via `minipro` (`epic-platformio#11`);
-PICkit2/PICkit3/"PICkit3.5" clones via `pk2cmd` are tracked separately
-(`epic-platformio#12`). Size reporting waits on epic-cc CC-6. Both are
-recorded in
+upload` flashes a TL866A/TL866II Plus via `minipro` (`epic-platformio#11`)
+or a PICkit2/PICkit3/"PICkit3.5" clone via `pk2cmd`
+(`epic-platformio#12`, see `docs/pk2cmd-LICENSE.md` before using it: it
+is Microchip's own licensed tool, not MIT). Size reporting waits on
+epic-cc CC-6. All three are recorded in
 [`docs/platform-decisions.md`](docs/platform-decisions.md). The work is
 tracked as PIO-1 through PIO-3 in the
 [epic-platformio issues](https://github.com/apojomovsky/epic-platformio/issues),
