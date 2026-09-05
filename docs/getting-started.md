@@ -115,8 +115,13 @@ EPIC_CONFIG("osc=hs, xtal_hz=4000000, cpudiv=div1, plldiv=noprescale, usbdiv=off
 
 `pio run -t upload` drives a **TL866A or TL866II Plus** universal
 programmer via [`minipro`](https://gitlab.com/DavidGriffith/minipro) (GPL,
-fully independent of Microchip). TL866CS has no ICSP header and cannot be
-used.
+fully independent of Microchip) by default. TL866CS has no ICSP header and
+cannot be used. It can also drive a **PICkit2 / PICkit3 / "PICkit3.5"**
+clone via a `pk2cmd`-family tool (`pk2cmd-minus` / `PICKitminus`, the
+maintained forks that auto-detect and drive both PICkit2 and PICkit3,
+including the "PICkit3.5" clones sold on AliExpress, which speak the same
+PICkit3 protocol). Select it with `UPLOAD_PROTOCOL=pk2cmd` (or set
+`upload.protocol = pk2cmd` on the board).
 
 `minipro` has no Debian/Ubuntu package. Build it from source:
 
@@ -125,28 +130,42 @@ git clone https://gitlab.com/DavidGriffith/minipro.git
 cd minipro && make && sudo make install
 ```
 
+`pk2cmd` has no Debian/Ubuntu package either. Build it from source (the
+`pk2cmd-minus` fork builds on Linux with `make`):
+
+```bash
+git clone https://github.com/cjacker/pk2cmd-minus.git
+cd pk2cmd-minus && make && sudo make install
+```
+
 Then, with the programmer's ICSP header wired to the target (or the
 target seated in a supported ZIF adapter):
 
 ```bash
-pio run -t upload
+pio run -t upload                 # minipro (default)
+UPLOAD_PROTOCOL=pk2cmd pio run -t upload   # pk2cmd-family tool
 ```
 
-If `minipro` is not on `PATH`, point the platform at it explicitly:
+If the tool is not on `PATH`, point the platform at it explicitly:
 
 ```bash
 EPIC8_MINIPRO_PATH=/path/to/minipro pio run -t upload
+EPIC8_PK2CMD_PATH=/path/to/pk2cmd UPLOAD_PROTOCOL=pk2cmd pio run -t upload
 ```
 
-PICkit2/PICkit3/"PICkit3.5" clones (via a `pk2cmd`-family tool) are not
-supported yet; tracked in
-[epic-platformio#12](https://github.com/apojomovsky/epic-platformio/issues/12).
-The exact `minipro` device-name mapping (`upload.minipro_device` in each
-board's JSON) is built from `minipro`'s documented `-p <name> -w <file>`
-invocation shape and has not been confirmed against real silicon; if
-`minipro -l` reports a different spelling for your device, that is the
-bug to file. The full history, including the rejected `pk2cmd`/`ipecmd`
-alternatives for v1, is in
+**PICkit3 clone firmware caveat.** Some PICkit3 clones need a one-time
+Windows-only firmware update ("scripting firmware") before any Linux tool
+can drive them at all; a `pk2cmd`-family tool cannot push that update on
+Linux. If `pk2cmd` reports the programmer as not found or not responding
+on first use, run the vendor's Windows updater once on a Windows machine,
+then the clone works under `pk2cmd` on Linux thereafter.
+
+The exact device-name mapping (`upload.minipro_device` / `upload.pk2cmd_device`
+in each board's JSON) is built from the tools' documented `-p <name>` /
+`-P<name>` invocation shape and has not been confirmed against real
+silicon; if `minipro -l` or `pk2cmd` reports a different spelling for your
+device, that is the bug to file. The full history, including the rejected
+`ipecmd` alternative and the license discussion, is in
 [`docs/platform-decisions.md`](platform-decisions.md).
 
 ## Supported parts
