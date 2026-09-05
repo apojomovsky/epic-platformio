@@ -7,6 +7,7 @@ in a single command.
 """
 
 import json
+import os
 import subprocess
 import sys
 from os.path import join
@@ -52,7 +53,6 @@ def _framework(env, mcu):
         # Fall back to the shared packages dir: a locally installed or
         # manually placed framework package is not in the platform's
         # package registry, but still lives under ~/.platformio/packages.
-        import os
         fw_dir = join(os.path.expanduser("~"), ".platformio", "packages", "framework-epichal")
     if not os.path.isdir(fw_dir):
         sys.stderr.write("Error: framework-epichal is not installed\n")
@@ -185,20 +185,57 @@ env.Depends(firmware, header_deps)
 
 AlwaysBuild(env.Alias("buildprog", firmware, firmware))
 
-# Upload is not supported in v1: the HEX is the deliverable. Flashing is
-# left to the user's own programmer (pk2cmd, ipecmd, a bootloader), which
-# keeps the platform free of Microchip downloads (docs/31 D-5).
-def _upload_not_supported(target, source, env):
-    sys.stderr.write(
-        "Error: upload is not supported by platform-epic8 in v1; the HEX "
-        "at %s is the deliverable. Flash it with your own programmer.\n"
-        % str(firmware[0])
-    )
-    env.Exit(1)
+# Upload. `minipro` drives a TL866A / TL866II Plus universal programmer
+# (docs/platform-decisions.md): fully independent of Microchip (XGecu
+# hardware, GPL tool), unlike pk2cmd/ipecmd, which is why it is the first
+# protocol wired here rather than either of those. Neither minipro nor
+# pk2cmd has a Debian/Ubuntu package, and vendoring our own prebuilt
+# binaries is a distribution project on the scale of epic-cc's
+# docs/30-distribution-design.md, so v1 finds a binary the user already
+# built, on PATH or via EPIC8_MINIPRO_PATH, rather than shipping one.
+import shutil
 
 
-AlwaysBuild(env.Alias("upload", firmware, _upload_not_supported))
-AlwaysBuild(env.Alias("program", firmware, _upload_not_supported))
+def _upload_minipro(source):
+    binary = os.environ.get("EPIC8_MINIPRO_PATH") or shutil.which("minipro")
+    if not binary:
+        sys.stderr.write(
+            "Error: minipro not found on PATH. Build it from "
+            "https://gitlab.com/DavidGriffith/minipro (no Debian/Ubuntu "
+            "package exists) and either put it on PATH or point "
+            "EPIC8_MINIPRO_PATH at the binary. See "
+            "docs/getting-started.md#upload.\n"
+        )
+        return 1
+    device = board.get("upload.minipro_device", "")
+    if not device:
+        sys.stderr.write(
+            "Error: board %s has no upload.minipro_device\n" % board.id
+        )
+        return 1
+    cmd = [binary, "-p", device, "-w", str(source[0])]
+    print("minipro %s" % " ".join(cmd[1:]))
+    return subprocess.call(cmd)
+
+
+UPLOAD_PROTOCOLS = {"minipro": _upload_minipro}
+
+
+def _upload(target, source, env):
+    protocol = env.get("UPLOAD_PROTOCOL") or board.get("upload.protocol", "")
+    handler = UPLOAD_PROTOCOLS.get(protocol)
+    if handler is None:
+        sys.stderr.write(
+            "Error: upload protocol %r is not supported by platform-epic8. "
+            "Supported: %s\n"
+            % (protocol or "(none)", ", ".join(sorted(UPLOAD_PROTOCOLS)))
+        )
+        return 1
+    return handler(source)
+
+
+AlwaysBuild(env.Alias("upload", firmware, _upload))
+AlwaysBuild(env.Alias("program", firmware, _upload))
 
 # Size report. epic-cc emits the whole flash image, so usage cannot be
 # derived from the HEX; the compiler's own report (CC-6) is the source,
