@@ -82,10 +82,10 @@ including wiring in the HAL, is in
 | `p16f887` | PIC14 (mid-range) | Same ISA, different device data |
 | `p18f4550` | PIC18 | PIC18 backend |
 
-This list tracks epic-cc's own
+This is the current [`boards/`](boards/) list, not the full set epic-cc can
+compile for; adding a board here for a device epic-cc already supports is a
+board-definition PR, decoupled from the compiler's own
 [device registry](https://github.com/apojomovsky/epic-cc/tree/master/crates/device/devices).
-Enhanced mid-range parts (`pic16f193x` and friends) are out of scope for now:
-epic-cc has no backend for that core yet.
 
 ## Status
 
