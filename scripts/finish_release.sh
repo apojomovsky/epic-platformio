@@ -1,18 +1,12 @@
 #!/usr/bin/env bash
-# Shared write-back for a just-published package release: sync
-# packages/versions.json, packages/<name>/package.json and platform.json,
-# roll the upstream repo's CHANGELOG.md section into this repo's own
-# CHANGELOG.md, and commit + push the result to master. Used by both the
-# toolchain and framework jobs in .github/workflows/package.yml so this
-# logic, and any fix to it, only has to exist once.
+# Shared write-back for a just-published release: sync versions.json,
+# package.json and platform.json, roll the upstream CHANGELOG.md section
+# in, commit and push to master. Used by both package.yml jobs so this
+# logic only exists once.
 #
-# Usage:
-#   finish_release.sh <package> <pkg_ver> <upstream_tag> <owner/upstream-repo> \
-#     <release-asset-name> [upstream_url_linux upstream_url_windows]
-#
-# The last two positional args are toolchain-epiccc only (per-system
-# bundle URLs recorded in packages/versions.json); omit them for
-# framework-epichal.
+# finish_release.sh <package> <pkg_ver> <upstream_tag> <owner/upstream-repo> \
+#   <release-asset-name> [upstream_url_linux upstream_url_windows]
+# The last two args are toolchain-epiccc only, omit for framework-epichal.
 set -euo pipefail
 
 package="$1"

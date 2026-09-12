@@ -54,10 +54,15 @@ def sync_versions_json(root: pathlib.Path, package: str, pkg_version: str,
     data = load_json(path)
     entries = data.setdefault(package, {})
 
+    # The highest version already on record, other than pkg_version itself
+    # (a re-cut of an already-published version must not treat itself as
+    # its own predecessor): semver order, not dict insertion order, since
+    # an out-of-order re-cut (see the is_latest comment below) can leave a
+    # higher version earlier in the dict than a lower one added after it.
     old_upstream_tag = None
-    if entries:
-        last_key = list(entries.keys())[-1]
-        old_upstream_tag = entries[last_key].get("upstream")
+    prior = [v for v in entries if v != pkg_version]
+    if prior:
+        old_upstream_tag = entries[max(prior, key=semver_key)].get("upstream")
 
     entry = {"upstream": upstream_tag}
     if url_linux:

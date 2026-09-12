@@ -37,16 +37,23 @@ def strip_v(tag):
 def slice_upstream_changelog(text: str, old_ver: str | None, new_ver: str) -> str | None:
     """Return the text between the new version's header and the old
     version's header (exclusive of the old one), newest-first order.
-    None if the new version's own header cannot be found."""
+    None if the new version's own header cannot be found.
+
+    When old_ver's header is missing (upstream regenerated/squashed its
+    changelog, or the pin skipped straight past a version it removed),
+    falls back to the rest of the text rather than the next header down:
+    a multi-version jump must not silently drop the versions in between
+    just because the exact lower boundary could not be located. Over
+    including (repeating an already-rolled-up older entry) is the safer
+    failure mode for a changelog than under-reporting what shipped."""
     matches = list(HEADER_RE.finditer(text))
     starts = {m.group(1): m.start() for m in matches}
     if new_ver not in starts:
         return None
-    later_starts = sorted(m.start() for m in matches if m.start() > starts[new_ver])
     if old_ver and old_ver in starts:
         segment_end = starts[old_ver]
     else:
-        segment_end = later_starts[0] if later_starts else len(text)
+        segment_end = len(text)
     return text[starts[new_ver]:segment_end].strip("\n")
 
 
