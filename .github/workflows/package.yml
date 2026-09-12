@@ -4,13 +4,9 @@ name: package
 # Triggered manually with the epic-cc and/or epic-hal tag that should be
 # wrapped. The mapping between package version and upstream tag lives in
 # packages/versions.json (D-6), so a packaging-only bump does not need a
-# new compiler or HAL release. Each job's last step (scripts/finish_release.sh)
-# commits its own version write-back and CHANGELOG.md rollup straight to
-# master (no branch protection here, see AGENTS.md), so the three files
-# never drift the way they used to. framework needs: toolchain so the two
-# jobs never race to push to master when both inputs are given in the same
-# dispatch; the `if` still lets framework run on its own when epic_cc_version
-# is left empty and toolchain is skipped.
+# new compiler or HAL release. Each job's last step, scripts/finish_release.sh,
+# writes that mapping plus platform.json and CHANGELOG.md back to master
+# (no branch protection here, see AGENTS.md).
 
 on:
   workflow_dispatch:
@@ -140,6 +136,9 @@ jobs:
 
   framework:
     runs-on: ubuntu-latest
+    # needs: toolchain sequences the two write-backs so a dispatch with
+    # both inputs set never races to push to master; the always()/skipped
+    # check still lets this job run on its own when epic_cc_version is empty.
     needs: toolchain
     if: ${{ always() && inputs.epic_hal_version != '' && (needs.toolchain.result == 'success' || needs.toolchain.result == 'skipped') }}
     steps:
