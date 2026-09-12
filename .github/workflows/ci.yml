@@ -56,6 +56,19 @@ jobs:
             echo "no scripts/ yet"
           fi
 
+      - name: Check shell script syntax
+        run: |
+          shopt -s nullglob
+          files=(scripts/*.sh)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "no scripts/*.sh yet"
+          else
+            for f in "${files[@]}"; do
+              echo "check $f"
+              bash -n "$f"
+            done
+          fi
+
       - name: Check package version consistency
         run: |
           if [ -f scripts/check_versions_consistent.py ]; then

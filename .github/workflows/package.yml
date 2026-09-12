@@ -4,9 +4,13 @@ name: package
 # Triggered manually with the epic-cc and/or epic-hal tag that should be
 # wrapped. The mapping between package version and upstream tag lives in
 # packages/versions.json (D-6), so a packaging-only bump does not need a
-# new compiler or HAL release. Each job commits its own version write-back
-# and CHANGELOG.md rollup straight to master (no branch protection here,
-# see AGENTS.md), so the three files never drift the way they used to.
+# new compiler or HAL release. Each job's last step (scripts/finish_release.sh)
+# commits its own version write-back and CHANGELOG.md rollup straight to
+# master (no branch protection here, see AGENTS.md), so the three files
+# never drift the way they used to. framework needs: toolchain so the two
+# jobs never race to push to master when both inputs are given in the same
+# dispatch; the `if` still lets framework run on its own when epic_cc_version
+# is left empty and toolchain is skipped.
 
 on:
   workflow_dispatch:
@@ -128,63 +132,16 @@ jobs:
           upstream_ver="${{ steps.ver.outputs.upstream_ver }}"
           pkg_ver="${{ steps.ver.outputs.pkg_ver }}"
           upstream_tag="${{ steps.ver.outputs.tag }}"
-          repo_tag="toolchain-epiccc-v${pkg_ver}"
-
-          old_upstream_tag="$(python3 scripts/sync_versions.py \
-            --package toolchain-epiccc \
-            --pkg-version "$pkg_ver" \
-            --upstream-tag "$upstream_tag" \
-            --upstream-url-linux "https://github.com/apojomovsky/epic-cc/releases/download/${upstream_tag}/epic-cc-${upstream_ver}-x86_64-linux.zip" \
-            --upstream-url-windows "https://github.com/apojomovsky/epic-cc/releases/download/${upstream_tag}/epic-cc-${upstream_ver}-x86_64-windows.zip" \
-            --asset-name "toolchain-epiccc-linux_x86_64-${pkg_ver}.tar.gz" \
-            | sed -n 's/^old_upstream_tag=//p')"
-
-          # gh release create (above) already made the "$repo_tag" git tag on
-          # the default branch. Fetch it and regenerate the full changelog
-          # rather than --prepend: --prepend leaves the old "## [Unreleased]"
-          # section duplicated below the newly inserted one, since it never
-          # removes what it superseded.
-          git fetch origin --tags --force
-          git-cliff --config cliff.toml -o CHANGELOG.md
-
-          if gh api "repos/apojomovsky/epic-cc/contents/CHANGELOG.md?ref=${upstream_tag}" \
-               --jq '.content' > /tmp/upstream-changelog.b64 2>/tmp/gh-api.err; then
-            base64 -d /tmp/upstream-changelog.b64 > /tmp/upstream-changelog.md
-          else
-            echo "no epic-cc CHANGELOG.md at ${upstream_tag} yet: $(cat /tmp/gh-api.err)"
-            : > /tmp/upstream-changelog.md
-          fi
-
-          fallback_args=()
-          if [ ! -s /tmp/upstream-changelog.md ] && [ -n "$old_upstream_tag" ]; then
-            git clone --quiet --no-checkout https://github.com/apojomovsky/epic-cc.git /tmp/epic-cc-hist
-            git -C /tmp/epic-cc-hist log --oneline "${old_upstream_tag}..${upstream_tag}" > /tmp/upstream-shortlog.txt || true
-            fallback_args=(--fallback-log /tmp/upstream-shortlog.txt)
-          fi
-
-          old_tag_args=()
-          if [ -n "$old_upstream_tag" ]; then
-            old_tag_args=(--old-upstream-tag "$old_upstream_tag")
-          fi
-
-          python3 scripts/rollup_changelog.py \
-            --changelog CHANGELOG.md \
-            --repo-tag "$repo_tag" \
-            --upstream-name epic-cc \
-            --new-upstream-tag "$upstream_tag" \
-            "${old_tag_args[@]}" \
-            --upstream-changelog /tmp/upstream-changelog.md \
-            "${fallback_args[@]}"
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add packages/versions.json packages/toolchain-epiccc/package.json platform.json CHANGELOG.md
-          git commit -m "chore(release): toolchain-epiccc v${pkg_ver}"
-          git push origin HEAD:master
+          bash scripts/finish_release.sh toolchain-epiccc "$pkg_ver" "$upstream_tag" \
+            apojomovsky/epic-cc \
+            "toolchain-epiccc-linux_x86_64-${pkg_ver}.tar.gz" \
+            "https://github.com/apojomovsky/epic-cc/releases/download/${upstream_tag}/epic-cc-${upstream_ver}-x86_64-linux.zip" \
+            "https://github.com/apojomovsky/epic-cc/releases/download/${upstream_tag}/epic-cc-${upstream_ver}-x86_64-windows.zip"
 
   framework:
     runs-on: ubuntu-latest
-    if: ${{ inputs.epic_hal_version != '' }}
+    needs: toolchain
+    if: ${{ always() && inputs.epic_hal_version != '' && (needs.toolchain.result == 'success' || needs.toolchain.result == 'skipped') }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -278,54 +235,6 @@ jobs:
         run: |
           pkg_ver="${{ steps.ver.outputs.pkg_ver }}"
           upstream_tag="${{ steps.ver.outputs.tag }}"
-          repo_tag="framework-epichal-v${pkg_ver}"
-
-          old_upstream_tag="$(python3 scripts/sync_versions.py \
-            --package framework-epichal \
-            --pkg-version "$pkg_ver" \
-            --upstream-tag "$upstream_tag" \
-            --asset-name "framework-epichal-${pkg_ver}.tar.gz" \
-            | sed -n 's/^old_upstream_tag=//p')"
-
-          # gh release create (above) already made the "$repo_tag" git tag on
-          # the default branch. Fetch it and regenerate the full changelog
-          # rather than --prepend: --prepend leaves the old "## [Unreleased]"
-          # section duplicated below the newly inserted one, since it never
-          # removes what it superseded.
-          git fetch origin --tags --force
-          git-cliff --config cliff.toml -o CHANGELOG.md
-
-          if gh api "repos/apojomovsky/epic-hal/contents/CHANGELOG.md?ref=${upstream_tag}" \
-               --jq '.content' > /tmp/upstream-changelog.b64 2>/tmp/gh-api.err; then
-            base64 -d /tmp/upstream-changelog.b64 > /tmp/upstream-changelog.md
-          else
-            echo "no epic-hal CHANGELOG.md at ${upstream_tag} yet: $(cat /tmp/gh-api.err)"
-            : > /tmp/upstream-changelog.md
-          fi
-
-          fallback_args=()
-          if [ ! -s /tmp/upstream-changelog.md ] && [ -n "$old_upstream_tag" ]; then
-            git clone --quiet --no-checkout https://github.com/apojomovsky/epic-hal.git /tmp/epic-hal-hist
-            git -C /tmp/epic-hal-hist log --oneline "${old_upstream_tag}..${upstream_tag}" > /tmp/upstream-shortlog.txt || true
-            fallback_args=(--fallback-log /tmp/upstream-shortlog.txt)
-          fi
-
-          old_tag_args=()
-          if [ -n "$old_upstream_tag" ]; then
-            old_tag_args=(--old-upstream-tag "$old_upstream_tag")
-          fi
-
-          python3 scripts/rollup_changelog.py \
-            --changelog CHANGELOG.md \
-            --repo-tag "$repo_tag" \
-            --upstream-name epic-hal \
-            --new-upstream-tag "$upstream_tag" \
-            "${old_tag_args[@]}" \
-            --upstream-changelog /tmp/upstream-changelog.md \
-            "${fallback_args[@]}"
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add packages/versions.json packages/framework-epichal/package.json platform.json CHANGELOG.md
-          git commit -m "chore(release): framework-epichal v${pkg_ver}"
-          git push origin HEAD:master
+          bash scripts/finish_release.sh framework-epichal "$pkg_ver" "$upstream_tag" \
+            apojomovsky/epic-hal \
+            "framework-epichal-${pkg_ver}.tar.gz"
