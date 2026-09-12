@@ -68,7 +68,18 @@ until the packages are uploaded to the PlatformIO registry (PIO-3). For a
 packaging-only fix without a new compiler tag, pass the override:
 `-f epic_cc_version=v0.0.3 -f package_version=0.0.4`.
 
-The framework package is published by hand from the build command above
-(`gh release create framework-epichal-v0.5.0 dist/framework-epichal-0.5.0.tar.gz`),
-since it combines several family bundles and the epic-cc source slice rather
-than wrapping a single upstream asset.
+`-f epic_hal_version=v0.5.0` does the same for the framework package (with
+its own `-f framework_package_version=...` override for a packaging-only
+bump). Both inputs can be set in the same dispatch; the `framework` job
+waits on `toolchain` so the two never race to push to master.
+
+Neither job stops at publishing the GitHub Release: each finishes by
+running `scripts/finish_release.sh`, which writes the new version back into
+`packages/versions.json`, the package's own `package.json` and
+`platform.json`'s download URL (so those three never drift the way they
+did before this existed), rolls the upstream repo's `CHANGELOG.md` section
+for the new tag into this repo's own `CHANGELOG.md` via
+`scripts/rollup_changelog.py`, and commits and pushes the result straight
+to `master`. `scripts/check_versions_consistent.py` runs in CI on every
+push and PR to catch the three files drifting again if someone hand-edits
+one without the others.

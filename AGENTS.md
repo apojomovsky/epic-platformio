@@ -201,4 +201,8 @@ fails the ritual and blocks the push.
 manifests (`platform.json`, `boards/*.json`) and byte-compiles the
 `builder/` Python, so the platform skeleton lands against a gate rather
 than adding one later. The gate is deliberately minimal until PIO-1
-brings a real build to gate on.
+brings a real build to gate on. It also runs
+`scripts/check_versions_consistent.py`, which fails the PR if
+`packages/versions.json`, a package's own `package.json` and
+`platform.json`'s download URL disagree about that package's current
+version (see `docs/packages.md`).
