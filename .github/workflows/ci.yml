@@ -55,3 +55,11 @@ jobs:
           else
             echo "no scripts/ yet"
           fi
+
+      - name: Check package version consistency
+        run: |
+          if [ -f scripts/check_versions_consistent.py ]; then
+            python3 scripts/check_versions_consistent.py
+          else
+            echo "no scripts/check_versions_consistent.py yet"
+          fi
