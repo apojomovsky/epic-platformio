@@ -35,6 +35,10 @@ DEFAULT_ASSET = {
 }
 
 
+def semver_key(version: str) -> tuple[int, int, int]:
+    return tuple(int(p) for p in version.split("."))
+
+
 def load_json(path: pathlib.Path) -> dict:
     return json.loads(path.read_text())
 
@@ -113,8 +117,22 @@ def main() -> None:
         root, args.package, args.pkg_version, args.upstream_tag,
         args.upstream_url_linux, args.upstream_url_windows, args.note,
     )
-    sync_package_json(root, args.package, args.pkg_version)
-    sync_platform_json(root, args.package, args.pkg_version, asset_name)
+
+    # packages/versions.json is an append-only log, so publishing an older
+    # version out of order (a manual re-cut) is fine to record there. But
+    # package.json and platform.json are live pointers: overwriting them
+    # with anything but the newest known version would regress the
+    # platform's actual install target.
+    all_versions = load_json(root / "packages" / "versions.json")[args.package]
+    is_latest = max(all_versions, key=semver_key) == args.pkg_version
+    if is_latest:
+        sync_package_json(root, args.package, args.pkg_version)
+        sync_platform_json(root, args.package, args.pkg_version, asset_name)
+    else:
+        print(
+            f"{args.pkg_version} is not the newest entry for {args.package} "
+            f"in packages/versions.json, leaving package.json and platform.json alone"
+        )
 
     line = f"old_upstream_tag={old_upstream_tag or ''}"
     print(line)
