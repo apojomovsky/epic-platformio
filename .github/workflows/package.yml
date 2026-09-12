@@ -1,19 +1,30 @@
 name: package
 
 # Cuts PlatformIO packages from upstream release assets. No hand repacking.
-# Triggered manually with the epic-cc tag that should be wrapped. The mapping
-# between package version and upstream tag lives in packages/versions.json
-# (D-6), so a packaging-only bump does not need a new compiler release.
+# Triggered manually with the epic-cc and/or epic-hal tag that should be
+# wrapped. The mapping between package version and upstream tag lives in
+# packages/versions.json (D-6), so a packaging-only bump does not need a
+# new compiler or HAL release. Each job's last step, scripts/finish_release.sh,
+# writes that mapping plus platform.json and CHANGELOG.md back to master
+# (no branch protection here, see AGENTS.md).
 
 on:
   workflow_dispatch:
     inputs:
       epic_cc_version:
-        description: "epic-cc tag, e.g. v0.0.3"
-        required: true
+        description: "epic-cc tag to wrap, e.g. v0.0.3 (leave empty to skip the toolchain job)"
+        required: false
         type: string
       package_version:
-        description: "package version override for packaging-only bumps (default: epic tag without v)"
+        description: "toolchain-epiccc package version override for packaging-only bumps (default: epic tag without v)"
+        required: false
+        type: string
+      epic_hal_version:
+        description: "epic-hal tag to wrap, e.g. v0.5.0 (leave empty to skip the framework job)"
+        required: false
+        type: string
+      framework_package_version:
+        description: "framework-epichal package version override for packaging-only bumps (default: hal tag without v)"
         required: false
         type: string
 
@@ -23,8 +34,15 @@ permissions:
 jobs:
   toolchain:
     runs-on: ubuntu-latest
+    if: ${{ inputs.epic_cc_version != '' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: git-cliff
 
       - name: Resolve versions
         id: ver
@@ -103,12 +121,119 @@ jobs:
               --notes "Built from https://github.com/apojomovsky/epic-cc/releases/tag/$upstream_tag"
           fi
 
+      - name: Sync versions and roll up the changelog
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          upstream_ver="${{ steps.ver.outputs.upstream_ver }}"
+          pkg_ver="${{ steps.ver.outputs.pkg_ver }}"
+          upstream_tag="${{ steps.ver.outputs.tag }}"
+          bash scripts/finish_release.sh toolchain-epiccc "$pkg_ver" "$upstream_tag" \
+            apojomovsky/epic-cc \
+            "toolchain-epiccc-linux_x86_64-${pkg_ver}.tar.gz" \
+            "https://github.com/apojomovsky/epic-cc/releases/download/${upstream_tag}/epic-cc-${upstream_ver}-x86_64-linux.zip" \
+            "https://github.com/apojomovsky/epic-cc/releases/download/${upstream_tag}/epic-cc-${upstream_ver}-x86_64-windows.zip"
+
   framework:
-    # Scaffold only, gated by HAL-5. Framework packaging validates the
-    # repacking tooling against the current family bundles but does not
-    # publish until HAL-5 flips the distribution.
     runs-on: ubuntu-latest
-    if: false
+    # needs: toolchain sequences the two write-backs so a dispatch with
+    # both inputs set never races to push to master; the always()/skipped
+    # check still lets this job run on its own when epic_cc_version is empty.
+    needs: toolchain
+    if: ${{ always() && inputs.epic_hal_version != '' && (needs.toolchain.result == 'success' || needs.toolchain.result == 'skipped') }}
     steps:
       - uses: actions/checkout@v4
-      - run: echo "framework-epichal blocked by HAL-5"
+        with:
+          fetch-depth: 0
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: git-cliff
+
+      - name: Resolve versions
+        id: ver
+        run: |
+          tag="${{ inputs.epic_hal_version }}"
+          if [ -z "$tag" ]; then echo "epic_hal_version required"; exit 1; fi
+          upstream_ver="${tag#v}"
+          pkg_ver="${{ inputs.framework_package_version }}"
+          if [ -z "$pkg_ver" ]; then pkg_ver="$upstream_ver"; fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "upstream_ver=$upstream_ver" >> "$GITHUB_OUTPUT"
+          echo "pkg_ver=$pkg_ver" >> "$GITHUB_OUTPUT"
+          echo "Resolved tag=$tag upstream=$upstream_ver package=$pkg_ver"
+
+      - name: Download epic-hal family bundles
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${{ steps.ver.outputs.tag }}"
+          gh release download "$tag" --repo apojomovsky/epic-hal \
+            --pattern "epic-hal-pic16f87xa-${tag}.tar.gz" \
+            --pattern "epic-hal-pic16f88x-${tag}.tar.gz" \
+            --pattern "epic-hal-pic18fxx5x-${tag}.tar.gz"
+          ls -lh epic-hal-*.tar.gz
+
+      - name: Checkout epic-hal for the manifest and epic-cc source slice
+        run: |
+          tag="${{ steps.ver.outputs.tag }}"
+          git clone --quiet --depth 1 --branch "$tag" \
+            https://github.com/apojomovsky/epic-hal.git /tmp/epic-hal-src
+
+      - name: Build PlatformIO framework package
+        run: |
+          pkg_ver="${{ steps.ver.outputs.pkg_ver }}"
+          tag="${{ steps.ver.outputs.tag }}"
+          mkdir -p dist
+          python3 scripts/package_framework.py \
+            --tar "epic-hal-pic16f87xa-${tag}.tar.gz" \
+            --tar "epic-hal-pic16f88x-${tag}.tar.gz" \
+            --tar "epic-hal-pic18fxx5x-${tag}.tar.gz" \
+            --manifest /tmp/epic-hal-src/epic-common/manifest/modules.toml \
+            --hal-repo /tmp/epic-hal-src \
+            --version "$pkg_ver" \
+            --out "dist/framework-epichal-${pkg_ver}.tar.gz"
+          ls -lh dist/
+
+      - name: Smoke test from repacked framework package
+        run: |
+          pkg_ver="${{ steps.ver.outputs.pkg_ver }}"
+          tmp="$(mktemp -d)"
+          tar -xzf "dist/framework-epichal-${pkg_ver}.tar.gz" -C "$tmp"
+          python3 -m json.tool "$tmp/package.json" >/dev/null
+          for fam in pic16f87xa pic16f88x pic18fxx5x; do
+            test -d "$tmp/${fam}-hal" || { echo "missing ${fam}-hal dir"; exit 1; }
+            test -f "$tmp/epic-hal-sources-${fam}.json" || { echo "missing epic-hal-sources-${fam}.json"; exit 1; }
+          done
+          echo "smoke passed: $(find "$tmp" -mindepth 1 -maxdepth 1 | wc -l) top-level entries"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: framework-packages
+          path: dist/*.tar.gz
+
+      - name: Publish to this repo's releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pkg_ver="${{ steps.ver.outputs.pkg_ver }}"
+          upstream_tag="${{ steps.ver.outputs.tag }}"
+          tag="framework-epichal-v${pkg_ver}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "release $tag already exists, uploading assets"
+            gh release upload "$tag" dist/*.tar.gz --clobber
+          else
+            gh release create "$tag" dist/*.tar.gz \
+              --title "framework-epichal $pkg_ver (from epic-hal $upstream_tag)" \
+              --notes "Built from https://github.com/apojomovsky/epic-hal/releases/tag/$upstream_tag"
+          fi
+
+      - name: Sync versions and roll up the changelog
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pkg_ver="${{ steps.ver.outputs.pkg_ver }}"
+          upstream_tag="${{ steps.ver.outputs.tag }}"
+          bash scripts/finish_release.sh framework-epichal "$pkg_ver" "$upstream_tag" \
+            apojomovsky/epic-hal \
+            "framework-epichal-${pkg_ver}.tar.gz"
