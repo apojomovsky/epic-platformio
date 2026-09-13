@@ -119,19 +119,23 @@ def build(tar_paths: list[pathlib.Path], version: str, out_path: pathlib.Path,
             doc = json.loads(src.read_text())
             if epiccc_sources and slug in epiccc_sources:
                 doc["epiccc_sources"] = epiccc_sources[slug]
-                # The epic-cc source files are not in the release bundles
-                # (they live under each hal's src/epiccc/), so copy them
-                # from the epic-hal checkout into the package.
+                # The epic-cc source files are not in the release bundles,
+                # so copy them from the epic-hal checkout into the package
+                # at the exact path the manifest names: builder/main.py
+                # resolves each epiccc_sources entry as join(fw_dir, s), so
+                # the copy must land at that same repo-root-relative path,
+                # not one reconstructed from a per-family hal dir (which
+                # broke the moment a family's slice moved some entries into
+                # the shared pic14-midrange-core, epic-hal's shared-core
+                # refactor).
                 if hal_repo:
-                    hal_dir = FAMILY_HAL_DIR[slug]
                     for s in epiccc_sources[slug]:
                         if "/src/epiccc/" not in s:
                             continue
-                        rel = s.split("/", 1)[1]
-                        src_file = hal_repo / hal_dir / rel
+                        src_file = hal_repo / s
                         if not src_file.exists():
                             raise SystemExit(f"epic-cc source {src_file} not found in epic-hal")
-                        dst = root / hal_dir / rel
+                        dst = root / s
                         dst.parent.mkdir(parents=True, exist_ok=True)
                         dst.write_bytes(src_file.read_bytes())
             (root / f"epic-hal-sources-{slug}.json").write_text(
