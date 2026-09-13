@@ -13,6 +13,11 @@
       "upstream": "v0.1.0",
       "upstream_url_linux": "https://github.com/apojomovsky/epic-cc/releases/download/v0.1.0/epic-cc-0.1.0-x86_64-linux.zip",
       "upstream_url_windows": "https://github.com/apojomovsky/epic-cc/releases/download/v0.1.0/epic-cc-0.1.0-x86_64-windows.zip"
+    },
+    "0.3.0": {
+      "upstream": "v0.3.0",
+      "upstream_url_linux": "https://github.com/apojomovsky/epic-cc/releases/download/v0.3.0/epic-cc-0.3.0-x86_64-linux.zip",
+      "upstream_url_windows": "https://github.com/apojomovsky/epic-cc/releases/download/v0.3.0/epic-cc-0.3.0-x86_64-windows.zip"
     }
   },
   "framework-epichal": {

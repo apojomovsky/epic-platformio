@@ -22,7 +22,7 @@
   "packages": {
     "toolchain-epiccc": {
       "type": "toolchain",
-      "version": "https://github.com/apojomovsky/epic-platformio/releases/download/toolchain-epiccc-v0.1.0/toolchain-epiccc-linux_x86_64-0.1.0.tar.gz"
+      "version": "https://github.com/apojomovsky/epic-platformio/releases/download/toolchain-epiccc-v0.3.0/toolchain-epiccc-linux_x86_64-0.3.0.tar.gz"
     },
     "framework-epichal": {
       "type": "framework",

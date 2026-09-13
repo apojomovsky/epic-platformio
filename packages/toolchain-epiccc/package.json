@@ -1,6 +1,6 @@
 {
   "name": "toolchain-epiccc",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "epic-cc toolchain for PIC14/PIC18, with bundled clang 20.1.8",
   "keywords": [
     "toolchain",
