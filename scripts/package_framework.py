@@ -119,15 +119,11 @@ def build(tar_paths: list[pathlib.Path], version: str, out_path: pathlib.Path,
             doc = json.loads(src.read_text())
             if epiccc_sources and slug in epiccc_sources:
                 doc["epiccc_sources"] = epiccc_sources[slug]
-                # The epic-cc source files are not in the release bundles,
-                # so copy them from the epic-hal checkout into the package
-                # at the exact path the manifest names: builder/main.py
-                # resolves each epiccc_sources entry as join(fw_dir, s), so
-                # the copy must land at that same repo-root-relative path,
-                # not one reconstructed from a per-family hal dir (which
-                # broke the moment a family's slice moved some entries into
-                # the shared pic14-midrange-core, epic-hal's shared-core
-                # refactor).
+                # Not in the release bundles: copy from the epic-hal
+                # checkout at the manifest's own path (builder/main.py
+                # resolves each entry as join(fw_dir, s)), not one rebuilt
+                # from a per-family hal dir, which broke once a family's
+                # slice moved into the shared pic14-midrange-core.
                 if hal_repo:
                     for s in epiccc_sources[slug]:
                         if "/src/epiccc/" not in s:
