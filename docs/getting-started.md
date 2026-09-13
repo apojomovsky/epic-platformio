@@ -111,6 +111,63 @@ divider named explicitly:
 EPIC_CONFIG("osc=hs, xtal_hz=4000000, cpudiv=div1, plldiv=noprescale, usbdiv=off, wdt=off, lvp=off");
 ```
 
+## XC8
+
+`board_build.toolchain = xc8` builds with MPLAB XC8 instead of epic-cc, on
+any of the 3 boards above, with or without `framework = epichal`:
+
+```ini
+; platformio.ini
+[env:epic8]
+platform = epic8
+board = p16f877a
+board_build.toolchain = xc8
+```
+
+```c
+// src/main.c
+#include <xc.h>
+
+#pragma config FOSC = HS
+#pragma config WDTE = OFF
+#pragma config PWRTE = ON
+#pragma config BOREN = ON
+#pragma config LVP = OFF
+#pragma config CPD = OFF
+#pragma config WRT = OFF
+#pragma config CP = OFF
+
+void main(void)
+{
+    TRISB = 0x00u;
+    for (;;) {
+        PORTB ^= 0x01u;
+    }
+}
+```
+
+Unlike epic-cc, config words are spelled the ordinary XC8 way
+(`#pragma config`, from `<xc.h>`), not `EPIC_CONFIG`: the builder does not
+translate between the two, so an xc8 project is a plain XC8 project as far
+as its own source goes.
+
+**Never vendored** (docs/platform-decisions.md): Microchip's EULA forbids
+redistributing XC8, so `platform.json` carries no toolchain package for it,
+the same posture as the upload tools below. Install it yourself (the free
+tier is enough) from
+<https://www.microchip.com/en-us/tools-resources/develop/mplab-xc-compilers>
+and put its `bin/` on `PATH`, or point `EPIC8_XC8_PATH` at the `xc8-cc`
+binary directly.
+
+A device family whose headers aren't in XC8's own built-in set also needs
+its Device Family Pack; see
+[epic-hal's README](https://github.com/apojomovsky/epic-hal#readme) for how
+to get one for the family your board uses. Point `EPIC8_XC8_DFP_DIR` at the
+pack's own `xc8` subdirectory (not the pack's top-level directory), e.g.
+`/opt/microchip/xc8/v4.00/pic/packs/Microchip.PIC16Fxxx_DFP/xc8`. Leaving it
+unset restricts the build to whatever devices XC8 already supports without
+one.
+
 ## Upload
 
 `pio run -t upload` drives a **TL866A or TL866II Plus** universal
