@@ -1,5 +1,33 @@
 # Platform decisions
 
+## Toolchain: xc8 lands as a fully supported alternate, never vendored
+
+**Decision (PIO-4, epic-platformio#22).** `board_build.toolchain = xc8`
+builds with MPLAB XC8 instead of epic-cc, on any board this platform
+ships, with or without `framework = epichal`. epic-cc stays the default:
+nothing about the zero-Microchip-download pitch changes for a project
+that never sets `board_build.toolchain`. This mirrors epic-cc's own
+design doc D-5 ("epic-cc becomes epic-hal's default path; XC8 stays
+supported") at the PlatformIO layer, and epic-hal's own build driver
+(`epic_build.py`) already defaults to xc8 on its side, so this closes a
+gap in platform-epic8 specifically, not a new position for the ecosystem.
+
+**Never vendored, same reasoning as minipro/pk2cmd below, sharper.**
+Microchip's EULA forbids redistributing XC8 at all (not merely "no
+package exists," `pk2cmd`'s situation); `platform.json` carries no
+`packages.*` entry for it, and never will. `builder/main.py` finds a
+binary the user already installed, on `PATH` or via `EPIC8_XC8_PATH`, and
+an optional `EPIC8_XC8_DFP_DIR` for a device family pack, the same
+discovery shape as `EPIC8_MINIPRO_PATH`/`EPIC8_PK2CMD_PATH`. Documented in
+`docs/getting-started.md#xc8`.
+
+**Why now, why not earlier.** The framework package (`framework-epichal`)
+platform-epic8 already downloads has shipped XC8-shaped sources
+(`hal_sources`, `include/target`) since PIO-2, as the base every
+epic-cc-specific slice (`epiccc_sources`, `include/epiccc`) is carved out
+of; only `builder/main.py` never read them. XC8 support was therefore a
+builder gap, not a packaging or framework one.
+
 ## Upload: minipro (TL866) and pk2cmd (PICkit2/3) both landed
 
 **Superseded 2026-09-05.** The original v1 call below rejected `pk2cmd`
