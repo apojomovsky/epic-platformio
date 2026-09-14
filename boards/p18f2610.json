@@ -1,0 +1,12 @@
+{
+  "build": {
+    "framework_epichal_toolchains": [],
+    "mcu": "p18f2610",
+    "toolchains": [
+      "epic-cc"
+    ]
+  },
+  "name": "Microchip PIC18F2610",
+  "url": "https://www.microchip.com/en-us/product/PIC18F2610",
+  "vendor": "Microchip"
+}

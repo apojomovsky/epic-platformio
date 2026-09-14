@@ -1,0 +1,12 @@
+{
+  "build": {
+    "framework_epichal_toolchains": [],
+    "mcu": "p18f6621",
+    "toolchains": [
+      "epic-cc"
+    ]
+  },
+  "name": "Microchip PIC18F6621",
+  "url": "https://www.microchip.com/en-us/product/PIC18F6621",
+  "vendor": "Microchip"
+}

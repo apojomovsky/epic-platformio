@@ -1,0 +1,12 @@
+{
+  "build": {
+    "framework_epichal_toolchains": [],
+    "mcu": "p16f767",
+    "toolchains": [
+      "epic-cc"
+    ]
+  },
+  "name": "Microchip PIC16F767",
+  "url": "https://www.microchip.com/en-us/product/PIC16F767",
+  "vendor": "Microchip"
+}

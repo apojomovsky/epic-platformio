@@ -1,0 +1,12 @@
+{
+  "build": {
+    "framework_epichal_toolchains": [],
+    "mcu": "p18f452",
+    "toolchains": [
+      "epic-cc"
+    ]
+  },
+  "name": "Microchip PIC18F452",
+  "url": "https://www.microchip.com/en-us/product/PIC18F452",
+  "vendor": "Microchip"
+}

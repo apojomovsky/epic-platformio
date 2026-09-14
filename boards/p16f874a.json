@@ -1,0 +1,17 @@
+{
+  "build": {
+    "epichal_family": "pic16f87xa",
+    "framework_epichal_toolchains": [
+      "epic-cc",
+      "xc8"
+    ],
+    "mcu": "p16f874a",
+    "toolchains": [
+      "epic-cc",
+      "xc8"
+    ]
+  },
+  "name": "Microchip PIC16F874A",
+  "url": "https://www.microchip.com/en-us/product/PIC16F874A",
+  "vendor": "Microchip"
+}

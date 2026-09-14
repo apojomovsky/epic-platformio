@@ -1,0 +1,15 @@
+{
+  "build": {
+    "epichal_family": "pic16f88x",
+    "framework_epichal_toolchains": [
+      "xc8"
+    ],
+    "mcu": "p16f886",
+    "toolchains": [
+      "xc8"
+    ]
+  },
+  "name": "Microchip PIC16F886",
+  "url": "https://www.microchip.com/en-us/product/PIC16F886",
+  "vendor": "Microchip"
+}

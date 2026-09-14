@@ -231,12 +231,26 @@ device, that is the bug to file. The full history, including the rejected
 
 ## Supported parts
 
-| Part | Core | Notes |
-|---|---|---|
-| `p16f877a` | PIC14 (mid-range) | the original epic-cc target |
-| `p16f887` | PIC14 (mid-range) | same ISA, different device data |
-| `p18f4550` | PIC18 | PIC18 backend |
+Every board under [`boards/`](../boards) is generated (PIO-6,
+`scripts/gen_boards.py`) from epic-cc's and epic-hal's own device
+registries, one board per device, at whatever capability level that
+device actually has: a board's `build.toolchains` lists which
+`board_build.toolchain` values it accepts, and `build.framework_epichal_toolchains`
+lists which of those also support `framework = epichal` (empty when
+epic-hal doesn't cover the device at all). Picking a combination a board
+doesn't support fails the build with a message naming what it does
+support, rather than a silent wrong build.
 
-Enhanced mid-range parts (`pic16f193x` and friends) are out of scope:
-epic-cc has no backend for that core, and adding one is a separate decision
-(docs/31 D-1).
+Three shapes exist today:
+
+- **epic-cc only** (most devices): epic-hal doesn't cover this part yet.
+- **Both toolchains**: epic-cc and epic-hal both cover it; `framework =
+  epichal` works under either, once framework-epichal's package
+  actually bundles that device's family (PIO-7; some newer families are
+  registered but not bundled yet, and fail loudly naming the gap).
+- **xc8 only**: epic-hal covers it but epic-cc's device registry doesn't
+  (yet), e.g. some `pic16f88x` siblings.
+
+Re-run `scripts/gen_boards.py` (see its own `--help`) against fresher
+epic-cc/epic-hal inputs to regenerate the whole set; PIO-7 wires this
+into the release pipeline so it happens automatically.

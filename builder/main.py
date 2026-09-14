@@ -49,6 +49,18 @@ if toolchain not in ("epic-cc", "xc8"):
     )
     env.Exit(1)
 
+# Per-board capability, from boards/*.json's build.toolchains (PIO-6,
+# scripts/gen_boards.py): not every device is known to both toolchains,
+# so a board picking one it doesn't support fails loudly here rather than
+# resolving a binary it can never actually use correctly.
+board_toolchains = board.get("build.toolchains", [])
+if toolchain not in board_toolchains:
+    sys.stderr.write(
+        "Error: board %s does not support toolchain %r. Supported: %s\n"
+        % (board.id, toolchain, ", ".join(board_toolchains) or "(none)")
+    )
+    env.Exit(1)
+
 epiccc = None
 xc8cc = None
 xc8_dfp_dir = ""
@@ -77,21 +89,25 @@ else:
     xc8_dfp_dir = os.environ.get("EPIC8_XC8_DFP_DIR", "")
 
 # Framework wiring. When `framework = epichal` is set, the epic-hal
-# framework package joins the build: the board's MCU picks the family,
-# and EPIC_HAL_MODULES (a comma-separated build flag) picks the modules.
-# Under epic-cc (a whole-program compiler, docs/31 D-7) the framework
-# sources are compiled in, not linked; under xc8 they're just more
-# translation units in the ordinary compile-then-link build below.
-FRAMEWORK_FAMILY = {
-    "p16f877a": "pic16f87xa",
-    "p16f887": "pic16f88x",
-    "p18f4550": "pic18fxx5x",
-}
+# framework package joins the build: the board's build.epichal_family
+# (PIO-6, scripts/gen_boards.py) picks the family, and EPIC_HAL_MODULES
+# (a comma-separated build flag) picks the modules. Under epic-cc (a
+# whole-program compiler, docs/31 D-7) the framework sources are compiled
+# in, not linked; under xc8 they're just more translation units in the
+# ordinary compile-then-link build below.
 
 
 def _framework(env, mcu, toolchain):
     if "epichal" not in env.get("PIOFRAMEWORK", []):
         return [], [], []
+    fw_toolchains = board.get("build.framework_epichal_toolchains", [])
+    if toolchain not in fw_toolchains:
+        sys.stderr.write(
+            "Error: board %s does not support framework=epichal under "
+            "toolchain %r. Supported: %s\n"
+            % (board.id, toolchain, ", ".join(fw_toolchains) or "(none)")
+        )
+        env.Exit(1)
     fw_dir = env.PioPlatform().get_package_dir("framework-epichal")
     if not fw_dir:
         # Fall back to the shared packages dir: a locally installed or
@@ -101,11 +117,22 @@ def _framework(env, mcu, toolchain):
     if not os.path.isdir(fw_dir):
         sys.stderr.write("Error: framework-epichal is not installed\n")
         env.Exit(1)
-    slug = FRAMEWORK_FAMILY.get(mcu)
+    slug = board.get("build.epichal_family")
     if not slug:
         sys.stderr.write("Error: no epic-hal family for board MCU %s\n" % mcu)
         env.Exit(1)
-    manifest = json.load(open(join(fw_dir, "epic-hal-sources-%s.json" % slug)))
+    manifest_path = join(fw_dir, "epic-hal-sources-%s.json" % slug)
+    if not os.path.exists(manifest_path):
+        # A board can validly claim framework support (PIO-6) for a family
+        # framework-epichal has not started bundling yet (package_framework.py
+        # still needs extending per-family, PIO-7): a real, transitional gap,
+        # not a bug in this board's own capability data.
+        sys.stderr.write(
+            "Error: framework-epichal has no bundled sources for family %r "
+            "yet (board %s). See epic-platformio#25.\n" % (slug, board.id)
+        )
+        env.Exit(1)
+    manifest = json.load(open(manifest_path))
     device = bare_mcu.upper()
     if toolchain == "epic-cc":
         # Family includes, /target -> /epiccc for the epic-cc path (the

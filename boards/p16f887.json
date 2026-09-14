@@ -1,15 +1,24 @@
 {
   "build": {
+    "epichal_family": "pic16f88x",
     "f_cpu": "4000000L",
-    "mcu": "p16f887"
+    "framework_epichal_toolchains": [
+      "epic-cc",
+      "xc8"
+    ],
+    "mcu": "p16f887",
+    "toolchains": [
+      "epic-cc",
+      "xc8"
+    ]
   },
   "name": "Microchip PIC16F887",
   "upload": {
     "maximum_ram_size": 368,
     "maximum_size": 16384,
-    "protocol": "minipro",
     "minipro_device": "PIC16F887",
-    "pk2cmd_device": "PIC16F887"
+    "pk2cmd_device": "PIC16F887",
+    "protocol": "minipro"
   },
   "url": "https://www.microchip.com/en-us/product/PIC16F887",
   "vendor": "Microchip"

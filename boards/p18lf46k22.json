@@ -1,0 +1,12 @@
+{
+  "build": {
+    "framework_epichal_toolchains": [],
+    "mcu": "p18lf46k22",
+    "toolchains": [
+      "epic-cc"
+    ]
+  },
+  "name": "Microchip PIC18LF46K22",
+  "url": "https://www.microchip.com/en-us/product/PIC18LF46K22",
+  "vendor": "Microchip"
+}

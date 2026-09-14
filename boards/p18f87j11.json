@@ -1,0 +1,12 @@
+{
+  "build": {
+    "framework_epichal_toolchains": [],
+    "mcu": "p18f87j11",
+    "toolchains": [
+      "epic-cc"
+    ]
+  },
+  "name": "Microchip PIC18F87J11",
+  "url": "https://www.microchip.com/en-us/product/PIC18F87J11",
+  "vendor": "Microchip"
+}

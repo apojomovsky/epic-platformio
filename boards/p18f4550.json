@@ -1,15 +1,24 @@
 {
   "build": {
+    "epichal_family": "pic18fxx5x",
     "f_cpu": "20000000L",
-    "mcu": "p18f4550"
+    "framework_epichal_toolchains": [
+      "epic-cc",
+      "xc8"
+    ],
+    "mcu": "p18f4550",
+    "toolchains": [
+      "epic-cc",
+      "xc8"
+    ]
   },
   "name": "Microchip PIC18F4550",
   "upload": {
     "maximum_ram_size": 2048,
     "maximum_size": 32768,
-    "protocol": "minipro",
     "minipro_device": "PIC18F4550",
-    "pk2cmd_device": "PIC18F4550"
+    "pk2cmd_device": "PIC18F4550",
+    "protocol": "minipro"
   },
   "url": "https://www.microchip.com/en-us/product/PIC18F4550",
   "vendor": "Microchip"

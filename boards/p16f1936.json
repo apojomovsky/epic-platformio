@@ -1,0 +1,17 @@
+{
+  "build": {
+    "epichal_family": "pic16f193x",
+    "framework_epichal_toolchains": [
+      "epic-cc",
+      "xc8"
+    ],
+    "mcu": "p16f1936",
+    "toolchains": [
+      "epic-cc",
+      "xc8"
+    ]
+  },
+  "name": "Microchip PIC16F1936",
+  "url": "https://www.microchip.com/en-us/product/PIC16F1936",
+  "vendor": "Microchip"
+}

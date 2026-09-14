@@ -1,0 +1,12 @@
+{
+  "build": {
+    "framework_epichal_toolchains": [],
+    "mcu": "p18f66j94",
+    "toolchains": [
+      "epic-cc"
+    ]
+  },
+  "name": "Microchip PIC18F66J94",
+  "url": "https://www.microchip.com/en-us/product/PIC18F66J94",
+  "vendor": "Microchip"
+}

@@ -1,0 +1,12 @@
+{
+  "build": {
+    "framework_epichal_toolchains": [],
+    "mcu": "p10f322",
+    "toolchains": [
+      "epic-cc"
+    ]
+  },
+  "name": "Microchip PIC10F322",
+  "url": "https://www.microchip.com/en-us/product/PIC10F322",
+  "vendor": "Microchip"
+}

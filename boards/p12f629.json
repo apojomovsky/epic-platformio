@@ -1,0 +1,12 @@
+{
+  "build": {
+    "framework_epichal_toolchains": [],
+    "mcu": "p12f629",
+    "toolchains": [
+      "epic-cc"
+    ]
+  },
+  "name": "Microchip PIC12F629",
+  "url": "https://www.microchip.com/en-us/product/PIC12F629",
+  "vendor": "Microchip"
+}

@@ -1,0 +1,12 @@
+{
+  "build": {
+    "framework_epichal_toolchains": [],
+    "mcu": "p16f684",
+    "toolchains": [
+      "epic-cc"
+    ]
+  },
+  "name": "Microchip PIC16F684",
+  "url": "https://www.microchip.com/en-us/product/PIC16F684",
+  "vendor": "Microchip"
+}

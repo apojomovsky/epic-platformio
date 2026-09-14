@@ -1,0 +1,12 @@
+{
+  "build": {
+    "framework_epichal_toolchains": [],
+    "mcu": "p12f683",
+    "toolchains": [
+      "epic-cc"
+    ]
+  },
+  "name": "Microchip PIC12F683",
+  "url": "https://www.microchip.com/en-us/product/PIC12F683",
+  "vendor": "Microchip"
+}
