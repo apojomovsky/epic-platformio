@@ -91,6 +91,10 @@ buildable from a clean checkout:
 | `blink-p16f887` | PIC16F887 | a new device on a supported core |
 | `blink-p18f4550` | PIC18F4550 | the PIC18 backend |
 | `hal-tick-p16f877a` | PIC16F877A | epic-tick plus GPIO, the integration proof |
+| `blink-xc8-p16f877a` | PIC16F877A | the xc8 toolchain path alone ([XC8](#xc8)) |
+| `blink-xc8-p16f887` | PIC16F887 | xc8 on a new device on a supported core |
+| `blink-xc8-p18f4550` | PIC18F4550 | xc8 on the PIC18 backend |
+| `hal-tick-xc8-p16f877a` | PIC16F877A | epic-tick plus GPIO under xc8 |
 
 Copy one into a fresh directory and run `pio run`.
 

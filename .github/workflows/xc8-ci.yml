@@ -1,0 +1,118 @@
+name: xc8-ci
+
+# Real-target build validation for the xc8 toolchain path (PIO-4,
+# epic-platformio#22). Reuses epic-hal's existing epic-hal-ci GHCR image
+# rather than building a second one (docs/platform-decisions.md); never
+# built here, human-triggered only in epic-hal via `make ci-image-push`.
+# If a PR fails to pull it, that or the cross-repo package grant is why.
+
+on:
+  pull_request:
+    paths:
+      - "builder/**"
+      - "boards/**"
+      - "platform.json"
+      - "examples/**"
+      - ".github/workflows/xc8-ci.yml"
+  push:
+    branches: [master]
+    paths:
+      - "builder/**"
+      - "boards/**"
+      - "platform.json"
+      - "examples/**"
+      - ".github/workflows/xc8-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  xc8-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Transitional pull, mirroring epic-hal's own family-check.yml exactly:
+      # epic-hal-ci is the new package name, pic8-hal-ci the still-published
+      # legacy one until epic-hal republishes the same tag under the new
+      # name. Try the new name first, fall back to legacy so this job stays
+      # green across the rename window.
+      - name: Resolve + pull the toolchain image
+        id: image
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          dockerfile=$(gh api repos/apojomovsky/epic-hal/contents/docker/ci-toolchain/Dockerfile --jq '.content' | base64 -d)
+          xc8_ver=$(printf '%s\n' "$dockerfile" | grep -m1 '^ARG XC8_VERSION=' | cut -d= -f2)
+          pic16_ver=$(printf '%s\n' "$dockerfile" | grep -m1 '^ARG PIC16FXXX_DFP_VERSION=' | cut -d= -f2)
+          pic18_ver=$(printf '%s\n' "$dockerfile" | grep -m1 '^ARG PIC18FXXXX_DFP_VERSION=' | cut -d= -f2)
+          pic1216f1_ver=$(printf '%s\n' "$dockerfile" | grep -m1 '^ARG PIC12_16F1XXX_DFP_VERSION=' | cut -d= -f2)
+          mplabx_ver=$(printf '%s\n' "$dockerfile" | grep -m1 '^ARG MPLABX_VERSION=' | cut -d= -f2)
+          tag="xc8-v${xc8_ver}-dfp${pic16_ver}-${pic18_ver}-${pic1216f1_ver}-mplabx${mplabx_ver}"
+          image="ghcr.io/apojomovsky/epic-hal-ci:${tag}"
+          legacy_image="ghcr.io/apojomovsky/pic8-hal-ci:${tag}"
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          if docker pull "$image"; then
+            echo "image=$image" >> "$GITHUB_OUTPUT"
+          elif docker pull "$legacy_image"; then
+            echo "note: pulled legacy $legacy_image (epic-hal-ci not yet published)" >&2
+            echo "image=$legacy_image" >> "$GITHUB_OUTPUT"
+          else
+            echo "error: no cached $image nor $legacy_image on GHCR." >&2
+            echo "  someone needs to run 'make ci-image-push' in epic-hal," >&2
+            echo "  or this repo's Actions runs need read access granted to" >&2
+            echo "  that private GHCR package." >&2
+            exit 1
+          fi
+          echo "xc8_version=$xc8_ver" >> "$GITHUB_OUTPUT"
+
+      - name: Build the xc8 examples (bare and framework=epichal)
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+          XC8_VERSION: ${{ steps.image.outputs.xc8_version }}
+        run: |
+          set -e
+          docker run --rm -e XC8_VERSION -v "$GITHUB_WORKSPACE:/repo" -w /repo "$IMAGE" sh -c '
+            set -e
+            apt-get update -qq
+            apt-get install -yq --no-install-recommends python3 python3-pip python3-venv >/dev/null
+            python3 -m venv /tmp/venv
+            . /tmp/venv/bin/activate
+            pip install -q platformio==6.1.19
+
+            # framework-epichal is an optional platform package: pio run
+            # never auto-installs an optional package on its own, so the
+            # hal-tick example needs it fetched explicitly, from the URL
+            # platform.json itself declares. "pio pkg install --tool" needs
+            # a real project directory to run in, and rewrites its ini in
+            # place (a "platform_packages" line), so it runs against a
+            # throwaway scratch project, never a real example directory.
+            fw_url=$(python3 -c "import json; print(json.load(open(\"/repo/platform.json\"))[\"packages\"][\"framework-epichal\"][\"version\"])")
+            mkdir -p /tmp/scratch
+            printf "[env:epic8]\nplatform = epic8\nboard = p16f877a\n" > /tmp/scratch/platformio.ini
+            pio pkg install --tool "$fw_url" -d /tmp/scratch
+
+            xc8_bin="/opt/microchip/xc8/v${XC8_VERSION}/bin/xc8-cc"
+            packs="/opt/microchip/xc8/v${XC8_VERSION}/pic/packs"
+
+            build_example() {
+              example="$1"; dfp="$2"
+              sed "s#platform = epic8#platform = file:///repo#" \
+                "examples/${example}/platformio.ini" > /tmp/pio.ini
+              EPIC8_XC8_PATH="$xc8_bin" EPIC8_XC8_DFP_DIR="${packs}/${dfp}/xc8" \
+                pio run -d "examples/${example}" --project-conf /tmp/pio.ini
+            }
+
+            # Run every example regardless of an earlier failure and report
+            # all of them: one broken example must not hide a second,
+            # unrelated regression in the ones after it in this list.
+            failed=0
+            build_example blink-xc8-p16f877a Microchip.PIC16Fxxx_DFP || failed=1
+            build_example blink-xc8-p16f887 Microchip.PIC16Fxxx_DFP || failed=1
+            build_example blink-xc8-p18f4550 Microchip.PIC18Fxxxx_DFP || failed=1
+            build_example hal-tick-xc8-p16f877a Microchip.PIC16Fxxx_DFP || failed=1
+            exit "$failed"
+          '
