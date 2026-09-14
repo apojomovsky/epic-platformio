@@ -1,0 +1,12 @@
+{
+  "build": {
+    "framework_epichal_toolchains": [],
+    "mcu": "p18f4580",
+    "toolchains": [
+      "epic-cc"
+    ]
+  },
+  "name": "Microchip PIC18F4580",
+  "url": "https://www.microchip.com/en-us/product/PIC18F4580",
+  "vendor": "Microchip"
+}

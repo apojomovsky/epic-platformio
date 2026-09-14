@@ -1,0 +1,12 @@
+{
+  "build": {
+    "framework_epichal_toolchains": [],
+    "mcu": "p12f509",
+    "toolchains": [
+      "epic-cc"
+    ]
+  },
+  "name": "Microchip PIC12F509",
+  "url": "https://www.microchip.com/en-us/product/PIC12F509",
+  "vendor": "Microchip"
+}

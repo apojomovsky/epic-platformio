@@ -1,15 +1,24 @@
 {
   "build": {
+    "epichal_family": "pic16f87xa",
     "f_cpu": "4000000L",
-    "mcu": "p16f877a"
+    "framework_epichal_toolchains": [
+      "epic-cc",
+      "xc8"
+    ],
+    "mcu": "p16f877a",
+    "toolchains": [
+      "epic-cc",
+      "xc8"
+    ]
   },
   "name": "Microchip PIC16F877A",
   "upload": {
     "maximum_ram_size": 368,
     "maximum_size": 16384,
-    "protocol": "minipro",
     "minipro_device": "PIC16F877A",
-    "pk2cmd_device": "PIC16F877A"
+    "pk2cmd_device": "PIC16F877A",
+    "protocol": "minipro"
   },
   "url": "https://www.microchip.com/en-us/product/PIC16F877A",
   "vendor": "Microchip"

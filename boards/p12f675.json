@@ -1,0 +1,12 @@
+{
+  "build": {
+    "framework_epichal_toolchains": [],
+    "mcu": "p12f675",
+    "toolchains": [
+      "epic-cc"
+    ]
+  },
+  "name": "Microchip PIC12F675",
+  "url": "https://www.microchip.com/en-us/product/PIC12F675",
+  "vendor": "Microchip"
+}

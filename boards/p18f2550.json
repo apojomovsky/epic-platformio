@@ -1,0 +1,17 @@
+{
+  "build": {
+    "epichal_family": "pic18fxx5x",
+    "framework_epichal_toolchains": [
+      "epic-cc",
+      "xc8"
+    ],
+    "mcu": "p18f2550",
+    "toolchains": [
+      "epic-cc",
+      "xc8"
+    ]
+  },
+  "name": "Microchip PIC18F2550",
+  "url": "https://www.microchip.com/en-us/product/PIC18F2550",
+  "vendor": "Microchip"
+}

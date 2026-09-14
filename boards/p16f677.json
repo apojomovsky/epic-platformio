@@ -1,0 +1,12 @@
+{
+  "build": {
+    "framework_epichal_toolchains": [],
+    "mcu": "p16f677",
+    "toolchains": [
+      "epic-cc"
+    ]
+  },
+  "name": "Microchip PIC16F677",
+  "url": "https://www.microchip.com/en-us/product/PIC16F677",
+  "vendor": "Microchip"
+}

@@ -76,21 +76,17 @@ including wiring in the HAL, is in
 
 ## Supported parts
 
-| Part | Core | Notes |
-|---|---|---|
-| `p16f877a` | PIC14 (mid-range) | The original epic-cc target |
-| `p16f887` | PIC14 (mid-range) | Same ISA, different device data |
-| `p18f4550` | PIC18 | PIC18 backend |
-
-This is the current [`boards/`](boards/) list, not the full set epic-cc can
-compile for; adding a board here for a device epic-cc already supports is a
-board-definition PR, decoupled from the compiler's own
-[device registry](https://github.com/apojomovsky/epic-cc/tree/master/crates/device/devices).
+[`boards/`](boards/) has one board per device either epic-cc or epic-hal
+supports (115 as of PIO-6), generated from both repos' own device
+registries rather than hand-curated: see
+[`docs/getting-started.md#supported-parts`](docs/getting-started.md#supported-parts)
+for what each board's capability fields mean and how to regenerate the
+set.
 
 ## Status
 
-**Early.** Building works end-to-end today: `pio run` compiles any of the
-three supported parts with no Microchip download. Flashing does not yet:
+**Early.** Building works end-to-end today: `pio run` compiles any
+supported part with no Microchip download. Flashing does not yet:
 `pio run -t upload` isn't wired to a programmer, and HEX size reporting isn't
 wired to `pio run -t size`. Both are open work, tracked in
 [`docs/platform-decisions.md`](docs/platform-decisions.md) and the

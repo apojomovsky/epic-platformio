@@ -1,0 +1,12 @@
+{
+  "build": {
+    "framework_epichal_toolchains": [],
+    "mcu": "p16f88",
+    "toolchains": [
+      "epic-cc"
+    ]
+  },
+  "name": "Microchip PIC16F88",
+  "url": "https://www.microchip.com/en-us/product/PIC16F88",
+  "vendor": "Microchip"
+}

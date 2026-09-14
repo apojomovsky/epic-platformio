@@ -1,5 +1,44 @@
 # Platform decisions
 
+## Boards: generated from epic-cc/epic-hal's own registries, every device, no curation
+
+**Decision (PIO-6, epic-platformio#24).** `boards/*.json` is generated
+(`scripts/gen_boards.py`) by joining epic-cc's device manifest (CC-7)
+against epic-hal's part-to-family map and per-family `epiccc_sources`
+declaration, one board per device either repo knows about, at whatever
+capability level it actually has. No allowlist or denylist: a device
+that would need curating out (e.g. a very low-resource baseline part) is
+a decision for the user's own `platformio.ini`, not this repo's board
+list.
+
+Each board's `build.toolchains` and `build.framework_epichal_toolchains`
+record the answer directly, and `builder/main.py` validates a project's
+`board_build.toolchain`/`framework` choice against them at build time:
+picking a combination the board doesn't support fails loudly, naming
+what it does support, rather than silently building with the wrong
+include set or resolving a toolchain binary the board can never use
+correctly.
+
+**The join key is the bare device name**, not a live call into either
+toolchain: epic-cc's own device names in its manifest are already
+canonical ("p" + epic-hal's own spelling, lowercased), a fixed
+structural fact (epic-cc#428 / epic-hal#162), not a per-device guess.
+
+**`url` is generated, not verified, for every board this script
+synthesizes from scratch.** PlatformIO's own board schema requires a
+non-empty `url`; the existing 3 hand-authored boards already used
+`https://www.microchip.com/en-us/product/<PART>`, so newly generated
+boards follow the same scheme rather than leaving the field out, but
+this has not been individually confirmed to resolve for every part.
+
+**Not yet wired into the release pipeline** (PIO-7): regenerating
+`boards/*.json` today is a manual `scripts/gen_boards.py` run against
+locally fetched inputs. A board can therefore validly claim
+`framework = epichal` support for a family `framework-epichal`'s own
+package does not bundle yet (some newer families are registered in
+epic-hal but `package_framework.py` still only bundles 3); the build
+fails loudly naming that specific gap rather than silently miscompiling.
+
 ## Toolchain: xc8 lands as a fully supported alternate, never vendored
 
 **Decision (PIO-4, epic-platformio#22).** `board_build.toolchain = xc8`
