@@ -32,15 +32,11 @@ fetch_upstream_changelog() {
   fi
 }
 
-# master has no branch protection, and several agents work this repo in
-# parallel, so an unrelated commit landing on master mid-run is routine,
-# not a one-off: on a rejected push, a rebase of this diff can genuinely
-# conflict (a concurrent write-back also prepends to CHANGELOG.md, the
-# same region every prepend touches). CHANGELOG.md and the version files
-# are entirely generated from current state, so recomputing this whole
-# step fresh against the new origin/master is always correct where
-# rebasing a stale diff is not: reset hard and redo the computation
-# instead of trying to transplant it.
+# A concurrent write-back landing on master mid-run is routine here (no
+# branch protection, several agents in parallel), and rebasing this diff
+# onto it can genuinely conflict (both prepend to the same CHANGELOG.md
+# region). Recomputing fresh against the new origin/master is always
+# correct instead, since every file this touches is fully generated.
 fetch_upstream_changelog
 for attempt in 1 2 3 4 5; do
   sync_args=(--package "$package" --pkg-version "$pkg_ver" --upstream-tag "$upstream_tag" --asset-name "$asset_name")
