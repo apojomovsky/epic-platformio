@@ -5,7 +5,10 @@ The framework package is the union of every supported family bundle: the
 shared modules (epic-common, epic-tick, ...) are copied once, each family's
 hal dir is kept separate, and each family's source manifest is renamed to
 `epic-hal-sources-<family>.json` so the builder can pick the right one from
-the board's MCU.
+the board's MCU. Every family slug (the hal dir name, the manifest suffix)
+comes from each bundle's own epic-hal-sources.json "family" field, not a
+hardcoded list here: a new family bundle (PIO-7, epic-platformio#25) needs
+no change to this script, only an extra --tar.
 
 Usage:
   package_framework.py \
@@ -24,24 +27,10 @@ import tempfile
 
 TEMPLATE = pathlib.Path(__file__).resolve().parent.parent / "packages" / "framework-epichal" / "package.json"
 
-# Family slug -> the hal dir name inside the bundle. The slug is what the
-# builder maps a board MCU to, and it names the per-family source manifest.
-FAMILY_HAL_DIR = {
-    "pic16f87xa": "pic16f87xa-hal",
-    "pic16f88x": "pic16f88x-hal",
-    "pic18fxx5x": "pic18fxx5x-hal",
-}
-
-# Family slug -> the epic-hal manifest family name (modules.toml).
-FAMILY_MANIFEST_NAME = {
-    "pic16f87xa": "PIC16F87XA",
-    "pic16f88x": "PIC16F88X",
-    "pic18fxx5x": "PIC18Fxx5x",
-}
-
 
 def _read_epiccc_sources(manifest_path: pathlib.Path) -> dict:
-    """Read each family's epic-cc source slice from the epic-hal manifest.
+    """Read every family's epic-cc source slice from the epic-hal manifest,
+    keyed by the same lowercased slug the bundle's own family field uses.
 
     The epic-cc path links a smaller, conformant source set than the full
     XC8 set (the full set uses XC8-only syntax and exceeds the 877A's GPR
@@ -50,11 +39,10 @@ def _read_epiccc_sources(manifest_path: pathlib.Path) -> dict:
     """
     import tomllib
     data = tomllib.loads(manifest_path.read_text())
-    result = {}
-    for slug, fam_name in FAMILY_MANIFEST_NAME.items():
-        fam = data["families"].get(fam_name)
-        result[slug] = fam.get("epiccc_sources", []) if fam else []
-    return result
+    return {
+        fam_name.lower(): fam.get("epiccc_sources", [])
+        for fam_name, fam in data["families"].items()
+    }
 
 
 def _extract_single(tar_path: pathlib.Path, td: pathlib.Path) -> pathlib.Path:
@@ -87,35 +75,38 @@ def build(tar_paths: list[pathlib.Path], version: str, out_path: pathlib.Path,
                 raise SystemExit(f"bundle {tar_path} missing VERSION")
             bundles[top] = tar_path
 
-        # The first bundle provides the shared modules and the top-level
-        # docs; every later bundle contributes its hal dir and source
-        # manifest. The hal dirs are disjoint, so a plain copy is safe.
+        # Every bundle's top-level entries land in the union, first one in
+        # wins: the shared modules (epic-common, epic-tick, ...) are
+        # identical byte for byte across bundles, so re-copying from a
+        # later one would be wasted work, not a correctness issue, but
+        # skipping it once it exists keeps the union O(bundles) instead of
+        # O(bundles^2). Each bundle's own hal dir is unique by construction
+        # (the family slug names it), so it never collides with another
+        # bundle's content.
         root = td / "framework"
         root.mkdir()
-        first = True
         for top, tar_path in bundles.items():
-            if first:
-                for child in sorted(top.iterdir()):
-                    if child.name == "epic-hal-sources.json":
-                        continue
-                    _copy(child, root / child.name)
-                first = False
-            else:
-                for child in sorted(top.iterdir()):
-                    if child.name == "epic-hal-sources.json":
-                        continue
-                    if child.is_dir() and child.name in FAMILY_HAL_DIR.values():
-                        _copy(child, root / child.name)
+            for child in sorted(top.iterdir()):
+                if child.name == "epic-hal-sources.json":
+                    continue
+                dst = root / child.name
+                if dst.exists():
+                    continue
+                _copy(child, dst)
 
         # Rename each family's source manifest so the builder can find the
         # one matching the board's MCU, and record the epic-cc source slice.
+        built_slugs = []
         for top, tar_path in bundles.items():
             src = top / "epic-hal-sources.json"
             if not src.exists():
                 raise SystemExit(f"bundle {tar_path} missing epic-hal-sources.json")
             manifest = json.loads(src.read_text())
-            family = manifest.get("family", "").lower()
-            slug = _family_slug(family, tar_path)
+            family = manifest.get("family")
+            if not family:
+                raise SystemExit(f"bundle {tar_path} epic-hal-sources.json missing family")
+            slug = family.lower()
+            built_slugs.append(slug)
             doc = json.loads(src.read_text())
             if epiccc_sources and slug in epiccc_sources:
                 doc["epiccc_sources"] = epiccc_sources[slug]
@@ -144,14 +135,7 @@ def build(tar_paths: list[pathlib.Path], version: str, out_path: pathlib.Path,
             for child in sorted(root.iterdir()):
                 out.add(child, arcname=child.name)
 
-    validate(out_path)
-
-
-def _family_slug(family: str, tar_path: pathlib.Path) -> str:
-    for slug, hal_dir in FAMILY_HAL_DIR.items():
-        if hal_dir in str(tar_path) or family == slug:
-            return slug
-    raise SystemExit(f"cannot map family {family!r} from {tar_path} to a known slug")
+    validate(out_path, built_slugs)
 
 
 def _copy(src: pathlib.Path, dst: pathlib.Path):
@@ -164,7 +148,7 @@ def _copy(src: pathlib.Path, dst: pathlib.Path):
         dst.write_bytes(src.read_bytes())
 
 
-def validate(tgz: pathlib.Path):
+def validate(tgz: pathlib.Path, slugs: list[str]):
     with tempfile.TemporaryDirectory() as td:
         td = pathlib.Path(td)
         with tarfile.open(tgz, "r:gz") as tf:
@@ -174,10 +158,10 @@ def validate(tgz: pathlib.Path):
         d = json.loads((td / "package.json").read_text())
         if not d.get("version"):
             raise SystemExit("package.json missing version")
-        # Every family's hal dir and source manifest must be present.
-        for slug, hal_dir in FAMILY_HAL_DIR.items():
-            if not (td / hal_dir).is_dir():
-                raise SystemExit(f"framework package missing {hal_dir}")
+        # Every family actually packaged must have its source manifest
+        # (the hal dir itself is trusted from the copy step above: its
+        # exact name isn't independently known here, only its slug).
+        for slug in slugs:
             if not (td / f"epic-hal-sources-{slug}.json").exists():
                 raise SystemExit(f"framework package missing epic-hal-sources-{slug}.json")
 

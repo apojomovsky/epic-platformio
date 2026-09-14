@@ -1,0 +1,153 @@
+name: boards-refresh
+
+# Keeps boards/*.json (scripts/gen_boards.py, PIO-6) in sync with epic-cc's
+# device manifest and epic-hal's part/family registry as those repos cut
+# new releases (PIO-7, epic-platformio#25), instead of drifting the way
+# the old hand-written 3-board list already had. Regenerates against the
+# latest release of each and opens a pull request when the result differs
+# from what's committed; never commits directly to master, same review
+# gate as every other change in this repo.
+#
+# [VERIFY] Opening a PR from a workflow needs "Allow GitHub Actions to
+# create and approve pull requests" enabled in the repo's Actions
+# settings; this workflow's own `permissions:` block requests what it
+# needs, but that repo-level toggle is outside this file's control.
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+    inputs:
+      epic_cc_tag:
+        description: "epic-cc tag to regenerate against (default: latest release)"
+        required: false
+        type: string
+      epic_hal_tag:
+        description: "epic-hal tag to regenerate against (default: latest release)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve upstream tags
+        id: tags
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cc_tag="${{ inputs.epic_cc_tag }}"
+          if [ -z "$cc_tag" ]; then
+            cc_tag="$(gh release list --repo apojomovsky/epic-cc --limit 1 --json tagName --jq '.[0].tagName')"
+          fi
+          hal_tag="${{ inputs.epic_hal_tag }}"
+          if [ -z "$hal_tag" ]; then
+            hal_tag="$(gh release list --repo apojomovsky/epic-hal --limit 1 --json tagName --jq '.[0].tagName')"
+          fi
+          if [ -z "$cc_tag" ] || [ -z "$hal_tag" ]; then
+            echo "::error::could not resolve a release tag for epic-cc and/or epic-hal"
+            exit 1
+          fi
+          echo "cc_tag=$cc_tag" >> "$GITHUB_OUTPUT"
+          echo "hal_tag=$hal_tag" >> "$GITHUB_OUTPUT"
+          echo "resolved epic-cc=$cc_tag epic-hal=$hal_tag"
+
+      - name: Snapshot committed boards/
+        run: cp -r boards /tmp/boards-before
+
+      - name: Fetch epic-cc device manifest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cc_tag="${{ steps.tags.outputs.cc_tag }}"
+          cc_ver="${cc_tag#v}"
+          gh release download "$cc_tag" --repo apojomovsky/epic-cc \
+            --pattern "epic-cc-${cc_ver}-x86_64-linux.zip" --dir /tmp --clobber
+          # devices.json sits inside the bundle's own top-level dir
+          # (epic-cc's Dockerfile release stage writes it there, not at
+          # the zip root), so unzip -p needs a glob, not a bare name.
+          unzip -p "/tmp/epic-cc-${cc_ver}-x86_64-linux.zip" "*/devices.json" > /tmp/devices.json
+          if [ ! -s /tmp/devices.json ]; then
+            echo "::error::epic-cc ${cc_tag} has no devices.json in its release bundle (CC-7 shipped after this tag was cut? try a newer --epic_cc_tag)"
+            exit 1
+          fi
+
+      - name: Fetch epic-hal parts map and manifest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          hal_tag="${{ steps.tags.outputs.hal_tag }}"
+          gh release download "$hal_tag" --repo apojomovsky/epic-hal \
+            --pattern "parts.txt" --dir /tmp --clobber
+          gh api "repos/apojomovsky/epic-hal/contents/epic-common/manifest/modules.toml?ref=${hal_tag}" \
+            --jq '.content' | base64 -d > /tmp/modules.toml
+          test -s /tmp/parts.txt
+          test -s /tmp/modules.toml
+
+      - name: Regenerate boards
+        run: |
+          python3 scripts/gen_boards.py \
+            --devices-json /tmp/devices.json \
+            --parts-txt /tmp/parts.txt \
+            --modules-toml /tmp/modules.toml \
+            --out-dir boards
+
+      - name: Check for changes
+        id: diff
+        run: |
+          if git diff --quiet -- boards/; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Summarize changes
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          python3 scripts/summarize_boards.py \
+            --before-dir /tmp/boards-before \
+            --after-dir boards \
+            --out /tmp/boards-diff.md
+          cat /tmp/boards-diff.md
+
+      - name: Open or update pull request
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          branch="boards-refresh"
+          cc_tag="${{ steps.tags.outputs.cc_tag }}"
+          hal_tag="${{ steps.tags.outputs.hal_tag }}"
+
+          {
+            echo "Regenerated \`boards/*.json\` (\`scripts/gen_boards.py\`) against:"
+            echo "- epic-cc [$cc_tag](https://github.com/apojomovsky/epic-cc/releases/tag/$cc_tag)"
+            echo "- epic-hal [$hal_tag](https://github.com/apojomovsky/epic-hal/releases/tag/$hal_tag)"
+            echo
+            cat /tmp/boards-diff.md
+          } > /tmp/pr-body.md
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git add boards/
+          git commit -m "chore(boards): regenerate from epic-cc ${cc_tag} / epic-hal ${hal_tag}"
+          git push --force origin "$branch"
+
+          existing="$(gh pr list --head "$branch" --state open --json number --jq '.[0].number')"
+          if [ -n "$existing" ]; then
+            gh pr edit "$existing" --body-file /tmp/pr-body.md
+            echo "updated existing PR #$existing"
+          else
+            gh pr create --head "$branch" \
+              --title "chore(boards): regenerate from upstream releases" \
+              --body-file /tmp/pr-body.md
+          fi
