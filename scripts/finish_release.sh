@@ -71,4 +71,21 @@ git config user.name "github-actions[bot]"
 git config user.email "github-actions[bot]@users.noreply.github.com"
 git add packages/versions.json "packages/${package}/package.json" platform.json CHANGELOG.md
 git commit -m "chore(release): ${package} v${pkg_ver}"
-git push origin HEAD:master
+
+# master has no branch protection, and several agents work this repo in
+# parallel, so an unrelated PR merging between this job's checkout and its
+# push shows up as a plain non-fast-forward, not a real conflict in the
+# common case (this commit only touches version/changelog bookkeeping
+# files an unrelated PR is unlikely to also touch): rebase and retry
+# rather than losing an already-built, already-published release. A
+# genuine conflict still aborts loudly via set -e in the rebase itself.
+for attempt in 1 2 3 4 5; do
+  if git push origin HEAD:master; then
+    exit 0
+  fi
+  echo "push rejected (attempt ${attempt}/5), fetching and rebasing onto origin/master"
+  git fetch origin master
+  git rebase origin/master
+done
+echo "::error::could not push the release commit after 5 attempts" >&2
+exit 1
