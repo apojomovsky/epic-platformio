@@ -28,6 +28,9 @@
     "0.5.0": {
       "upstream": "v0.5.0",
       "note": "combined family bundles plus the epic-cc source slice (epiccc_sources); HAL-5 epic-cc distribution"
+    },
+    "0.6.0": {
+      "upstream": "v0.6.0"
     }
   }
 }

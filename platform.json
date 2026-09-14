@@ -27,7 +27,7 @@
     "framework-epichal": {
       "type": "framework",
       "optional": true,
-      "version": "https://github.com/apojomovsky/epic-platformio/releases/download/framework-epichal-v0.5.0/framework-epichal-0.5.0.tar.gz"
+      "version": "https://github.com/apojomovsky/epic-platformio/releases/download/framework-epichal-v0.6.0/framework-epichal-0.6.0.tar.gz"
     }
   },
   "examples": [

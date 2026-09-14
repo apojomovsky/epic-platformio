@@ -2,6 +2,74 @@
 
 All notable changes to this project are documented here, generated from
 Conventional Commits. Dates are UTC.
+## [framework-epichal-v0.6.0] - 2026-09-14
+
+### Bug Fixes
+
+- Recompute finish_release.sh's write-back on a concurrent master race (#31) (#31)
+
+### Upstream: epic-hal v0.5.0 -> v0.6.0
+
+#### [0.6.0] - 2026-09-13
+
+##### Bug Fixes
+
+- Route cut-release through a PR to satisfy the master ruleset (#161)
+
+- Use a PAT for cut-release so its release PR checks actually run (#165)
+
+
+##### Features
+
+- Add PIC16F628A family support on shared pic14 core (#137)
+
+- Onboard 16F627/627A/628/648A and the LF variants (#158)
+
+
+##### Miscellaneous
+
+- Git-cliff changelog and manual cut-release workflow (#160)
+
+
+##### Refactor
+
+- Converge the post-628A family layout leftovers (#141)
+
+- Migrate 87XA/88X SSP driver into pic14-midrange-core (#142)
+
+- Migrate 87XA/88X ADC driver into pic14-midrange-core (#143)
+
+#### [0.5.1] - 2026-09-10
+
+##### Bug Fixes
+
+- Authenticate the epic-tasks checkout for prose lint (#126)
+
+
+##### Documentation
+
+- Require a separate code review before takeoff (#127)
+
+- Board-track every filed issue (#128)
+
+- Lead with the API, not the installer detour (#135)
+
+
+##### Features
+
+- Epic-sdcard and epic-settings PIC18 slice under epic-cc (#125)
+
+- Bring PIC16F193X onto the epic-cc path (#130)
+
+- One-command XC8 size baseline for epic-cc#200 (#131)
+
+
+##### Miscellaneous
+
+- Remove prose-ledger leftovers from the pre-PR gates (#133)
+
+- Production-ready src comments without planning-stage prose (#134)
+
 ## [toolchain-epiccc-v0.3.0] - 2026-09-14
 
 ### Bug Fixes
