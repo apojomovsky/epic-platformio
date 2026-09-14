@@ -31,6 +31,13 @@ on:
 permissions:
   contents: write
 
+env:
+  # The changelog template reads commit.remote.pr_number, which calls the
+  # GitHub API per commit unless this is set, and (per epic-hal#160)
+  # doubles the "(#N)" GitHub's squash-merge already appends to the
+  # subject. Offline leaves the number already in the subject alone.
+  GIT_CLIFF_OFFLINE: "true"
+
 jobs:
   toolchain:
     runs-on: ubuntu-latest

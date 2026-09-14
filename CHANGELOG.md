@@ -6,7 +6,7 @@ Conventional Commits. Dates are UTC.
 
 ### Bug Fixes
 
-- Recompute finish_release.sh's write-back on a concurrent master race (#31) (#31)
+- Recompute finish_release.sh's write-back on a concurrent master race (#31)
 
 ### Upstream: epic-hal v0.5.0 -> v0.6.0
 
@@ -74,7 +74,7 @@ Conventional Commits. Dates are UTC.
 
 ### Bug Fixes
 
-- Recompute finish_release.sh's write-back on a concurrent master race (#31) (#31)
+- Recompute finish_release.sh's write-back on a concurrent master race (#31)
 
 ### Upstream: epic-cc v0.1.0 -> v0.3.0
 
