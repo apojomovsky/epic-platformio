@@ -177,16 +177,14 @@ def _copy(src: pathlib.Path, dst: pathlib.Path):
 
 
 def _merge_copy(src: pathlib.Path, dst: pathlib.Path, rel: str) -> None:
-    """Copy src into dst, additively: a shared core module bundled per
-    family can carry a different subset of files depending on what that
-    family's own hal_sources actually reference (confirmed against real
-    epic-hal v0.6.0 data: pic14-midrange-core's file set differs between
-    pic16f628a/pic16f87xa/pic16f88x, but every file more than one of them
-    ships is byte-identical), so two bundles' copies of the same
-    top-level name are a partial, additive overlap to merge, not
-    necessarily an all-or-nothing match. Any real disagreement on a file
-    both bundles actually ship is still a hard error, never a silent
-    pick-one.
+    """Copy src into dst, additively.
+
+    A shared core module bundled per family can carry a different,
+    family-pruned file subset (real epic-hal v0.6.0 data:
+    pic14-midrange-core differs this way between families, but every
+    file more than one ships is identical), so a repeated top-level name
+    is a partial overlap to merge, not an all-or-nothing match; any real
+    disagreement on a shared file is still a hard error.
     """
     if not dst.exists():
         _copy(src, dst)

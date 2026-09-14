@@ -38,9 +38,19 @@ pinnable to a specific tag pair), diffs the result against what's
 committed, and opens a pull request when it differs instead of ever
 committing to master directly, the same review gate as everything else
 in this repo. The PR body (`scripts/summarize_boards.py`) reports added,
-removed, and capability-changed boards, not a raw JSON diff. A second
-run before the first is merged updates that same PR rather than opening
-a duplicate.
+removed, and capability-changed boards, not a raw JSON diff. Each run
+pushes a fresh, timestamped branch (never force-pushes a shared one,
+per this repo's own no-force-push rule) and closes any earlier run's
+still-open PR as superseded rather than leaving two open at once. A
+`concurrency` group serializes overlapping runs (a schedule firing
+mid-`workflow_dispatch`, say) so two runs can never race to supersede
+each other's freshly opened PR.
+
+**[VERIFY]** Opening a PR from a workflow needs "Allow GitHub Actions
+to create and approve pull requests" enabled in this repo's own Actions
+settings; `boards-refresh.yml`'s `permissions:` block requests what it
+needs, but that repo-level toggle is outside any workflow file's
+control and has not been independently confirmed on.
 
 `scripts/package_framework.py` packages every family bundle a release
 actually publishes, discovered from each bundle's own

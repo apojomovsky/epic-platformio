@@ -1,17 +1,10 @@
 name: boards-refresh
 
-# Keeps boards/*.json (scripts/gen_boards.py, PIO-6) in sync with epic-cc's
-# device manifest and epic-hal's part/family registry as those repos cut
-# new releases (PIO-7, epic-platformio#25), instead of drifting the way
-# the old hand-written 3-board list already had. Regenerates against the
-# latest release of each and opens a pull request when the result differs
-# from what's committed; never commits directly to master, same review
-# gate as every other change in this repo.
-#
-# [VERIFY] Opening a PR from a workflow needs "Allow GitHub Actions to
-# create and approve pull requests" enabled in the repo's Actions
-# settings; this workflow's own `permissions:` block requests what it
-# needs, but that repo-level toggle is outside this file's control.
+# Keeps boards/*.json (scripts/gen_boards.py, PIO-6) in sync with
+# epic-cc/epic-hal releases (PIO-7, epic-platformio#25): regenerates and
+# opens a PR on a diff, never commits to master directly. See
+# docs/platform-decisions.md for the design and the [VERIFY] note on the
+# repo's own "Allow GitHub Actions to create pull requests" setting.
 
 on:
   schedule:
@@ -30,6 +23,12 @@ on:
 permissions:
   contents: write
   pull-requests: write
+
+# Serializes overlapping runs (a schedule firing mid-workflow_dispatch)
+# so two runs never race to list/close/open PRs against each other.
+concurrency:
+  group: boards-refresh
+  cancel-in-progress: false
 
 jobs:
   refresh:
@@ -54,11 +53,13 @@ jobs:
         run: |
           cc_tag="$EPIC_CC_TAG_INPUT"
           if [ -z "$cc_tag" ]; then
-            cc_tag="$(gh release list --repo apojomovsky/epic-cc --limit 1 --json tagName --jq '.[0].tagName')"
+            cc_tag="$(gh release list --repo apojomovsky/epic-cc --exclude-drafts --exclude-pre-releases \
+              --limit 1 --json tagName --jq '.[0].tagName')"
           fi
           hal_tag="$EPIC_HAL_TAG_INPUT"
           if [ -z "$hal_tag" ]; then
-            hal_tag="$(gh release list --repo apojomovsky/epic-hal --limit 1 --json tagName --jq '.[0].tagName')"
+            hal_tag="$(gh release list --repo apojomovsky/epic-hal --exclude-drafts --exclude-pre-releases \
+              --limit 1 --json tagName --jq '.[0].tagName')"
           fi
           if [ -z "$cc_tag" ] || [ -z "$hal_tag" ]; then
             echo "::error::could not resolve a release tag for epic-cc and/or epic-hal"
