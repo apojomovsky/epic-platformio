@@ -202,10 +202,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tag="${{ steps.ver.outputs.tag }}"
+          pattern_args=()
           while read -r fam; do
-            gh release download "$tag" --repo apojomovsky/epic-hal \
-              --pattern "epic-hal-${fam}-${tag}.tar.gz"
+            pattern_args+=(--pattern "epic-hal-${fam}-${tag}.tar.gz")
           done < /tmp/families.txt
+          gh release download "$tag" --repo apojomovsky/epic-hal "${pattern_args[@]}"
           ls -lh epic-hal-*.tar.gz
 
       - name: Checkout epic-hal for the manifest and epic-cc source slice

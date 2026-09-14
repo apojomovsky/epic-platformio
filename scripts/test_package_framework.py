@@ -73,9 +73,48 @@ class BuildTests(unittest.TestCase):
                 self.assertTrue((ex / "epic-hal-sources-pic18fxx5x.json").exists())
                 self.assertTrue((ex / "pic16f87xa-hal" / "src.c").exists())
                 self.assertTrue((ex / "pic18fxx5x-hal" / "src.c").exists())
-                # Shared file present once, from whichever bundle contributed it first.
+                # Identical shared file across both bundles: merged without complaint.
                 self.assertTrue((ex / "epic-common" / "shared.c").exists())
                 self.assertEqual(json.loads((ex / "package.json").read_text())["version"], "0.6.0")
+
+    def test_shared_dir_with_a_different_file_subset_per_bundle_is_merged(self):
+        """Real epic-hal v0.6.0 data: pic14-midrange-core ships a
+        different, family-pruned subset of files per family bundle, with
+        every file more than one family ships byte-identical. The merge
+        must take the union, not reject on the differing file list."""
+        with tempfile.TemporaryDirectory() as td:
+            td = pathlib.Path(td)
+            tar_paths = []
+            for fam, only_file in (
+                ("pic16f628a", "gpio.c"),
+                ("pic16f87xa", "adc.c"),
+            ):
+                top = td / f"src-{fam}" / f"epic-hal-{fam}"
+                top.mkdir(parents=True)
+                (top / "VERSION").write_text("v0.6.0\n")
+                (top / "epic-hal-sources.json").write_text(json.dumps({"family": fam}))
+                (top / f"{fam}-hal").mkdir()
+                (top / f"{fam}-hal" / "src.c").write_text(f"/* {fam} */\n")
+                core = top / "pic14-midrange-core"
+                core.mkdir()
+                (core / "common.c").write_text("shared core file\n")
+                (core / only_file).write_text(f"{fam} only\n")
+                tar_path = td / f"epic-hal-{fam}-v0.6.0.tar.gz"
+                with tarfile.open(tar_path, "w:gz") as tf:
+                    tf.add(top, arcname=top.name)
+                tar_paths.append(tar_path)
+
+            out = td / "framework-epichal-0.6.0.tar.gz"
+            package_framework.build(tar_paths, "0.6.0", out)
+
+            with tempfile.TemporaryDirectory() as ex:
+                ex = pathlib.Path(ex)
+                with tarfile.open(out, "r:gz") as tf:
+                    tf.extractall(ex)
+                core = ex / "pic14-midrange-core"
+                self.assertEqual((core / "common.c").read_text(), "shared core file\n")
+                self.assertEqual((core / "gpio.c").read_text(), "pic16f628a only\n")
+                self.assertEqual((core / "adc.c").read_text(), "pic16f87xa only\n")
 
     def test_missing_family_field_fails_loudly(self):
         with tempfile.TemporaryDirectory() as td:
@@ -90,6 +129,45 @@ class BuildTests(unittest.TestCase):
 
             with self.assertRaises(SystemExit):
                 package_framework.build([tar_path], "0.6.0", td / "out.tar.gz")
+
+    def test_duplicate_family_fails_loudly(self):
+        with tempfile.TemporaryDirectory() as td:
+            td = pathlib.Path(td)
+            tar_a = _make_bundle(td, "pic16f87xa", "pic16f87xa-hal")
+            tar_b = _make_bundle(td / "again", "pic16f87xa", "pic16f87xa-hal")
+            with self.assertRaises(SystemExit):
+                package_framework.build([tar_a, tar_b], "0.6.0", td / "out.tar.gz")
+
+    def test_same_name_entries_that_differ_fail_loudly(self):
+        """Two bundles sharing a top-level name (e.g. epic-common) must
+        actually be identical; a real divergence must not be silently
+        resolved by keeping whichever bundle copied first."""
+        with tempfile.TemporaryDirectory() as td:
+            td = pathlib.Path(td)
+            tar_a = _make_bundle(td, "pic16f87xa", "pic16f87xa-hal", extra_shared="version A\n")
+            tar_b = _make_bundle(td, "pic18fxx5x", "pic18fxx5x-hal", extra_shared="version B\n")
+            with self.assertRaises(SystemExit):
+                package_framework.build([tar_a, tar_b], "0.6.0", td / "out.tar.gz")
+
+    def test_dropped_family_content_caught_by_validate(self):
+        """If a family's own unique content never made it into the built
+        tarball, validate() must catch it even though its source-manifest
+        sidecar was still written."""
+        with tempfile.TemporaryDirectory() as td:
+            td = pathlib.Path(td)
+            out = td / "framework-epichal-0.6.0.tar.gz"
+            root = td / "root"
+            root.mkdir()
+            (root / "epic-hal-sources-pic16f87xa.json").write_text("{}")
+            (root / "package.json").write_text(json.dumps({"version": "0.6.0"}))
+            with tarfile.open(out, "w:gz") as tf:
+                for child in root.iterdir():
+                    tf.add(child, arcname=child.name)
+
+            with self.assertRaises(SystemExit):
+                package_framework.validate(
+                    out, ["pic16f87xa"], {"pic16f87xa": ["pic16f87xa-hal"]}
+                )
 
 
 if __name__ == "__main__":

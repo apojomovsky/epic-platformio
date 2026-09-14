@@ -43,12 +43,20 @@ jobs:
         id: tags
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Indirected through env instead of spliced into the script
+          # text via ${{ inputs.* }}: a workflow_dispatch input is
+          # attacker-controlled free text, and template-expanding it
+          # directly into `run:` is the standard GitHub Actions script-
+          # injection hole. As an env var, bash sees it as one opaque
+          # value, never as shell syntax.
+          EPIC_CC_TAG_INPUT: ${{ inputs.epic_cc_tag }}
+          EPIC_HAL_TAG_INPUT: ${{ inputs.epic_hal_tag }}
         run: |
-          cc_tag="${{ inputs.epic_cc_tag }}"
+          cc_tag="$EPIC_CC_TAG_INPUT"
           if [ -z "$cc_tag" ]; then
             cc_tag="$(gh release list --repo apojomovsky/epic-cc --limit 1 --json tagName --jq '.[0].tagName')"
           fi
-          hal_tag="${{ inputs.epic_hal_tag }}"
+          hal_tag="$EPIC_HAL_TAG_INPUT"
           if [ -z "$hal_tag" ]; then
             hal_tag="$(gh release list --repo apojomovsky/epic-hal --limit 1 --json tagName --jq '.[0].tagName')"
           fi
@@ -74,7 +82,16 @@ jobs:
           # devices.json sits inside the bundle's own top-level dir
           # (epic-cc's Dockerfile release stage writes it there, not at
           # the zip root), so unzip -p needs a glob, not a bare name.
-          unzip -p "/tmp/epic-cc-${cc_ver}-x86_64-linux.zip" "*/devices.json" > /tmp/devices.json
+          # unzip -p silently concatenates every match instead of
+          # erroring on more than one, so count first: a lone match is
+          # what makes the glob safe to trust.
+          zip_path="/tmp/epic-cc-${cc_ver}-x86_64-linux.zip"
+          matches="$(unzip -Z1 "$zip_path" | grep -c '/devices\.json$' || true)"
+          if [ "$matches" != "1" ]; then
+            echo "::error::expected exactly one devices.json in $zip_path, found $matches"
+            exit 1
+          fi
+          unzip -p "$zip_path" "*/devices.json" > /tmp/devices.json
           if [ ! -s /tmp/devices.json ]; then
             echo "::error::epic-cc ${cc_tag} has no devices.json in its release bundle (CC-7 shipped after this tag was cut? try a newer --epic_cc_tag)"
             exit 1
@@ -103,7 +120,12 @@ jobs:
       - name: Check for changes
         id: diff
         run: |
-          if git diff --quiet -- boards/; then
+          # `git diff` alone never sees a brand-new, still-untracked
+          # boards/pXXXXX.json (a genuinely new device is exactly the
+          # case this workflow exists to catch), so stage first and
+          # diff the index instead.
+          git add -A -- boards/
+          if git diff --cached --quiet -- boards/; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -118,14 +140,21 @@ jobs:
             --out /tmp/boards-diff.md
           cat /tmp/boards-diff.md
 
-      - name: Open or update pull request
+      - name: Open pull request
         if: steps.diff.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          branch="boards-refresh"
           cc_tag="${{ steps.tags.outputs.cc_tag }}"
           hal_tag="${{ steps.tags.outputs.hal_tag }}"
+          # A fresh, timestamped branch per run rather than a shared
+          # rolling one: this repo's own CLAUDE.md forbids force-pushing
+          # a branch that already exists on the remote without an
+          # explicit human go-ahead (it can drop a maintainer's own edit
+          # to a still-open boards-refresh PR with no conflict signal),
+          # so nothing here ever needs to rewrite history to land a
+          # second run's regeneration.
+          branch="boards-refresh-$(date -u +%Y%m%d%H%M%S)"
 
           {
             echo "Regenerated \`boards/*.json\` (\`scripts/gen_boards.py\`) against:"
@@ -137,17 +166,22 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -B "$branch"
-          git add boards/
+          git checkout -b "$branch"
+          git add -A -- boards/
           git commit -m "chore(boards): regenerate from epic-cc ${cc_tag} / epic-hal ${hal_tag}"
-          git push --force origin "$branch"
+          git push origin "$branch"
 
-          existing="$(gh pr list --head "$branch" --state open --json number --jq '.[0].number')"
-          if [ -n "$existing" ]; then
-            gh pr edit "$existing" --body-file /tmp/pr-body.md
-            echo "updated existing PR #$existing"
-          else
-            gh pr create --head "$branch" \
-              --title "chore(boards): regenerate from upstream releases" \
-              --body-file /tmp/pr-body.md
-          fi
+          new_url="$(gh pr create --head "$branch" \
+            --title "chore(boards): regenerate from upstream releases" \
+            --body-file /tmp/pr-body.md)"
+          echo "opened $new_url"
+
+          # At most one boards-refresh PR open at a time: close any
+          # earlier run's still-open PR rather than leaving it to go
+          # stale, pointing reviewers at the fresher one.
+          gh pr list --state open --json number,headRefName \
+              --jq '.[] | select(.headRefName | startswith("boards-refresh-")) | select(.headRefName != "'"$branch"'") | .number' |
+            while read -r old; do
+              gh pr comment "$old" --body "Superseded by a fresher regeneration: $new_url"
+              gh pr close "$old"
+            done

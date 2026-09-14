@@ -51,7 +51,7 @@ list before building). A board can still validly claim `framework =
 epichal` support for a family whose HAL content genuinely has nothing to
 build yet (e.g. a family manifest with zero HAL modules, or a module
 that calls into a peripheral driver the epic-cc conformant source slice
-doesn't include) — `builder/main.py` fails loudly naming that gap at
+doesn't include), `builder/main.py` fails loudly naming that gap at
 build time rather than silently miscompiling; this is a content gap for
 epic-hal to close per family, not a packaging-pipeline bug.
 

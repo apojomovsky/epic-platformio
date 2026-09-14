@@ -75,7 +75,7 @@ waits on `toolchain` so the two never race to push to master. The
 `framework` job discovers which family bundles that epic-hal tag actually
 published (`epic-hal-<family>-<tag>.tar.gz` assets on its GitHub Release)
 before downloading and packaging them, so a new family needs no change
-here (PIO-7, epic-platformio#25) — only a `--tar` per family when calling
+here (PIO-7, epic-platformio#25), only a `--tar` per family when calling
 `package_framework.py` by hand, as in the example above.
 
 ## Keeping `boards/*.json` current
