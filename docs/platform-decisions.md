@@ -97,9 +97,10 @@ builder gap, not a packaging or framework one.
 
 **Superseded 2026-09-05.** The original v1 call below rejected `pk2cmd`
 and `ipecmd` because both are Microchip's own tools, and the platform's
-reason to exist is a build path with no Microchip downloads (design doc
-31 D-5). It did not anticipate genuinely independent, non-Microchip open
-source flashing tools for hardware hobbyists already own: cheap
+original reason to exist was a build path with no Microchip downloads
+(design doc 31 D-5, predating xc8 support; see PIO-4). It did not
+anticipate genuinely independent, non-Microchip open source flashing tools
+for hardware hobbyists already own: cheap
 "hacker's" programmers sold on AliExpress split cleanly by how
 independent their host-side tooling is from Microchip.
 
@@ -136,8 +137,9 @@ validate against in this repo, and no consumer asking for it.
 `pio run -t upload` failed with a clear message: the HEX is the
 deliverable and flashing is left to the user's own programmer (pk2cmd,
 ipecmd, a bootloader). `pk2cmd`/`ipecmd` wrappers were rejected because
-both are Microchip tools, and wrapping them would make the platform
-depend on the very downloads it exists to avoid (design doc 31 D-5). The
+both are Microchip tools, and wrapping them would make the platform depend
+on the very downloads the epic-cc default path exists to avoid (design doc
+31 D-5, predating xc8 support). The
 decision was recorded so it would not be relitigated per PR, and left a
 note for whoever picked this back up: when a programmer integration
 lands, it belongs in a `tool-*` package (PIO-2 shape), not the platform
