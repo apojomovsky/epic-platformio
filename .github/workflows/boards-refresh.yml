@@ -65,6 +65,19 @@ jobs:
             echo "::error::could not resolve a release tag for epic-cc and/or epic-hal"
             exit 1
           fi
+          # A tag flows into later steps' git/gh CLI calls (git clone
+          # --branch, gh release download, gh api ...?ref=) as a bare
+          # positional argument: even passed through env instead of
+          # spliced into script text, a value starting with `-` is still
+          # argument-injectable (git clone --upload-pack=... is a known
+          # RCE vector), and a workflow_dispatch tag input is
+          # attacker-controlled free text. A real git tag never needs
+          # more than this, so reject anything else outright.
+          tag_re='^[A-Za-z0-9][A-Za-z0-9._-]*$'
+          if ! [[ "$cc_tag" =~ $tag_re ]] || ! [[ "$hal_tag" =~ $tag_re ]]; then
+            echo "::error::rejecting unsafe-looking tag: cc_tag=$cc_tag hal_tag=$hal_tag"
+            exit 1
+          fi
           echo "cc_tag=$cc_tag" >> "$GITHUB_OUTPUT"
           echo "hal_tag=$hal_tag" >> "$GITHUB_OUTPUT"
           echo "resolved epic-cc=$cc_tag epic-hal=$hal_tag"
@@ -75,8 +88,13 @@ jobs:
       - name: Fetch epic-cc device manifest
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Same env indirection as the tag resolution step, and for the
+          # same reason: a step output that started life as a
+          # workflow_dispatch input must never be template-expanded
+          # straight into run: script text.
+          CC_TAG: ${{ steps.tags.outputs.cc_tag }}
         run: |
-          cc_tag="${{ steps.tags.outputs.cc_tag }}"
+          cc_tag="$CC_TAG"
           cc_ver="${cc_tag#v}"
           gh release download "$cc_tag" --repo apojomovsky/epic-cc \
             --pattern "epic-cc-${cc_ver}-x86_64-linux.zip" --dir /tmp --clobber
@@ -101,8 +119,9 @@ jobs:
       - name: Fetch epic-hal parts map and manifest
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HAL_TAG: ${{ steps.tags.outputs.hal_tag }}
         run: |
-          hal_tag="${{ steps.tags.outputs.hal_tag }}"
+          hal_tag="$HAL_TAG"
           gh release download "$hal_tag" --repo apojomovsky/epic-hal \
             --pattern "parts.txt" --dir /tmp --clobber
           gh api "repos/apojomovsky/epic-hal/contents/epic-common/manifest/modules.toml?ref=${hal_tag}" \
@@ -145,9 +164,11 @@ jobs:
         if: steps.diff.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CC_TAG: ${{ steps.tags.outputs.cc_tag }}
+          HAL_TAG: ${{ steps.tags.outputs.hal_tag }}
         run: |
-          cc_tag="${{ steps.tags.outputs.cc_tag }}"
-          hal_tag="${{ steps.tags.outputs.hal_tag }}"
+          cc_tag="$CC_TAG"
+          hal_tag="$HAL_TAG"
           # A fresh, timestamped branch per run rather than a shared
           # rolling one: this repo's own CLAUDE.md forbids force-pushing
           # a branch that already exists on the remote without an
