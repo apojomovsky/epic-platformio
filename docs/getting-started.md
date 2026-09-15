@@ -245,12 +245,14 @@ Three shapes exist today:
 
 - **epic-cc only** (most devices): epic-hal doesn't cover this part yet.
 - **Both toolchains**: epic-cc and epic-hal both cover it; `framework =
-  epichal` works under either, once framework-epichal's package
-  actually bundles that device's family (PIO-7; some newer families are
-  registered but not bundled yet, and fail loudly naming the gap).
+  epichal` works under either, once the family has HAL content to build
+  (some families are registered with zero HAL modules yet, or a module
+  that needs a peripheral driver epic-cc's conformant slice doesn't
+  carry, and fail loudly naming the gap rather than miscompiling).
 - **xc8 only**: epic-hal covers it but epic-cc's device registry doesn't
   (yet), e.g. some `pic16f88x` siblings.
 
-Re-run `scripts/gen_boards.py` (see its own `--help`) against fresher
-epic-cc/epic-hal inputs to regenerate the whole set; PIO-7 wires this
-into the release pipeline so it happens automatically.
+A scheduled `boards-refresh` workflow (PIO-7) regenerates this list
+against the latest epic-cc/epic-hal releases and opens a pull request
+when it changes; `scripts/gen_boards.py` (see its own `--help`) is also
+runnable by hand against fresher local inputs.

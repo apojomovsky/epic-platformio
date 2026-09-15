@@ -31,13 +31,39 @@ non-empty `url`; the existing 3 hand-authored boards already used
 boards follow the same scheme rather than leaving the field out, but
 this has not been individually confirmed to resolve for every part.
 
-**Not yet wired into the release pipeline** (PIO-7): regenerating
-`boards/*.json` today is a manual `scripts/gen_boards.py` run against
-locally fetched inputs. A board can therefore validly claim
-`framework = epichal` support for a family `framework-epichal`'s own
-package does not bundle yet (some newer families are registered in
-epic-hal but `package_framework.py` still only bundles 3); the build
-fails loudly naming that specific gap rather than silently miscompiling.
+**Wired into the release pipeline (PIO-7, epic-platformio#25).** A
+scheduled `boards-refresh` workflow regenerates `boards/*.json` against
+the latest epic-cc and epic-hal releases daily (also `workflow_dispatch`,
+pinnable to a specific tag pair), diffs the result against what's
+committed, and opens a pull request when it differs instead of ever
+committing to master directly, the same review gate as everything else
+in this repo. The PR body (`scripts/summarize_boards.py`) reports added,
+removed, and capability-changed boards, not a raw JSON diff. Each run
+pushes a fresh, timestamped branch (never force-pushes a shared one,
+per this repo's own no-force-push rule) and closes any earlier run's
+still-open PR as superseded rather than leaving two open at once. A
+`concurrency` group serializes overlapping runs (a schedule firing
+mid-`workflow_dispatch`, say) so two runs can never race to supersede
+each other's freshly opened PR.
+
+**[VERIFY]** Opening a PR from a workflow needs "Allow GitHub Actions
+to create and approve pull requests" enabled in this repo's own Actions
+settings; `boards-refresh.yml`'s `permissions:` block requests what it
+needs, but that repo-level toggle is outside any workflow file's
+control and has not been independently confirmed on.
+
+`scripts/package_framework.py` packages every family bundle a release
+actually publishes, discovered from each bundle's own
+`epic-hal-sources.json` `"family"` field rather than a hardcoded list
+(same for `package.yml`'s "framework" job, which now discovers the set
+of family bundles to download from the epic-hal release's own asset
+list before building). A board can still validly claim `framework =
+epichal` support for a family whose HAL content genuinely has nothing to
+build yet (e.g. a family manifest with zero HAL modules, or a module
+that calls into a peripheral driver the epic-cc conformant source slice
+doesn't include), `builder/main.py` fails loudly naming that gap at
+build time rather than silently miscompiling; this is a content gap for
+epic-hal to close per family, not a packaging-pipeline bug.
 
 ## Toolchain: xc8 lands as a fully supported alternate, never vendored
 

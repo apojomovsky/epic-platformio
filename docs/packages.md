@@ -71,7 +71,24 @@ packaging-only fix without a new compiler tag, pass the override:
 `-f epic_hal_version=v0.5.0` does the same for the framework package (with
 its own `-f framework_package_version=...` override for a packaging-only
 bump). Both inputs can be set in the same dispatch; the `framework` job
-waits on `toolchain` so the two never race to push to master.
+waits on `toolchain` so the two never race to push to master. The
+`framework` job discovers which family bundles that epic-hal tag actually
+published (`epic-hal-<family>-<tag>.tar.gz` assets on its GitHub Release)
+before downloading and packaging them, so a new family needs no change
+here (PIO-7, epic-platformio#25), only a `--tar` per family when calling
+`package_framework.py` by hand, as in the example above.
+
+## Keeping `boards/*.json` current
+
+A separate scheduled workflow, `boards-refresh.yml`, regenerates
+`boards/*.json` (`scripts/gen_boards.py`) against the latest epic-cc and
+epic-hal releases and opens a pull request when the result differs from
+what's committed (PIO-7, epic-platformio#25); see
+[`docs/platform-decisions.md`](platform-decisions.md) for the design.
+It runs independently of `package.yml` above: a board can list a
+toolchain/family combination before that family's package is actually
+cut, and the builder's own validation is what catches that gap at build
+time, not a dependency between these two workflows.
 
 Neither job stops at publishing the GitHub Release: each finishes by
 running `scripts/finish_release.sh`, which writes the new version back into

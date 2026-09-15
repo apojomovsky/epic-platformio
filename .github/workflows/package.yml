@@ -170,15 +170,43 @@ jobs:
           echo "pkg_ver=$pkg_ver" >> "$GITHUB_OUTPUT"
           echo "Resolved tag=$tag upstream=$upstream_ver package=$pkg_ver"
 
+      - name: Discover published family bundles
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${{ steps.ver.outputs.tag }}"
+          python3 - "$tag" <<'PY' > /tmp/families.txt
+          import json, subprocess, sys
+          tag = sys.argv[1]
+          out = subprocess.run(
+              ["gh", "release", "view", tag, "--repo", "apojomovsky/epic-hal", "--json", "assets"],
+              capture_output=True, text=True, check=True,
+          ).stdout
+          assets = json.loads(out)["assets"]
+          prefix, suffix = "epic-hal-", f"-{tag}.tar.gz"
+          families = sorted(
+              a["name"][len(prefix):-len(suffix)]
+              for a in assets
+              if a["name"].startswith(prefix) and a["name"].endswith(suffix)
+              and not a["name"].startswith("epic-hal-cli-")
+          )
+          if not families:
+              sys.exit(f"no family bundles found for {tag}")
+          print("\n".join(families))
+          PY
+          echo "resolved families:"
+          cat /tmp/families.txt
+
       - name: Download epic-hal family bundles
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tag="${{ steps.ver.outputs.tag }}"
-          gh release download "$tag" --repo apojomovsky/epic-hal \
-            --pattern "epic-hal-pic16f87xa-${tag}.tar.gz" \
-            --pattern "epic-hal-pic16f88x-${tag}.tar.gz" \
-            --pattern "epic-hal-pic18fxx5x-${tag}.tar.gz"
+          pattern_args=()
+          while read -r fam; do
+            pattern_args+=(--pattern "epic-hal-${fam}-${tag}.tar.gz")
+          done < /tmp/families.txt
+          gh release download "$tag" --repo apojomovsky/epic-hal "${pattern_args[@]}"
           ls -lh epic-hal-*.tar.gz
 
       - name: Checkout epic-hal for the manifest and epic-cc source slice
@@ -192,10 +220,12 @@ jobs:
           pkg_ver="${{ steps.ver.outputs.pkg_ver }}"
           tag="${{ steps.ver.outputs.tag }}"
           mkdir -p dist
+          tar_args=()
+          while read -r fam; do
+            tar_args+=(--tar "epic-hal-${fam}-${tag}.tar.gz")
+          done < /tmp/families.txt
           python3 scripts/package_framework.py \
-            --tar "epic-hal-pic16f87xa-${tag}.tar.gz" \
-            --tar "epic-hal-pic16f88x-${tag}.tar.gz" \
-            --tar "epic-hal-pic18fxx5x-${tag}.tar.gz" \
+            "${tar_args[@]}" \
             --manifest /tmp/epic-hal-src/epic-common/manifest/modules.toml \
             --hal-repo /tmp/epic-hal-src \
             --version "$pkg_ver" \
@@ -205,13 +235,36 @@ jobs:
       - name: Smoke test from repacked framework package
         run: |
           pkg_ver="${{ steps.ver.outputs.pkg_ver }}"
+          tag="${{ steps.ver.outputs.tag }}"
           tmp="$(mktemp -d)"
           tar -xzf "dist/framework-epichal-${pkg_ver}.tar.gz" -C "$tmp"
           python3 -m json.tool "$tmp/package.json" >/dev/null
-          for fam in pic16f87xa pic16f88x pic18fxx5x; do
-            test -d "$tmp/${fam}-hal" || { echo "missing ${fam}-hal dir"; exit 1; }
+          while read -r fam; do
             test -f "$tmp/epic-hal-sources-${fam}.json" || { echo "missing epic-hal-sources-${fam}.json"; exit 1; }
-          done
+          done < /tmp/families.txt
+
+          # Independent re-check straight from each downloaded bundle's
+          # own raw content (not package_framework.py's bookkeeping) that
+          # every top-level entry it contributed actually made it into
+          # the built package: workflow-level defense in depth against a
+          # regression in the script's own union copy, redundant with
+          # its internal validate() on purpose.
+          skip_names="$(python3 -c "
+          import sys; sys.path.insert(0, 'scripts')
+          import package_framework as m
+          print('\n'.join(sorted(m._SKIP_TOP_LEVEL)))
+          ")"
+          while read -r fam; do
+            bundle_dir="$(mktemp -d)"
+            tar -xzf "epic-hal-${fam}-${tag}.tar.gz" -C "$bundle_dir"
+            bundle_top="$(find "$bundle_dir" -mindepth 1 -maxdepth 1 -type d)"
+            for entry in "$bundle_top"/*; do
+              name="$(basename "$entry")"
+              grep -qxF "$name" <<< "$skip_names" && continue
+              test -e "$tmp/$name" || { echo "missing ${fam}'s own top-level entry: $name"; exit 1; }
+            done
+          done < /tmp/families.txt
+
           echo "smoke passed: $(find "$tmp" -mindepth 1 -maxdepth 1 | wc -l) top-level entries"
 
       - uses: actions/upload-artifact@v4

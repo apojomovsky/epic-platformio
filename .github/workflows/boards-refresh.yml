@@ -1,0 +1,209 @@
+name: boards-refresh
+
+# Keeps boards/*.json (scripts/gen_boards.py, PIO-6) in sync with
+# epic-cc/epic-hal releases (PIO-7, epic-platformio#25): regenerates and
+# opens a PR on a diff, never commits to master directly. See
+# docs/platform-decisions.md for the design and the [VERIFY] note on the
+# repo's own "Allow GitHub Actions to create pull requests" setting.
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+    inputs:
+      epic_cc_tag:
+        description: "epic-cc tag to regenerate against (default: latest release)"
+        required: false
+        type: string
+      epic_hal_tag:
+        description: "epic-hal tag to regenerate against (default: latest release)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# Serializes overlapping runs (a schedule firing mid-workflow_dispatch)
+# so two runs never race to list/close/open PRs against each other.
+concurrency:
+  group: boards-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve upstream tags
+        id: tags
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Indirected through env instead of spliced into the script
+          # text via ${{ inputs.* }}: a workflow_dispatch input is
+          # attacker-controlled free text, and template-expanding it
+          # directly into `run:` is the standard GitHub Actions script-
+          # injection hole. As an env var, bash sees it as one opaque
+          # value, never as shell syntax.
+          EPIC_CC_TAG_INPUT: ${{ inputs.epic_cc_tag }}
+          EPIC_HAL_TAG_INPUT: ${{ inputs.epic_hal_tag }}
+        run: |
+          cc_tag="$EPIC_CC_TAG_INPUT"
+          if [ -z "$cc_tag" ]; then
+            cc_tag="$(gh release list --repo apojomovsky/epic-cc --exclude-drafts --exclude-pre-releases \
+              --limit 1 --json tagName --jq '.[0].tagName')"
+          fi
+          hal_tag="$EPIC_HAL_TAG_INPUT"
+          if [ -z "$hal_tag" ]; then
+            hal_tag="$(gh release list --repo apojomovsky/epic-hal --exclude-drafts --exclude-pre-releases \
+              --limit 1 --json tagName --jq '.[0].tagName')"
+          fi
+          if [ -z "$cc_tag" ] || [ -z "$hal_tag" ]; then
+            echo "::error::could not resolve a release tag for epic-cc and/or epic-hal"
+            exit 1
+          fi
+          # A tag flows into later steps' git/gh CLI calls (git clone
+          # --branch, gh release download, gh api ...?ref=) as a bare
+          # positional argument: even passed through env instead of
+          # spliced into script text, a value starting with `-` is still
+          # argument-injectable (git clone --upload-pack=... is a known
+          # RCE vector), and a workflow_dispatch tag input is
+          # attacker-controlled free text. A real git tag never needs
+          # more than this, so reject anything else outright.
+          tag_re='^[A-Za-z0-9][A-Za-z0-9._-]*$'
+          if ! [[ "$cc_tag" =~ $tag_re ]] || ! [[ "$hal_tag" =~ $tag_re ]]; then
+            echo "::error::rejecting unsafe-looking tag: cc_tag=$cc_tag hal_tag=$hal_tag"
+            exit 1
+          fi
+          echo "cc_tag=$cc_tag" >> "$GITHUB_OUTPUT"
+          echo "hal_tag=$hal_tag" >> "$GITHUB_OUTPUT"
+          echo "resolved epic-cc=$cc_tag epic-hal=$hal_tag"
+
+      - name: Snapshot committed boards/
+        run: cp -r boards /tmp/boards-before
+
+      - name: Fetch epic-cc device manifest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Same env indirection as the tag resolution step, and for the
+          # same reason: a step output that started life as a
+          # workflow_dispatch input must never be template-expanded
+          # straight into run: script text.
+          CC_TAG: ${{ steps.tags.outputs.cc_tag }}
+        run: |
+          cc_tag="$CC_TAG"
+          cc_ver="${cc_tag#v}"
+          gh release download "$cc_tag" --repo apojomovsky/epic-cc \
+            --pattern "epic-cc-${cc_ver}-x86_64-linux.zip" --dir /tmp --clobber
+          # devices.json sits inside the bundle's own top-level dir
+          # (epic-cc's Dockerfile release stage writes it there, not at
+          # the zip root), so unzip -p needs a glob, not a bare name.
+          # unzip -p silently concatenates every match instead of
+          # erroring on more than one, so count first: a lone match is
+          # what makes the glob safe to trust.
+          zip_path="/tmp/epic-cc-${cc_ver}-x86_64-linux.zip"
+          matches="$(unzip -Z1 "$zip_path" | grep -c '/devices\.json$' || true)"
+          if [ "$matches" != "1" ]; then
+            echo "::error::expected exactly one devices.json in $zip_path, found $matches"
+            exit 1
+          fi
+          unzip -p "$zip_path" "*/devices.json" > /tmp/devices.json
+          if [ ! -s /tmp/devices.json ]; then
+            echo "::error::epic-cc ${cc_tag} has no devices.json in its release bundle (CC-7 shipped after this tag was cut? try a newer --epic_cc_tag)"
+            exit 1
+          fi
+
+      - name: Fetch epic-hal parts map and manifest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HAL_TAG: ${{ steps.tags.outputs.hal_tag }}
+        run: |
+          hal_tag="$HAL_TAG"
+          gh release download "$hal_tag" --repo apojomovsky/epic-hal \
+            --pattern "parts.txt" --dir /tmp --clobber
+          gh api "repos/apojomovsky/epic-hal/contents/epic-common/manifest/modules.toml?ref=${hal_tag}" \
+            --jq '.content' | base64 -d > /tmp/modules.toml
+          test -s /tmp/parts.txt
+          test -s /tmp/modules.toml
+
+      - name: Regenerate boards
+        run: |
+          python3 scripts/gen_boards.py \
+            --devices-json /tmp/devices.json \
+            --parts-txt /tmp/parts.txt \
+            --modules-toml /tmp/modules.toml \
+            --out-dir boards
+
+      - name: Check for changes
+        id: diff
+        run: |
+          # `git diff` alone never sees a brand-new, still-untracked
+          # boards/pXXXXX.json (a genuinely new device is exactly the
+          # case this workflow exists to catch), so stage first and
+          # diff the index instead.
+          git add -A -- boards/
+          if git diff --cached --quiet -- boards/; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Summarize changes
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          python3 scripts/summarize_boards.py \
+            --before-dir /tmp/boards-before \
+            --after-dir boards \
+            --out /tmp/boards-diff.md
+          cat /tmp/boards-diff.md
+
+      - name: Open pull request
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CC_TAG: ${{ steps.tags.outputs.cc_tag }}
+          HAL_TAG: ${{ steps.tags.outputs.hal_tag }}
+        run: |
+          cc_tag="$CC_TAG"
+          hal_tag="$HAL_TAG"
+          # A fresh, timestamped branch per run rather than a shared
+          # rolling one: this repo's own CLAUDE.md forbids force-pushing
+          # a branch that already exists on the remote without an
+          # explicit human go-ahead (it can drop a maintainer's own edit
+          # to a still-open boards-refresh PR with no conflict signal),
+          # so nothing here ever needs to rewrite history to land a
+          # second run's regeneration.
+          branch="boards-refresh-$(date -u +%Y%m%d%H%M%S)"
+
+          {
+            echo "Regenerated \`boards/*.json\` (\`scripts/gen_boards.py\`) against:"
+            echo "- epic-cc [$cc_tag](https://github.com/apojomovsky/epic-cc/releases/tag/$cc_tag)"
+            echo "- epic-hal [$hal_tag](https://github.com/apojomovsky/epic-hal/releases/tag/$hal_tag)"
+            echo
+            cat /tmp/boards-diff.md
+          } > /tmp/pr-body.md
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add -A -- boards/
+          git commit -m "chore(boards): regenerate from epic-cc ${cc_tag} / epic-hal ${hal_tag}"
+          git push origin "$branch"
+
+          new_url="$(gh pr create --head "$branch" \
+            --title "chore(boards): regenerate from upstream releases" \
+            --body-file /tmp/pr-body.md)"
+          echo "opened $new_url"
+
+          # At most one boards-refresh PR open at a time: close any
+          # earlier run's still-open PR rather than leaving it to go
+          # stale, pointing reviewers at the fresher one.
+          gh pr list --state open --json number,headRefName \
+              --jq '.[] | select(.headRefName | startswith("boards-refresh-")) | select(.headRefName != "'"$branch"'") | .number' |
+            while read -r old; do
+              gh pr comment "$old" --body "Superseded by a fresher regeneration: $new_url"
+              gh pr close "$old"
+            done
