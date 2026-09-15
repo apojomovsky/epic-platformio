@@ -60,8 +60,9 @@ pio run
 
 That produces `firmware.hex` in `.pio/build/epic8/`. Full walkthrough,
 including wiring in the HAL, is in
-[`docs/getting-started.md`](docs/getting-started.md); four worked examples
-(three families, plus one using epic-hal's tick module) live under
+[`docs/getting-started.md`](docs/getting-started.md); eight worked examples,
+the same four again under each toolchain (blink and epic-tick plus GPIO),
+live under
 [`examples/`](examples/).
 
 ## What you get

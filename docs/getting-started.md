@@ -120,7 +120,9 @@ EPIC_CONFIG("osc=hs, xtal_hz=4000000, cpudiv=div1, plldiv=noprescale, usbdiv=off
 ## XC8
 
 `board_build.toolchain = xc8` builds with MPLAB XC8 instead of epic-cc, on
-any of the 3 boards above, with or without `framework = epichal`:
+any board whose capability table row lists xc8 (both-toolchain and xc8-only
+rows in [Supported parts](#supported-parts)), with or without
+`framework = epichal`:
 
 ```ini
 ; platformio.ini
