@@ -2,8 +2,10 @@
 
 `platform-epic8` (registry id `epic8`) builds a PlatformIO project with
 [epic-cc](https://github.com/apojomovsky/epic-cc), the open-source
-whole-program C compiler for PIC14/PIC18, instead of Microchip's
-licence-gated XC8. Nothing is downloaded from Microchip's servers.
+whole-program C compiler for PIC14/PIC18, as the default toolchain; no
+Microchip download is needed on that path. On the same boards it also
+supports [MPLAB XC8](#xc8) as a fully supported alternate toolchain:
+`board_build.toolchain = xc8` drives your own installed XC8.
 
 ## Install the platform
 
@@ -118,7 +120,9 @@ EPIC_CONFIG("osc=hs, xtal_hz=4000000, cpudiv=div1, plldiv=noprescale, usbdiv=off
 ## XC8
 
 `board_build.toolchain = xc8` builds with MPLAB XC8 instead of epic-cc, on
-any of the 3 boards above, with or without `framework = epichal`:
+any board whose capability table row lists xc8 (both-toolchain and xc8-only
+rows in [Supported parts](#supported-parts)), with or without
+`framework = epichal`:
 
 ```ini
 ; platformio.ini
@@ -241,18 +245,14 @@ epic-hal doesn't cover the device at all). Picking a combination a board
 doesn't support fails the build with a message naming what it does
 support, rather than a silent wrong build.
 
-Three shapes exist today:
+The counts per shape reflect the generated set:
 
-- **epic-cc only** (most devices): epic-hal doesn't cover this part yet.
-- **Both toolchains**: epic-cc and epic-hal both cover it; `framework =
-  epichal` works under either, once the family has HAL content to build
-  (some families are registered with zero HAL modules yet, or a module
-  that needs a peripheral driver epic-cc's conformant slice doesn't
-  carry, and fail loudly naming the gap rather than miscompiling).
-- **xc8 only**: epic-hal covers it but epic-cc's device registry doesn't
-  (yet), e.g. some `pic16f88x` siblings.
+| Shape | What it means | Example boards |
+|---|---|---|
+| epic-cc only (most devices) | builds with the default epic-cc toolchain; no XC8 support, no epic-hal framework | `p10f320`, `p12f509`, `p16f54` |
+| both toolchains | builds with epic-cc or xc8; `framework = epichal` works under either, once framework-epichal's package actually bundles that device's family (PIO-7; some newer families are registered but not bundled yet, and fail loudly naming the gap) | `p16f627a`, `p16f877a`, `p16f887`, `p18f4550` |
+| xc8 only | builds only with your own installed XC8; epic-hal covers it but epic-cc's device registry doesn't (yet), e.g. some `pic16f88x` siblings | `p16f882`, `p16f883`, `p16f884`, `p16f886` |
 
-A scheduled `boards-refresh` workflow (PIO-7) regenerates this list
-against the latest epic-cc/epic-hal releases and opens a pull request
-when it changes; `scripts/gen_boards.py` (see its own `--help`) is also
-runnable by hand against fresher local inputs.
+Re-run `scripts/gen_boards.py` (see its own `--help`) against fresher
+epic-cc/epic-hal inputs to regenerate the whole set; PIO-7 wires this
+into the release pipeline so it happens automatically.

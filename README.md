@@ -7,11 +7,11 @@
 
 <h1 align="center">platform-epic8</h1>
 
-<p align="center"><em>pio run for 8-bit PIC. No Microchip download, no XC8.</em></p>
+<p align="center"><em>pio run for 8-bit PIC. epic-cc is the default toolchain; MPLAB XC8 is a fully supported alternate.</em></p>
 
 <p align="center">
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![CI](https://github.com/apojomovsky/epic-platformio/actions/workflows/ci.yml/badge.svg)](https://github.com/apojomovsky/epic-platformio/actions/workflows/ci.yml) [![Toolchain: epic-cc](https://img.shields.io/badge/toolchain-epic--cc-blue.svg)](https://github.com/apojomovsky/epic-cc) [![HAL: epic-hal](https://img.shields.io/badge/HAL-epic--hal-blue.svg)](https://github.com/apojomovsky/epic-hal) [![status: early](https://img.shields.io/badge/status-early-yellow.svg)](#status)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![CI](https://github.com/apojomovsky/epic-platformio/actions/workflows/ci.yml/badge.svg)](https://github.com/apojomovsky/epic-platformio/actions/workflows/ci.yml) [![Toolchain: epic-cc](https://img.shields.io/badge/toolchain-epic--cc-blue.svg)](https://github.com/apojomovsky/epic-cc) [![Toolchain: MPLAB XC8](https://img.shields.io/badge/toolchain-MPLAB%20XC8-green.svg)](https://www.microchip.com/mpgb/xc8.html) [![HAL: epic-hal](https://img.shields.io/badge/HAL-epic--hal-blue.svg)](https://github.com/apojomovsky/epic-hal) [![status: early](https://img.shields.io/badge/status-early-yellow.svg)](#status)
 
 </p>
 
@@ -21,7 +21,11 @@ so far meant leaving it for Microchip's licence-gated MPLAB X and XC8.
 PIC14/PIC18 project with [epic-cc](https://github.com/apojomovsky/epic-cc), a
 real open-source compiler, and wires in
 [epic-hal](https://github.com/apojomovsky/epic-hal) as an optional framework.
-`pio run`, and nothing ever touches Microchip's servers.
+`pio run` just works with epic-cc, and no Microchip download is needed for
+that default path. And where a device or workflow needs it, the same project
+builds with MPLAB XC8 as a fully supported alternate toolchain: set
+`board_build.toolchain = xc8` and the platform drives your own installed XC8
+instead.
 
 ## Quickstart
 
@@ -56,17 +60,23 @@ pio run
 
 That produces `firmware.hex` in `.pio/build/epic8/`. Full walkthrough,
 including wiring in the HAL, is in
-[`docs/getting-started.md`](docs/getting-started.md); four worked examples
-(three families, plus one using epic-hal's tick module) live under
+[`docs/getting-started.md`](docs/getting-started.md); eight worked examples,
+the same four again under each toolchain (blink and epic-tick plus GPIO),
+live under
 [`examples/`](examples/).
 
 ## What you get
 
 - **A familiar workflow.** `platformio.ini` + `pio run`, the same shape as
-  every other PlatformIO platform: no MPLAB X, no separate toolchain install.
-- **A real compiler underneath.** [epic-cc](https://github.com/apojomovsky/epic-cc)
-  owns every stage from C to Intel HEX; this repo is just the PlatformIO glue
-  (platform manifest, SCons builder, board definitions).
+  every other PlatformIO platform: no MPLAB X, no separate toolchain install
+  on the epic-cc default path. XC8 users set `board_build.toolchain = xc8`
+  and use their existing install.
+- **A real compiler underneath.** The default toolchain,
+  [epic-cc](https://github.com/apojomovsky/epic-cc), owns every stage from C
+  to Intel HEX with no Microchip download; this repo is just the PlatformIO
+  glue (platform manifest, SCons builder, board definitions). With
+  `board_build.toolchain = xc8`, the glue drives your installed MPLAB XC8
+  instead.
 - **The HAL is one line away.** `framework = epichal` pulls in
   [epic-hal](https://github.com/apojomovsky/epic-hal)'s register-level drivers
   and module shelf, picked with `-DEPIC_HAL_MODULES`.
@@ -85,8 +95,9 @@ set.
 
 ## Status
 
-**Early.** Building works end-to-end today: `pio run` compiles any
-supported part with no Microchip download. Flashing does not yet:
+**Early.** Building works end-to-end today: `pio run` compiles a supported
+part, with epic-cc (no Microchip download on that path) or with MPLAB XC8
+as the alternate. Flashing does not yet:
 `pio run -t upload` isn't wired to a programmer, and HEX size reporting isn't
 wired to `pio run -t size`. Both are open work, tracked in
 [`docs/platform-decisions.md`](docs/platform-decisions.md) and the
