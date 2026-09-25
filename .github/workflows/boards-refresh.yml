@@ -82,8 +82,10 @@ jobs:
           echo "hal_tag=$hal_tag" >> "$GITHUB_OUTPUT"
           echo "resolved epic-cc=$cc_tag epic-hal=$hal_tag"
 
-      - name: Snapshot committed boards/
-        run: cp -r boards /tmp/boards-before
+      - name: Snapshot committed boards
+        run: |
+          cp -r boards /tmp/boards-before
+          cp -r boards-experimental /tmp/boards-experimental-before
 
       - name: Fetch epic-cc device manifest
         env:
@@ -134,8 +136,7 @@ jobs:
           python3 scripts/gen_boards.py \
             --devices-json /tmp/devices.json \
             --parts-txt /tmp/parts.txt \
-            --modules-toml /tmp/modules.toml \
-            --out-dir boards
+            --modules-toml /tmp/modules.toml
 
       - name: Check for changes
         id: diff
@@ -144,8 +145,8 @@ jobs:
           # boards/pXXXXX.json (a genuinely new device is exactly the
           # case this workflow exists to catch), so stage first and
           # diff the index instead.
-          git add -A -- boards/
-          if git diff --cached --quiet -- boards/; then
+          git add -A -- boards/ boards-experimental/
+          if git diff --cached --quiet -- boards/ boards-experimental/; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -157,6 +158,8 @@ jobs:
           python3 scripts/summarize_boards.py \
             --before-dir /tmp/boards-before \
             --after-dir boards \
+            --before-experimental-dir /tmp/boards-experimental-before \
+            --after-experimental-dir boards-experimental \
             --out /tmp/boards-diff.md
           cat /tmp/boards-diff.md
 
@@ -179,7 +182,7 @@ jobs:
           branch="boards-refresh-$(date -u +%Y%m%d%H%M%S)"
 
           {
-            echo "Regenerated \`boards/*.json\` (\`scripts/gen_boards.py\`) against:"
+            echo "Regenerated \`boards/*.json\` and \`boards-experimental/*.json\` (\`scripts/gen_boards.py\`) against:"
             echo "- epic-cc [$cc_tag](https://github.com/apojomovsky/epic-cc/releases/tag/$cc_tag)"
             echo "- epic-hal [$hal_tag](https://github.com/apojomovsky/epic-hal/releases/tag/$hal_tag)"
             echo
@@ -189,7 +192,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$branch"
-          git add -A -- boards/
+          git add -A -- boards/ boards-experimental/
           git commit -m "chore(boards): regenerate from epic-cc ${cc_tag} / epic-hal ${hal_tag}"
           git push origin "$branch"
 

@@ -13,11 +13,21 @@
     ]
   },
   "name": "Microchip PIC16F877A",
+  "support": "simulator",
   "upload": {
+    "devices": {
+      "minipro": "PIC16F877A",
+      "picpro": "16F877A",
+      "pk2cmd": "PIC16F877A"
+    },
+    "hazards": {
+      "bandgap_bits": null,
+      "lvp_scheme": "pgm_pin",
+      "osccal_word": null,
+      "pgm_pin": "RB3"
+    },
     "maximum_ram_size": 368,
     "maximum_size": 16384,
-    "minipro_device": "PIC16F877A",
-    "pk2cmd_device": "PIC16F877A",
     "protocol": "minipro"
   },
   "url": "https://www.microchip.com/en-us/product/PIC16F877A",

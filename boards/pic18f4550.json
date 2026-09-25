@@ -13,11 +13,21 @@
     ]
   },
   "name": "Microchip PIC18F4550",
+  "support": "simulator",
   "upload": {
+    "devices": {
+      "minipro": "PIC18F4550",
+      "picpro": "18F4550",
+      "pk2cmd": "PIC18F4550"
+    },
+    "hazards": {
+      "bandgap_bits": null,
+      "lvp_scheme": "pgm_pin",
+      "osccal_word": null,
+      "pgm_pin": "RB5"
+    },
     "maximum_ram_size": 2048,
     "maximum_size": 32768,
-    "minipro_device": "PIC18F4550",
-    "pk2cmd_device": "PIC18F4550",
     "protocol": "minipro"
   },
   "url": "https://www.microchip.com/en-us/product/PIC18F4550",

@@ -412,11 +412,41 @@ def _upload_minipro(source):
             "docs/getting-started.md#upload.\n"
         )
         return 1
-    device = board.get("upload.minipro_device", "")
+
+
+def _device_name(protocol, tool):
+    """The name `tool` expects for this board's part, from `upload.devices`.
+
+    Curated boards (docs/46 D-8) carry one entry per tool that supports the
+    part. A protocol whose tool has no entry is refused naming the tools
+    that do, so a picpro upload of a 16F887 fails here rather than inside
+    the programmer with an unknown-device message.
+    """
+    devices = board.get("upload.devices", {})
+    device = devices.get(tool, "")
     if not device:
         sys.stderr.write(
-            "Error: board %s has no upload.minipro_device\n" % board.id
+            "Error: board %s has no upload.devices.%s, so protocol %r "
+            "cannot flash it. Tools with an entry: %s\n"
+            % (board.id, tool, protocol, ", ".join(sorted(devices)) or "(none)")
         )
+        return None
+    return device
+
+
+def _upload_minipro(source):
+    binary = os.environ.get("EPIC8_MINIPRO_PATH") or shutil.which("minipro")
+    if not binary:
+        sys.stderr.write(
+            "Error: minipro not found on PATH. Build it from "
+            "https://gitlab.com/DavidGriffith/minipro (no Debian/Ubuntu "
+            "package exists) and either put it on PATH or point "
+            "EPIC8_MINIPRO_PATH at the binary. See "
+            "docs/getting-started.md#upload.\n"
+        )
+        return 1
+    device = _device_name("minipro", "minipro")
+    if device is None:
         return 1
     cmd = [binary, "-p", device, "-w", str(source[0])]
     print("minipro %s" % " ".join(cmd[1:]))
@@ -434,11 +464,8 @@ def _upload_pk2cmd(source):
             "docs/getting-started.md#upload.\n"
         )
         return 1
-    device = board.get("upload.pk2cmd_device", "")
-    if not device:
-        sys.stderr.write(
-            "Error: board %s has no upload.pk2cmd_device\n" % board.id
-        )
+    device = _device_name("pk2cmd", "pk2cmd")
+    if device is None:
         return 1
     # `pk2cmd -P<part> -F <hex> -M -E` programs the whole chip (program +
     # config, and erase first), the same one-shot shape minipro's `-w` uses.

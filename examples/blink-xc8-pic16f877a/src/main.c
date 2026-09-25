@@ -1,6 +1,6 @@
 /*
  * Bare blink for the PIC16F877A, xc8 toolchain: no HAL, no framework. The
- * xc8 compiler path alone is the point, the same role blink-p16f877a
+ * xc8 compiler path alone is the point, the same role blink-pic16f877a
  * plays for epic-cc. Config words are XC8's own #pragma config, not
  * EPIC_CONFIG (docs/getting-started.md#xc8), since a project under
  * board_build.toolchain = xc8 is a plain XC8 project. The LED is driven

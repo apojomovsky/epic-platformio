@@ -1,0 +1,29 @@
+{
+  "build": {
+    "framework_epichal_toolchains": [],
+    "mcu": "p12f675",
+    "toolchains": [
+      "epic-cc"
+    ]
+  },
+  "name": "Microchip PIC12F675",
+  "support": "simulator",
+  "upload": {
+    "devices": {
+      "minipro": "PIC12F675",
+      "picpro": "12F675",
+      "pk2cmd": "PIC12F675"
+    },
+    "hazards": {
+      "bandgap_bits": "13:12",
+      "lvp_scheme": "none",
+      "osccal_word": "0x3FF",
+      "pgm_pin": null
+    },
+    "maximum_ram_size": 64,
+    "maximum_size": 2046,
+    "protocol": "minipro"
+  },
+  "url": "https://www.microchip.com/en-us/product/PIC12F675",
+  "vendor": "Microchip"
+}

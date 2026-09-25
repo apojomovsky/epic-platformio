@@ -25,7 +25,7 @@ platformio platform install https://github.com/apojomovsky/epic-platformio
 ; platformio.ini
 [env:epic8]
 platform = epic8
-board = p16f877a
+board = pic16f877a
 ```
 
 ```c
@@ -58,7 +58,7 @@ and pick the modules with `-DEPIC_HAL_MODULES`:
 ```ini
 [env:epic8]
 platform = epic8
-board = p16f877a
+board = pic16f877a
 framework = epichal
 build_flags = -DEPIC_HAL_MODULES=tick
 ```
@@ -89,14 +89,14 @@ buildable from a clean checkout:
 
 | Example | Board | What it proves |
 |---|---|---|
-| `blink-p16f877a` | PIC16F877A | the compiler path alone |
-| `blink-p16f887` | PIC16F887 | a new device on a supported core |
-| `blink-p18f4550` | PIC18F4550 | the PIC18 backend |
-| `hal-tick-p16f877a` | PIC16F877A | epic-tick plus GPIO, the integration proof |
-| `blink-xc8-p16f877a` | PIC16F877A | the xc8 toolchain path alone ([XC8](#xc8)) |
-| `blink-xc8-p16f887` | PIC16F887 | xc8 on a new device on a supported core |
-| `blink-xc8-p18f4550` | PIC18F4550 | xc8 on the PIC18 backend |
-| `hal-tick-xc8-p16f877a` | PIC16F877A | epic-tick plus GPIO under xc8 |
+| `blink-pic16f877a` | PIC16F877A | the compiler path alone |
+| `blink-pic16f887` | PIC16F887 | a new device on a supported core |
+| `blink-pic18f4550` | PIC18F4550 | the PIC18 backend |
+| `hal-tick-pic16f877a` | PIC16F877A | epic-tick plus GPIO, the integration proof |
+| `blink-xc8-pic16f877a` | PIC16F877A | the xc8 toolchain path alone ([XC8](#xc8)) |
+| `blink-xc8-pic16f887` | PIC16F887 | xc8 on a new device on a supported core |
+| `blink-xc8-pic18f4550` | PIC18F4550 | xc8 on the PIC18 backend |
+| `hal-tick-xc8-pic16f877a` | PIC16F877A | epic-tick plus GPIO under xc8 |
 
 Copy one into a fresh directory and run `pio run`.
 
@@ -128,7 +128,7 @@ rows in [Supported parts](#supported-parts)), with or without
 ; platformio.ini
 [env:epic8]
 platform = epic8
-board = p16f877a
+board = pic16f877a
 board_build.toolchain = xc8
 ```
 
@@ -225,34 +225,55 @@ Linux. If `pk2cmd` reports the programmer as not found or not responding
 on first use, run the vendor's Windows updater once on a Windows machine,
 then the clone works under `pk2cmd` on Linux thereafter.
 
-The exact device-name mapping (`upload.minipro_device` / `upload.pk2cmd_device`
-in each board's JSON) is built from the tools' documented `-p <name>` /
-`-P<name>` invocation shape and has not been confirmed against real
-silicon; if `minipro -l` or `pk2cmd` reports a different spelling for your
-device, that is the bug to file. The full history, including the rejected
+The device-name mapping lives under `upload.devices.<tool>` in each
+curated board's JSON, one entry per tool that supports the part. The names
+come from each tool's own database (minipro's `infoic.xml`, pk2cmd's
+`PK2DeviceFile.dat`, picpro's `chipdata.cid`) rather than from the part
+name, and are in each tool's own matching case and package form, so they
+are correct by construction, but they have not been confirmed against real
+silicon at this point; if `minipro -l` or `pk2cmd` reports a different
+spelling for your device, that is the bug to file. The full history, including the rejected
 `ipecmd` alternative and the license discussion, is in
 [`docs/platform-decisions.md`](platform-decisions.md).
 
 ## Supported parts
 
-Every board under [`boards/`](../boards) is generated (PIO-6,
-`scripts/gen_boards.py`) from epic-cc's and epic-hal's own device
-registries, one board per device, at whatever capability level that
-device actually has: a board's `build.toolchains` lists which
-`board_build.toolchain` values it accepts, and `build.framework_epichal_toolchains`
-lists which of those also support `framework = epichal` (empty when
-epic-hal doesn't cover the device at all). Picking a combination a board
-doesn't support fails the build with a message naming what it does
-support, rather than a silent wrong build.
+Two directories, two promises (docs/46 D-2, amending the old "no curation"
+call):
 
-The counts per shape reflect the generated set:
+- **[`boards/`](../boards)** is the curated beta set: six boards, one per
+  beta part, each with sized memory, per-tool device names under
+  `upload.devices.<tool>`, the per-part programming hazards D-9 warns
+  about, and a `support` field (`simulator` until the D-11 silicon
+  sign-off flips that board's row to `hardware`). The ids follow the
+  chip's own name, the PlatformIO convention (`pic16f877a`), while
+  `build.mcu` keeps epic-cc's `p16f877a`.
+- **[`boards-experimental/`](../boards-experimental)** holds every other
+  device either registry knows, at whatever capability level it actually
+  has. PlatformIO does not read a platform subdirectory named that, so
+  these are copy-into-your-project files: copy the one you want into your
+  project's own `boards/` directory, which PlatformIO does read natively.
+  They carry no sizes, no device names and no support promise.
+
+Both sets are generated (PIO-6, `scripts/gen_boards.py`) from epic-cc's and
+epic-hal's own device registries, so a device added or dropped upstream
+lands without a hand edit. A board's `build.toolchains` lists which
+`board_build.toolchain` values it accepts, and
+`build.framework_epichal_toolchains` lists which of those also support
+`framework = epichal` (empty when epic-hal doesn't cover the device at
+all). Picking a combination a board doesn't support fails the build with a
+message naming what it does support, rather than a silent wrong build.
+
+The beta parts are `pic16f877a`, `pic16f887`, `pic16f628a`, `pic12f675`,
+`pic16f1937` and `pic18f4550`; the experimental set covers 110 more devices
+today, in three capability shapes:
 
 | Shape | What it means | Example boards |
 |---|---|---|
 | epic-cc only (most devices) | builds with the default epic-cc toolchain; no XC8 support, no epic-hal framework | `p10f320`, `p12f509`, `p16f54` |
-| both toolchains | builds with epic-cc or xc8; `framework = epichal` works under either, once framework-epichal's package actually bundles that device's family (PIO-7; some newer families are registered but not bundled yet, and fail loudly naming the gap) | `p16f627a`, `p16f877a`, `p16f887`, `p18f4550` |
+| both toolchains | builds with epic-cc or xc8; `framework = epichal` works under either, once framework-epichal's package actually bundles that device's family (PIO-7; some newer families are registered but not bundled yet, and fail loudly naming the gap) | `p16f627a`, `p16f628`, `p18f2455` |
 | xc8 only | builds only with your own installed XC8; epic-hal covers it but epic-cc's device registry doesn't (yet), e.g. some `pic16f88x` siblings | `p16f882`, `p16f883`, `p16f884`, `p16f886` |
 
 Re-run `scripts/gen_boards.py` (see its own `--help`) against fresher
-epic-cc/epic-hal inputs to regenerate the whole set; PIO-7 wires this
+epic-cc/epic-hal inputs to regenerate both sets; PIO-7 wires this
 into the release pipeline so it happens automatically.

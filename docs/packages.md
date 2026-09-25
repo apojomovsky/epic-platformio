@@ -78,12 +78,13 @@ before downloading and packaging them, so a new family needs no change
 here (PIO-7, epic-platformio#25), only a `--tar` per family when calling
 `package_framework.py` by hand, as in the example above.
 
-## Keeping `boards/*.json` current
+## Keeping the boards current
 
-A separate scheduled workflow, `boards-refresh.yml`, regenerates
-`boards/*.json` (`scripts/gen_boards.py`) against the latest epic-cc and
-epic-hal releases and opens a pull request when the result differs from
-what's committed (PIO-7, epic-platformio#25); see
+A separate scheduled workflow, `boards-refresh.yml`, regenerates the
+curated `boards/` set and `boards-experimental/` (`scripts/gen_boards.py`)
+against the latest epic-cc and epic-hal releases and opens a pull request
+when the result differs from what's committed (PIO-7,
+epic-platformio#25); see
 [`docs/platform-decisions.md`](platform-decisions.md) for the design.
 It runs independently of `package.yml` above: a board can list a
 toolchain/family combination before that family's package is actually
