@@ -15,6 +15,37 @@ upstream stays pinned. The same rule holds for `framework-epichal` against
 This is the point of D-6 in `epic-cc/docs/31-ecosystem-integration-design.md`:
 a board-definition fix landing here never forces a compiler release.
 
+## Host selection (PIO-1, epic-platformio#44)
+
+The upstream bundles are per host, and so are the packages built from them
+(`toolchain-epiccc-linux_x86_64-<ver>.tar.gz`,
+`toolchain-epiccc-windows_amd64-<ver>.tar.gz`). `platform.json` pins only
+one of them, the Linux asset, and `platform.py` remaps that pin to the
+running host's asset at build time (the reasoning is in
+[`docs/platform-decisions.md`](platform-decisions.md#distribution-platformpy-picks-the-hosts-toolchain-tools-arrive-on-selection)).
+
+Consequences for a release:
+
+- `packages/toolchain-epiccc/package.json` declares the real `system` list
+  (`linux_x86_64`, `windows_amd64`), and `scripts/package_toolchain.py`
+  stamps the matching subset into each artifact it builds, so the registry
+  and the package manager filter per host rather than offering every host
+  the Linux binary.
+- The remap answers on `packages`, so it also covers the global install
+  path (`platformio platform install <url>`), which has no project attached
+  and never calls `configure_default_packages`. A project's own
+  `platform_packages` pin is remapped too, since `packages` re-applies those
+  pins on every read.
+- A host with no bundle is not refused: the pinned URL is passed through
+  unchanged, and the toolchain package's own `system` list is what stops it
+  installing there. `packages` is read on uninstall, update and `pio pkg
+  list` as well as on install, so raising from it would leave the platform
+  unremovable and unlistable outside the beta hosts, and would break a
+  project with `board_build.toolchain = xc8`, which never needs the
+  epic-cc toolchain at all.
+- Adding a host (macOS, ARM) is one `TOOLCHAIN_HOSTS` entry, one real
+  `system` entry here, and a bundle to pack; the remap needs no new pin.
+
 ## Building
 
 ```bash

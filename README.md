@@ -124,6 +124,7 @@ Repository layout:
 
 ```
 platform.json      # platform metadata and package references
+platform.py         # per-host package selection (PlatformIO platform class)
 builder/main.py    # SCons builder: sources through epic-cc in one invocation
 boards/*.json       # board definitions for the supported parts
 packages/           # package manifests and the version mapping
