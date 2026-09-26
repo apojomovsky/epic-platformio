@@ -102,13 +102,13 @@ sets.
 
 **Early.** Building works end-to-end today: `pio run` compiles a supported
 part, with epic-cc (no Microchip download on that path) or with MPLAB XC8
-as the alternate. Flashing does not yet:
-`pio run -t upload` isn't wired to a programmer, and HEX size reporting isn't
-wired to `pio run -t size`. Both are open work, tracked in
-[`docs/platform-decisions.md`](docs/platform-decisions.md) and the
-[issue tracker](https://github.com/apojomovsky/epic-platformio/issues). Not
-yet published to the PlatformIO registry: install from the git URL above
-until it is.
+as the alternate. Flashing works through `pio run -t upload` (plus
+`erase` and `readback`) with a TL866 programmer, a PICkit, a K150, or a
+custom `upload_command`; see
+[`docs/getting-started.md#upload`](docs/getting-started.md#upload) and one
+guide per programmer under [`docs/programmers/`](docs/programmers/). HEX
+size reporting is not wired to `pio run -t size` yet. Not yet published
+to the PlatformIO registry: install from the git URL above until it is.
 
 <details>
 <summary><strong>Under the hood</strong>: how this repo fits with epic-cc and epic-hal</summary>

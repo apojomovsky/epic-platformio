@@ -32,13 +32,14 @@ TOOLCHAIN_HOSTS = {
 }
 
 # Upload protocol -> the epic8-tools package providing that programmer
-# (D-10). Keys are exactly the protocols builder/main.py dispatches today;
-# picpro joins both ends with epic-platformio#46. Activation below only
-# touches a package platform.json declares, so a name here is inert until
-# that package exists.
+# (D-10). Keys are the tool-driven protocols builder/main.py dispatches;
+# custom is dispatched there but maps to nothing, it is the project's own
+# upload_command. Activation below only touches a package platform.json
+# declares, so a name here is inert until that package exists.
 PROTOCOL_TOOL_PACKAGES = {
     "minipro": "tool-minipro",
     "pk2cmd": "tool-pk2cmd",
+    "picpro": "tool-picpro",
 }
 
 

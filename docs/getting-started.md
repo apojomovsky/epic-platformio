@@ -178,52 +178,48 @@ one.
 
 ## Upload
 
-`pio run -t upload` drives a **TL866A or TL866II Plus** universal
-programmer via [`minipro`](https://gitlab.com/DavidGriffith/minipro) (GPL,
-fully independent of Microchip) by default. TL866CS has no ICSP header and
-cannot be used. It can also drive a **PICkit2 / PICkit3 / "PICkit3.5"**
-clone via a `pk2cmd`-family tool (`pk2cmd-minus` / `PICKitminus`, the
-maintained forks that auto-detect and drive both PICkit2 and PICkit3,
-including the "PICkit3.5" clones sold on AliExpress, which speak the same
-PICkit3 protocol). Select it with `UPLOAD_PROTOCOL=pk2cmd` (or set
-`upload.protocol = pk2cmd` on the board).
+`pio run -t upload` flashes with the programmer named by `upload_protocol`.
+Each protocol resolves its tool from `EPIC8_*_PATH` first, then its tool
+package (installed automatically when the protocol is selected), then
+`PATH`.
 
-`minipro` has no Debian/Ubuntu package. Build it from source:
-
-```bash
-git clone https://gitlab.com/DavidGriffith/minipro.git
-cd minipro && make && sudo make install
-```
-
-`pk2cmd` has no Debian/Ubuntu package either. Build it from source (the
-`pk2cmd-minus` fork builds on Linux with `make`):
-
-```bash
-git clone https://github.com/cjacker/pk2cmd-minus.git
-cd pk2cmd-minus && make && sudo make install
-```
-
-Then, with the programmer's ICSP header wired to the target (or the
-target seated in a supported ZIF adapter):
+| Protocol | Programmers | Tool package |
+|---|---|---|
+| `minipro` (default) | XGecu T48, TL866II Plus (TL866CS has no ICSP header and cannot be used) | `tool-minipro` |
+| `pk2cmd` | PICkit2, PICkit3, PKOB, "PICkit3.5" clones | `tool-pk2cmd` |
+| `picpro` | Kitsrus K150 and siblings, P18A firmware only | `tool-picpro` |
+| `custom` | anything, through your own `upload_command` | none |
 
 ```bash
 pio run -t upload                 # minipro (default)
-UPLOAD_PROTOCOL=pk2cmd pio run -t upload   # pk2cmd-family tool
+pio run -t upload -e pickit       # an env with upload_protocol = pk2cmd
+pio run -t erase                  # bulk-erase the chip first
+pio run -t readback               # dump flash to .pio/build/<env>/readback.hex
 ```
 
-If the tool is not on `PATH`, point the platform at it explicitly:
+`upload_flags` appends extra tool arguments on every tool-driven protocol,
+`upload_port` names the K150 serial device for `picpro`:
 
-```bash
-EPIC8_MINIPRO_PATH=/path/to/minipro pio run -t upload
-EPIC8_PK2CMD_PATH=/path/to/pk2cmd UPLOAD_PROTOCOL=pk2cmd pio run -t upload
+```ini
+upload_protocol = picpro
+upload_port = /dev/ttyUSB0
+upload_flags = --icsp
 ```
 
-**PICkit3 clone firmware caveat.** Some PICkit3 clones need a one-time
-Windows-only firmware update ("scripting firmware") before any Linux tool
-can drive them at all; a `pk2cmd`-family tool cannot push that update on
-Linux. If `pk2cmd` reports the programmer as not found or not responding
-on first use, run the vendor's Windows updater once on a Windows machine,
-then the clone works under `pk2cmd` on Linux thereafter.
+`custom` runs `upload_command` verbatim with `$SOURCE` set to the firmware
+HEX. It defines only upload: there is no erase or readback command to run.
+
+```ini
+upload_protocol = custom
+upload_command = myprog --write $SOURCE
+```
+
+One guide per programmer covers wiring, firmware prerequisites, udev rules
+and a first flash: [`docs/programmers/minipro.md`](programmers/minipro.md),
+[`docs/programmers/pk2cmd.md`](programmers/pk2cmd.md),
+[`docs/programmers/picpro.md`](programmers/picpro.md). The rules live in
+[`udev/99-epic8.rules`](../udev/99-epic8.rules); install them before a
+first flash.
 
 The device-name mapping lives under `upload.devices.<tool>` in each
 curated board's JSON, one entry per tool that supports the part. The names
@@ -232,9 +228,9 @@ come from each tool's own database (minipro's `infoic.xml`, pk2cmd's
 name, and are in each tool's own matching case and package form, so they
 are correct by construction, but they have not been confirmed against real
 silicon at this point; if `minipro -l` or `pk2cmd` reports a different
-spelling for your device, that is the bug to file. The full history, including the rejected
-`ipecmd` alternative and the license discussion, is in
-[`docs/platform-decisions.md`](platform-decisions.md).
+spelling for your device, that is the bug to file. The full history,
+including the rejected `ipecmd` alternative and the license discussion, is
+in [`docs/platform-decisions.md`](platform-decisions.md).
 
 ## Supported parts
 
