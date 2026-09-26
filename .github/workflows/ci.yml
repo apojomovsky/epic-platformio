@@ -48,6 +48,14 @@ jobs:
             echo "no builder/ yet (PIO-1)"
           fi
 
+      - name: Byte-compile the platform class
+        run: |
+          if [ -f platform.py ]; then
+            python3 -m compileall -q platform.py
+          else
+            echo "no platform.py yet (PIO-1)"
+          fi
+
       - name: Byte-compile packaging scripts
         run: |
           if [ -d scripts ]; then

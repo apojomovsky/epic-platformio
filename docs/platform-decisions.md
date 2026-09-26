@@ -65,6 +65,62 @@ doesn't include), `builder/main.py` fails loudly naming that gap at
 build time rather than silently miscompiling; this is a content gap for
 epic-hal to close per family, not a packaging-pipeline bug.
 
+## Distribution: `platform.py` picks the host's toolchain, tools arrive on selection
+
+**Decision (PIO-1, epic-platformio#44).** `platform.py` is the one place a
+host-specific fact is resolved. It does two jobs and refuses nothing:
+
+- **One toolchain package per host, remapped from the `platform.json`
+  pin.** epic-cc ships a bundle per host while `platform.json` pins a
+  single download URL per package, so the pin names one host's asset and
+  `platform.py` swaps the host token in that asset's file name for the
+  running machine's, the shape Community-PIO-CH32V uses. `platform.json`
+  stays the only place a version is pinned (D-5, `docs/packages.md`) and
+  the remap is a pure function of it, so the two hosts cannot drift to two
+  versions the way two hand-kept pins would. Both Windows spellings
+  PlatformIO can report (`windows_amd64`, `windows_x86_64`) resolve to the
+  one Windows bundle this repo packs.
+
+  **The remap answers on the `packages` property, not in
+  `configure_default_packages`.** `PlatformBase.packages` rebuilds its dict
+  from the manifest and re-applies a project's `platform_packages` pins on
+  every read, so a value written into the manifest earlier is overwritten
+  by the pin on the next read, and the installer (which reads through
+  `get_package_spec`) would receive the pinned URL rather than the remapped
+  one. Answering on the property also covers the global install path
+  (`platformio platform install <url>`), which has no project attached and
+  so never calls `configure_default_packages` at all.
+
+  **A host with no bundle is passed through, not refused.** `packages` is
+  read on uninstall, update and `pio pkg list` as well as on install, so
+  raising there would leave the platform unremovable and unlistable outside
+  the beta hosts, and would break a project on
+  `board_build.toolchain = xc8`, which never needs the epic-cc toolchain.
+  What stops the Linux artifact installing on a non-Linux host is the
+  toolchain package's own `system` list.
+- **A programmer tool package is pulled only when the project selects its
+  protocol.** An explicit `upload_protocol` in the project's own
+  configuration activates the package `PROTOCOL_TOOL_PACKAGES` names for
+  it; the board's own `upload.protocol` default deliberately does not,
+  since every board names one and treating it as a selection would make a
+  plain `pio run` download a programmer the user may already have on PATH
+  (the bring-your-own-binary path, "Upload" below). `custom` maps to
+  nothing: it is the project's own `upload_command`.
+
+**The tool packages do not exist yet** (epic8-tools' `tool-minipro`,
+`tool-pk2cmd`, `tool-picpro`; epic-platformio#40..#43). The hook is the
+mapping plus a guard that only touches a package `platform.json` actually
+declares, so a protocol named there but not yet carried is a no-op and its
+build still finds the binary on `PATH`. The mapping names exactly the
+protocols `builder/main.py` dispatches today, so it cannot activate a
+package for a protocol the builder then rejects; `picpro` joins both ends
+with epic-platformio#46. Two rules for whoever publishes these entries:
+declare them with `"type": "tool"`, not `"uploader"`, because
+`PlatformBase.configure_default_packages` enables every `uploader`-typed
+package for any upload target and a `tool`-typed one stays under this
+class's control; and keep each entry's name equal to the value in
+`PROTOCOL_TOOL_PACKAGES`, or update that line with it.
+
 ## Toolchain: xc8 lands as a fully supported alternate, never vendored
 
 **Decision (PIO-4, epic-platformio#22).** `board_build.toolchain = xc8`
