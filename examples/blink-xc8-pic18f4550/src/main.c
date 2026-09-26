@@ -1,6 +1,6 @@
 /*
  * Bare blink for the PIC18F4550, xc8 toolchain: the PIC18 backend
- * counterpart to blink-p18f4550. Config words are XC8's own #pragma
+ * counterpart to blink-pic18f4550. Config words are XC8's own #pragma
  * config, not EPIC_CONFIG (docs/getting-started.md#xc8). PIC18 reads
  * back PORT (the pin state) rather than the output latch, so LAT is the
  * SFR to toggle, not PORT.

@@ -1,15 +1,47 @@
 # Platform decisions
 
-## Boards: generated from epic-cc/epic-hal's own registries, every device, no curation
+## Boards: generated from epic-cc/epic-hal's own registries, curated beta set plus `boards-experimental/`
+
+**Amended for the beta (PIO-2, epic-platformio#45; docs/46 D-2).** The
+original decision below generated one board per device into `boards/`, with
+no allowlist or denylist. The beta makes a support promise per board, which
+a generated list cannot back, so the set is now split in two:
+
+- **`boards/`** holds the six curated beta parts (`pic16f877a`,
+  `pic16f887`, `pic16f628a`, `pic12f675`, `pic16f1937`, `pic18f4550`), each
+  carrying what the registries do not know: `upload.maximum_size` and
+  `upload.maximum_ram_size` from epic-cc's device TOMLs, `upload.devices.<tool>`
+  with the name that tool itself matches on (minipro's `infoic.xml`,
+  pk2cmd's `PK2DeviceFile.dat`, picpro's `chipdata.cid`), the D-9 hazard
+  facts (`upload.hazards`: PGM pin or LVP scheme, the OSCCAL word, the
+  bandgap bits), and a `support` field (`simulator` until D-11's silicon
+  sign-off flips a green row to `hardware`, epic-platformio#52).
+- **`boards-experimental/`** holds every other device at whatever
+  capability level it has, and is documented and delivered as
+  copy-into-your-project files: PlatformIO reads a project-local `boards/`
+  natively and does not read a platform subdirectory other than `boards/`,
+  so nothing unverified is advertised in `pio boards`.
+
+The split is by device, and the generator decides it from one table
+(`scripts/gen_boards.py`'s `CURATED`), so a part promoted to the beta set
+is one entry there plus the facts behind it.
+
+**Curated ids follow the chip's own name** (PlatformIO's convention,
+`pic16f877a`), while `build.mcu` keeps epic-cc's p-prefixed device name
+(`p16f877a`), the split the builder already relies on. A curated board's
+`pic16f877a.json` and an experimental board's `p16f877a.json` therefore name
+the same device under two different file names; the generator never writes
+one device into both directories.
+
+**The rest of this section (generation, capability fields, the join key,
+the generated `url`, the PIO-7 wiring) is unchanged and applies to both
+sets.**
 
 **Decision (PIO-6, epic-platformio#24).** `boards/*.json` is generated
 (`scripts/gen_boards.py`) by joining epic-cc's device manifest (CC-7)
 against epic-hal's part-to-family map and per-family `epiccc_sources`
 declaration, one board per device either repo knows about, at whatever
-capability level it actually has. No allowlist or denylist: a device
-that would need curating out (e.g. a very low-resource baseline part) is
-a decision for the user's own `platformio.ini`, not this repo's board
-list.
+capability level it actually has.
 
 Each board's `build.toolchains` and `build.framework_epichal_toolchains`
 record the answer directly, and `builder/main.py` validates a project's
@@ -32,7 +64,8 @@ boards follow the same scheme rather than leaving the field out, but
 this has not been individually confirmed to resolve for every part.
 
 **Wired into the release pipeline (PIO-7, epic-platformio#25).** A
-scheduled `boards-refresh` workflow regenerates `boards/*.json` against
+scheduled `boards-refresh` workflow regenerates the curated `boards/` set
+and `boards-experimental/` against
 the latest epic-cc and epic-hal releases daily (also `workflow_dispatch`,
 pinnable to a specific tag pair), diffs the result against what's
 committed, and opens a pull request when it differs instead of ever
@@ -150,6 +183,21 @@ of; only `builder/main.py` never read them. XC8 support was therefore a
 builder gap, not a packaging or framework one.
 
 ## Upload: minipro (TL866) and pk2cmd (PICkit2/3) both landed
+
+**Device names moved under `upload.devices.<tool>` (PIO-2,
+epic-platformio#45; docs/46 D-8).** The three original boards carried
+`upload.minipro_device` / `upload.pk2cmd_device`; the curated set carries
+one map, `upload.devices.<tool>`, with an entry per tool that supports the
+part and none for a tool that does not (picpro has no 16F887 or 16F1xxx
+entry, so those two boards carry no `devices.picpro`). `builder/main.py`
+looks the name up there and refuses a protocol whose tool has no entry,
+naming the tools that do rather than letting the programmer report an
+unknown device. The per-part name is the exact spelling each tool matches
+on, checked against the tool's own database rather than derived from the
+part name: picpro lowercases its `-t` argument, minipro compares the
+comma-separated `name` field of an `infoic.xml` entry exactly (a per-package
+token such as `PIC16F1937@DIP40` when the part has no bare row), pk2cmd
+its 28-byte `PartName`.
 
 **Superseded 2026-09-05.** The original v1 call below rejected `pk2cmd`
 and `ipecmd` because both are Microchip's own tools, and the platform's

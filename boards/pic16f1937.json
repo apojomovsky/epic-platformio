@@ -1,0 +1,33 @@
+{
+  "build": {
+    "epichal_family": "pic16f193x",
+    "framework_epichal_toolchains": [
+      "epic-cc",
+      "xc8"
+    ],
+    "mcu": "p16f1937",
+    "toolchains": [
+      "epic-cc",
+      "xc8"
+    ]
+  },
+  "name": "Microchip PIC16F1937",
+  "support": "simulator",
+  "upload": {
+    "devices": {
+      "minipro": "PIC16F1937@DIP40",
+      "pk2cmd": "PIC16F1937"
+    },
+    "hazards": {
+      "bandgap_bits": null,
+      "lvp_scheme": "key_sequence",
+      "osccal_word": null,
+      "pgm_pin": null
+    },
+    "maximum_ram_size": 512,
+    "maximum_size": 16384,
+    "protocol": "minipro"
+  },
+  "url": "https://www.microchip.com/en-us/product/PIC16F1937",
+  "vendor": "Microchip"
+}

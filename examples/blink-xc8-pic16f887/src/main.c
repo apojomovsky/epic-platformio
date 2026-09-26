@@ -1,6 +1,6 @@
 /*
  * Bare blink for the PIC16F887, xc8 toolchain: same ISA as the 877A on
- * different device data, the xc8-path counterpart to blink-p16f887.
+ * different device data, the xc8-path counterpart to blink-pic16f887.
  * Config words are XC8's own #pragma config, not EPIC_CONFIG
  * (docs/getting-started.md#xc8). The LED is driven by writing the
  * PORTB/TRISB SFRs directly.

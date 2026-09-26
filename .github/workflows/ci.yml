@@ -22,7 +22,10 @@ jobs:
       - name: Lint JSON manifests
         run: |
           shopt -s nullglob
-          files=(boards/*.json)
+          files=()
+          for f in boards/*.json boards-experimental/*.json; do
+            files+=("$f")
+          done
           if [ -f platform.json ]; then
             files+=(platform.json)
           fi

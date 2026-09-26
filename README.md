@@ -37,7 +37,7 @@ platformio platform install https://github.com/apojomovsky/epic-platformio
 ; platformio.ini
 [env:epic8]
 platform = epic8
-board = p16f877a
+board = pic16f877a
 ```
 
 ```c
@@ -86,12 +86,17 @@ live under
 
 ## Supported parts
 
-[`boards/`](boards/) has one board per device either epic-cc or epic-hal
-supports (115 as of PIO-6), generated from both repos' own device
-registries rather than hand-curated: see
+[`boards/`](boards/) is the curated beta set: six boards, one per beta part
+(`pic16f877a`, `pic16f887`, `pic16f628a`, `pic12f675`, `pic16f1937`,
+`pic18f4550`), each carrying sizes, per-tool device names and the
+programming hazards its part needs warned about. Everything else either
+registry knows lives in
+[`boards-experimental/`](boards-experimental/), capability-only files you
+copy into your project's own `boards/`. Both sets are generated from the
+two upstream registries rather than hand-maintained; see
 [`docs/getting-started.md#supported-parts`](docs/getting-started.md#supported-parts)
 for what each board's capability fields mean and how to regenerate the
-set.
+sets.
 
 ## Status
 
@@ -112,7 +117,7 @@ Three repos, three jobs:
 
 | Piece | Repo | Role |
 |---|---|---|
-| `platform-epic8` | this repo | PlatformIO platform (registry id `epic8`): `platform.json`, `builder/main.py`, `boards/*.json` |
+| `platform-epic8` | this repo | PlatformIO platform (registry id `epic8`): `platform.json`, `builder/main.py`, `boards/` |
 | `toolchain-epiccc` | epic-cc | The compiler, packaged from epic-cc release bundles |
 | `framework-epichal` | epic-hal | The HAL and module shelf, packaged from epic-hal releases |
 
@@ -126,7 +131,8 @@ Repository layout:
 platform.json      # platform metadata and package references
 platform.py         # per-host package selection (PlatformIO platform class)
 builder/main.py    # SCons builder: sources through epic-cc in one invocation
-boards/*.json       # board definitions for the supported parts
+boards/             # the curated beta boards
+boards-experimental # generated copy-into-your-project boards
 packages/           # package manifests and the version mapping
 examples/           # worked examples, one per supported board
 docs/               # getting started and platform decisions

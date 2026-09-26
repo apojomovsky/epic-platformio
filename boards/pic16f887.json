@@ -13,11 +13,20 @@
     ]
   },
   "name": "Microchip PIC16F887",
+  "support": "simulator",
   "upload": {
+    "devices": {
+      "minipro": "PIC16F887",
+      "pk2cmd": "PIC16F887"
+    },
+    "hazards": {
+      "bandgap_bits": null,
+      "lvp_scheme": "pgm_pin",
+      "osccal_word": null,
+      "pgm_pin": "RB3"
+    },
     "maximum_ram_size": 368,
     "maximum_size": 16384,
-    "minipro_device": "PIC16F887",
-    "pk2cmd_device": "PIC16F887",
     "protocol": "minipro"
   },
   "url": "https://www.microchip.com/en-us/product/PIC16F887",

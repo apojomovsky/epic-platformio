@@ -92,7 +92,7 @@ jobs:
             # throwaway scratch project, never a real example directory.
             fw_url=$(python3 -c "import json; print(json.load(open(\"/repo/platform.json\"))[\"packages\"][\"framework-epichal\"][\"version\"])")
             mkdir -p /tmp/scratch
-            printf "[env:epic8]\nplatform = epic8\nboard = p16f877a\n" > /tmp/scratch/platformio.ini
+            printf "[env:epic8]\nplatform = epic8\nboard = pic16f877a\n" > /tmp/scratch/platformio.ini
             pio pkg install --tool "$fw_url" -d /tmp/scratch
 
             xc8_bin="/opt/microchip/xc8/v${XC8_VERSION}/bin/xc8-cc"
@@ -110,9 +110,9 @@ jobs:
             # all of them: one broken example must not hide a second,
             # unrelated regression in the ones after it in this list.
             failed=0
-            build_example blink-xc8-p16f877a Microchip.PIC16Fxxx_DFP || failed=1
-            build_example blink-xc8-p16f887 Microchip.PIC16Fxxx_DFP || failed=1
-            build_example blink-xc8-p18f4550 Microchip.PIC18Fxxxx_DFP || failed=1
-            build_example hal-tick-xc8-p16f877a Microchip.PIC16Fxxx_DFP || failed=1
+            build_example blink-xc8-pic16f877a Microchip.PIC16Fxxx_DFP || failed=1
+            build_example blink-xc8-pic16f887 Microchip.PIC16Fxxx_DFP || failed=1
+            build_example blink-xc8-pic18f4550 Microchip.PIC18Fxxxx_DFP || failed=1
+            build_example hal-tick-xc8-pic16f877a Microchip.PIC16Fxxx_DFP || failed=1
             exit "$failed"
           '

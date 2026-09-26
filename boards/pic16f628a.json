@@ -1,0 +1,34 @@
+{
+  "build": {
+    "epichal_family": "pic16f628a",
+    "framework_epichal_toolchains": [
+      "epic-cc",
+      "xc8"
+    ],
+    "mcu": "p16f628a",
+    "toolchains": [
+      "epic-cc",
+      "xc8"
+    ]
+  },
+  "name": "Microchip PIC16F628A",
+  "support": "simulator",
+  "upload": {
+    "devices": {
+      "minipro": "PIC16F628A",
+      "picpro": "16F628A",
+      "pk2cmd": "PIC16F628A"
+    },
+    "hazards": {
+      "bandgap_bits": null,
+      "lvp_scheme": "pgm_pin",
+      "osccal_word": null,
+      "pgm_pin": "RB4"
+    },
+    "maximum_ram_size": 224,
+    "maximum_size": 4096,
+    "protocol": "minipro"
+  },
+  "url": "https://www.microchip.com/en-us/product/PIC16F628A",
+  "vendor": "Microchip"
+}
