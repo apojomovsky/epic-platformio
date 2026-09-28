@@ -31,7 +31,7 @@ TOOLCHAIN_HOSTS = {
     "windows_x86_64": "windows_amd64",
 }
 
-# Upload protocol -> the epic8-tools package providing that programmer
+# Upload protocol -> the epic-tools package providing that programmer
 # (D-10). Keys are the tool-driven protocols builder/main.py dispatches;
 # custom is dispatched there but maps to nothing, it is the project's own
 # upload_command. Activation below only touches a package platform.json

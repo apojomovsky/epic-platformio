@@ -140,7 +140,7 @@ host-specific fact is resolved. It does two jobs and refuses nothing:
   (the bring-your-own-binary path, "Upload" below). `custom` maps to
   nothing: it is the project's own `upload_command`.
 
-**The tool packages exist** (epic8-tools' `tool-minipro`,
+**The tool packages exist** (epic-tools' `tool-minipro`,
 `tool-pk2cmd`, `tool-picpro`; epic-platformio#40..#43) and
 `platform.json` declares them with `"type": "tool"`, not `"uploader"`,
 because `PlatformBase.configure_default_packages` enables every
@@ -151,7 +151,7 @@ not yet carried is a no-op and its build still finds the binary on
 `PATH`. `picpro` joined both ends with epic-platformio#46. Two rules
 for whoever publishes these entries: keep each entry's name equal to
 the value in `PROTOCOL_TOOL_PACKAGES`, or update that line with it; and
-keep the versions pinned to the epic8-tools releases (those packages
+keep the versions pinned to the epic-tools releases (those packages
 are versioned there, not in `packages/versions.json`, whose checker
 covers this repo's own builds).
 
@@ -221,7 +221,7 @@ need a one-time Windows-only firmware update before any Linux tool can
 drive them, documented in `docs/getting-started.md#upload`.
 **Tools ship as tool packages, with a bring-your-own fallthrough**
 (epic-platformio#46). `tool-minipro`, `tool-pk2cmd` and `tool-picpro`
-are built and published by epic8-tools from pinned upstream tags;
+are built and published by epic-tools from pinned upstream tags;
 selecting the protocol pulls the package, and `EPIC8_*_PATH` or `PATH`
 overrides it. `picpro` runs under PlatformIO's own interpreter from the
 package's vendor dir; `minipro` needs `MINIPRO_HOME` pointed at the

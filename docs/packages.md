@@ -16,7 +16,7 @@ This is the point of D-6 in `epic-cc/docs/31-ecosystem-integration-design.md`:
 a board-definition fix landing here never forces a compiler release.
 
 The programmer tool packages (`tool-minipro`, `tool-pk2cmd`,
-`tool-picpro`) are the exception: epic8-tools versions and publishes
+`tool-picpro`) are the exception: epic-tools versions and publishes
 them, so `platform.json` pins their release URLs directly and
 `packages/versions.json` does not list them. The consistency checker
 only covers packages listed there.
