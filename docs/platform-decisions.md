@@ -211,7 +211,8 @@ independent their host-side tooling is from Microchip.
 
 | Device | Tool | License | Independent of Microchip |
 |---|---|---|---|
-:| PICkit2 / PICkit3 / "PICkit3.5" clones ("3.5" is clone-vendor branding for the PICkit3 protocol, not a Microchip designation) | [jaka-fi/pk2cmd](https://github.com/jaka-fi/pk2cmd) (`PK2DeviceFile.dat` ships in the package) | Microchip's own restrictive license | No, but the restriction reads as being about the *target chip* being genuine Microchip silicon, not the programmer's brand, and every board here targets genuine Microchip parts. Decided: full first-class support, not a bring-your-own-binary carve-out, revisited only if something concrete (redistribution terms on a specific fork) forces it. |
+| TL866A / TL866II Plus (not TL866CS, no ICSP header) | [`minipro`](https://gitlab.com/DavidGriffith/minipro) | GPL | Yes, fully (XGecu hardware, independent reimplementation) |
+| PICkit2 / PICkit3 / "PICkit3.5" clones ("3.5" is clone-vendor branding for the PICkit3 protocol, not a Microchip designation) | [jaka-fi/pk2cmd](https://github.com/jaka-fi/pk2cmd) (Microchip's own `PK2DeviceFile.dat` 1.62.14 ships in the package) | Microchip's own restrictive license | No, but the restriction reads as being about the *target chip* being genuine Microchip silicon, not the programmer's brand, and every board here targets genuine Microchip parts. Decided: full first-class support, not a bring-your-own-binary carve-out, revisited only if something concrete (redistribution terms on a specific fork) forces it. |
 
 `minipro`/TL866 landed first as the pathfinder (`epic-platformio#11`): the
 cleanest of the two, one unambiguous tool, no firmware-bootstrap gotchas.
@@ -229,6 +230,22 @@ package's share dir, which the builder sets. `pk2cmd` finds its
 `PK2DeviceFile.dat` beside the package binary by its own search. The
 builder's pk2cmd hint names the maintained upstream,
 `jaka-fi/pk2cmd`, not `cjacker/pk2cmd-minus` (idle since 2023).
+
+**The device file is Microchip's, not jaka-fi's (amended 2026-09-28,
+epic-tools#6).** On 2026-09-27 jaka-fi withdrew its `PK2DeviceFile.dat`
+and every release download after a copyright claim from the PICkitPlus
+team over the roughly 400 entries they added or fixed. That is the
+"something concrete" the row above waits for, and it touches the data,
+not the program: the pk2cmd code stays under Microchip's licence as
+before. `tool-pk2cmd` keeps the jaka-fi binary and ships Microchip's
+final device file, 1.62.14, which predates PICkitPlus and carries every
+curated beta part. It lacks the SPI-type (MSB-first) families, which
+also need jaka-fi's 2.63.222+ scripts; a user who wants those supplies
+their own device file (`docs/programmers/pk2cmd.md`). Forking pk2cmd to
+rebuild the withdrawn entries was rejected: the licence does not make
+it free software, and rewriting per-family programming scripts is a
+programmer project, not platform glue. A free host tool that would lift
+both constraints is epic-platformio#58.
 Protocols are `minipro`, `pk2cmd`, `picpro` and `custom`
 (`upload_command`); `upload_flags` passes through on the tool-driven
 three; targets are `upload`, `erase` and `readback` (flash dumped to

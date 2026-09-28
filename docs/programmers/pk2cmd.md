@@ -3,8 +3,15 @@
 `upload_protocol = pk2cmd` drives a PICkit2, PICkit3, PKOB, or a
 "PICkit3.5" clone (clone-vendor branding for the PICkit3 protocol)
 through [jaka-fi/pk2cmd](https://github.com/jaka-fi/pk2cmd) 1.27.01,
-packaged as `tool-pk2cmd` with its `PK2DeviceFile.dat`. That fork is the
-maintained one; `cjacker/pk2cmd-minus` is idle since 2023.
+packaged as `tool-pk2cmd`. That fork is the maintained one;
+`cjacker/pk2cmd-minus` is idle since 2023.
+
+The package ships Microchip's own `PK2DeviceFile.dat` 1.62.14, not
+jaka-fi's, which jaka-fi withdrew after a copyright claim from the
+PICkitPlus team (`docs/platform-decisions.md`). It covers every board in
+`boards/`. Newer SPI-type (MSB-first) parts, such as the PIC16F18xxx and
+PIC18 Q families, are not in it; see "Parts outside the bundled device
+file" below.
 
 pk2cmd is Microchip-licensed, not open source. Clause 1(b) permits
 redistributing a modified version for use with Microchip products with
@@ -31,6 +38,22 @@ thereafter.
 Selecting the protocol pulls `tool-pk2cmd` automatically. To use your
 own build instead, put it on `PATH` or point `EPIC8_PK2CMD_PATH` at it,
 with `PK2DeviceFile.dat` beside the binary (or `-B<dir>` at it).
+
+## Parts outside the bundled device file
+
+`pk2cmd` rejects a part name its device file does not list. For such a
+part, keep the packaged binary and point it at a device file that does
+list it:
+
+```ini
+upload_flags = -B/path/to/devfile/dir
+```
+
+`-B` takes the directory holding `PK2DeviceFile.dat`. SPI-type parts need
+a 2.63.222 or later file to work with jaka-fi's binary. Boards under
+`boards-experimental/` carry no pk2cmd name, so add
+`upload.devices.pk2cmd` (the file's exact `PartName`) to your copy of the
+board first.
 
 ## udev
 
