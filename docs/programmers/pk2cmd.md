@@ -9,7 +9,7 @@ packaged as `tool-pk2cmd`. That fork is the maintained one;
 The package ships Microchip's own `PK2DeviceFile.dat` 1.62.14, not
 jaka-fi's, which jaka-fi withdrew after a copyright claim from the
 PICkitPlus team (`docs/platform-decisions.md`). It covers every board in
-`boards/`. Newer SPI-type (MSB-first) parts, such as the PIC16F18xxx and
+`boards/`. Newer MSB-first (MSB1st) parts, such as the PIC16F18xxx and
 PIC18 Q families, are not in it; see "Parts outside the bundled device
 file" below.
 
@@ -49,7 +49,7 @@ list it:
 upload_flags = -B/path/to/devfile/dir
 ```
 
-`-B` takes the directory holding `PK2DeviceFile.dat`. SPI-type parts need
+`-B` takes the directory holding `PK2DeviceFile.dat`. MSB-first parts need
 a 2.63.222 or later file to work with jaka-fi's binary. Boards under
 `boards-experimental/` carry no pk2cmd name, so add
 `upload.devices.pk2cmd` (the file's exact `PartName`) to your copy of the
