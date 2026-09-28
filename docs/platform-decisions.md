@@ -244,8 +244,9 @@ also need jaka-fi's 2.63.222+ scripts; a user who wants those supplies
 their own device file (`docs/programmers/pk2cmd.md`). Forking pk2cmd to
 rebuild the withdrawn entries was rejected: the licence does not make
 it free software, and rewriting per-family programming scripts is a
-programmer project, not platform glue. A free host tool that would lift
-both constraints is epic-platformio#58.
+programmer project, not platform glue. No free PICkit2/3 host tool
+exists to switch to (epic-platformio#58): every one found is
+Microchip-derived.
 Protocols are `minipro`, `pk2cmd`, `picpro` and `custom`
 (`upload_command`); `upload_flags` passes through on the tool-driven
 three; targets are `upload`, `erase` and `readback` (flash dumped to
