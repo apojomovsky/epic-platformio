@@ -140,19 +140,20 @@ host-specific fact is resolved. It does two jobs and refuses nothing:
   (the bring-your-own-binary path, "Upload" below). `custom` maps to
   nothing: it is the project's own `upload_command`.
 
-**The tool packages do not exist yet** (epic8-tools' `tool-minipro`,
-`tool-pk2cmd`, `tool-picpro`; epic-platformio#40..#43). The hook is the
-mapping plus a guard that only touches a package `platform.json` actually
-declares, so a protocol named there but not yet carried is a no-op and its
-build still finds the binary on `PATH`. The mapping names exactly the
-protocols `builder/main.py` dispatches today, so it cannot activate a
-package for a protocol the builder then rejects; `picpro` joins both ends
-with epic-platformio#46. Two rules for whoever publishes these entries:
-declare them with `"type": "tool"`, not `"uploader"`, because
-`PlatformBase.configure_default_packages` enables every `uploader`-typed
-package for any upload target and a `tool`-typed one stays under this
-class's control; and keep each entry's name equal to the value in
-`PROTOCOL_TOOL_PACKAGES`, or update that line with it.
+**The tool packages exist** (epic8-tools' `tool-minipro`,
+`tool-pk2cmd`, `tool-picpro`; epic-platformio#40..#43) and
+`platform.json` declares them with `"type": "tool"`, not `"uploader"`,
+because `PlatformBase.configure_default_packages` enables every
+`uploader`-typed package for any upload target and a `tool`-typed one
+stays under this class's control. The hook's guard only touches a
+package `platform.json` declares, so a protocol named in the mapping but
+not yet carried is a no-op and its build still finds the binary on
+`PATH`. `picpro` joined both ends with epic-platformio#46. Two rules
+for whoever publishes these entries: keep each entry's name equal to
+the value in `PROTOCOL_TOOL_PACKAGES`, or update that line with it; and
+keep the versions pinned to the epic8-tools releases (those packages
+are versioned there, not in `packages/versions.json`, whose checker
+covers this repo's own builds).
 
 ## Toolchain: xc8 lands as a fully supported alternate, never vendored
 
@@ -210,8 +211,7 @@ independent their host-side tooling is from Microchip.
 
 | Device | Tool | License | Independent of Microchip |
 |---|---|---|---|
-| TL866A / TL866II Plus (not TL866CS, no ICSP header) | [`minipro`](https://gitlab.com/DavidGriffith/minipro) | GPL | Yes, fully (XGecu hardware, independent reimplementation) |
-| PICkit2 / PICkit3 / "PICkit3.5" clones ("3.5" is clone-vendor branding for the PICkit3 protocol, not a Microchip designation) | `pk2cmd`-family (`pk2cmd-minus`, `PICkitminus`) | Microchip's own restrictive license | No, but the restriction reads as being about the *target chip* being genuine Microchip silicon, not the programmer's brand, and every board here targets genuine Microchip parts. Decided: full first-class support, not a bring-your-own-binary carve-out, revisited only if something concrete (redistribution terms on a specific fork) forces it. |
+:| PICkit2 / PICkit3 / "PICkit3.5" clones ("3.5" is clone-vendor branding for the PICkit3 protocol, not a Microchip designation) | [jaka-fi/pk2cmd](https://github.com/jaka-fi/pk2cmd) (`PK2DeviceFile.dat` ships in the package) | Microchip's own restrictive license | No, but the restriction reads as being about the *target chip* being genuine Microchip silicon, not the programmer's brand, and every board here targets genuine Microchip parts. Decided: full first-class support, not a bring-your-own-binary carve-out, revisited only if something concrete (redistribution terms on a specific fork) forces it. |
 
 `minipro`/TL866 landed first as the pathfinder (`epic-platformio#11`): the
 cleanest of the two, one unambiguous tool, no firmware-bootstrap gotchas.
@@ -219,19 +219,22 @@ cleanest of the two, one unambiguous tool, no firmware-bootstrap gotchas.
 the same dispatcher shape. A known gotcha there is that some PICkit3 clones
 need a one-time Windows-only firmware update before any Linux tool can
 drive them, documented in `docs/getting-started.md#upload`.
-
-**Neither tool is vendored.** Neither `minipro` nor `pk2cmd` has a
-Debian/Ubuntu package (checked directly: absent from `apt-cache`), and
-building/hosting our own prebuilt cross-platform binaries is a
-distribution project on the scale of epic-cc's
-`docs/30-distribution-design.md`, not something to fold into wiring an
-upload target. `builder/main.py` finds a binary the user already built,
-on `PATH` or via an env var override (`EPIC8_MINIPRO_PATH` /
-`EPIC8_PK2CMD_PATH`), and the build steps are documented in
-`docs/getting-started.md#upload`. This is a deliberate amendment to
-the "belongs in a `tool-*` package" note below: a `tool-*` package that
-vendors a real prebuilt binary is a later, separate effort, not part of
-landing the upload target itself.
+**Tools ship as tool packages, with a bring-your-own fallthrough**
+(epic-platformio#46). `tool-minipro`, `tool-pk2cmd` and `tool-picpro`
+are built and published by epic8-tools from pinned upstream tags;
+selecting the protocol pulls the package, and `EPIC8_*_PATH` or `PATH`
+overrides it. `picpro` runs under PlatformIO's own interpreter from the
+package's vendor dir; `minipro` needs `MINIPRO_HOME` pointed at the
+package's share dir, which the builder sets. `pk2cmd` finds its
+`PK2DeviceFile.dat` beside the package binary by its own search. The
+builder's pk2cmd hint names the maintained upstream,
+`jaka-fi/pk2cmd`, not `cjacker/pk2cmd-minus` (idle since 2023).
+Protocols are `minipro`, `pk2cmd`, `picpro` and `custom`
+(`upload_command`); `upload_flags` passes through on the tool-driven
+three; targets are `upload`, `erase` and `readback` (flash dumped to
+`$BUILD_DIR/readback.hex`). Per-programmer guides live under
+`docs/programmers/`, udev rules in `udev/99-epic8.rules`
+(epic-platformio#49).
 
 **A bootloader protocol** remains rejected: real work with no hardware to
 validate against in this repo, and no consumer asking for it.

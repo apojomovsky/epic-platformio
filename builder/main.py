@@ -13,6 +13,7 @@ already used for the upload tools below.
 import hashlib
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -393,25 +394,119 @@ else:
 
 AlwaysBuild(env.Alias("buildprog", firmware, firmware))
 
-# Upload. `minipro` drives a TL866A / TL866II Plus universal programmer
-# (docs/platform-decisions.md): fully independent of Microchip (XGecu
-# hardware, GPL tool), unlike pk2cmd/ipecmd, which is why it is the first
-# protocol wired here rather than either of those. Neither minipro nor
-# pk2cmd has a Debian/Ubuntu package, and vendoring our own prebuilt
-# binaries is a distribution project on the scale of epic-cc's
-# docs/30-distribution-design.md, so v1 finds a binary the user already
-# built, on PATH or via EPIC8_MINIPRO_PATH, rather than shipping one.
-def _upload_minipro(source):
-    binary = os.environ.get("EPIC8_MINIPRO_PATH") or shutil.which("minipro")
-    if not binary:
+# Upload (docs/46 D-8). Four protocols: minipro (XGecu T48, TL866II Plus),
+# pk2cmd (PICkit2 and 3, PKOB), picpro (K150 and siblings on P18A
+# firmware), custom (the project's own upload_command). upload_flags
+# passes through on every tool-driven protocol. Targets: upload, erase,
+# readback (flash dumped to $BUILD_DIR/readback.hex).
+def _upload_flags():
+    """Extra tool arguments from the project's upload_flags.
+
+    PlatformIO keeps one config line per list element, so an element can
+    hold a flag and its value (`-o vpp=12`) or a variable
+    (`-P$UPLOAD_PORT`). Each element goes through SCons substitution,
+    then shell-like splitting, matching what the stock upload flow does
+    when it expands flags into its command string.
+    """
+    lines = env.get("UPLOAD_FLAGS", [])
+    if isinstance(lines, str):
+        lines = [lines]
+    expanded = []
+    for line in lines:
+        expanded += shlex.split(env.subst(line))
+    return expanded
+
+
+def _run(tool, args, cmd, extra_env=None):
+    """Print the tool line, then run the full command."""
+    print("%s %s" % (tool, " ".join(args)))
+    if extra_env is None:
+        return subprocess.call(cmd)
+    merged = dict(os.environ)
+    merged.update(extra_env)
+    return subprocess.call(cmd, env=merged)
+
+
+def _find_tool(protocol, package, binary, env_var, homepage):
+    """The programmer binary and the tool package dir holding it.
+
+    Returns (binary, package_dir); package_dir is None unless the binary
+    came from the tool package. The package is what D-8 wants; the PATH
+    fallthrough keeps a checkout working before the registry publishes,
+    and the env var stays as the bring-your-own override either way.
+    """
+    override = os.environ.get(env_var)
+    if override:
+        return override, None
+    package_dir = env.PioPlatform().get_package_dir(package)
+    if package_dir:
+        return join(package_dir, binary), package_dir
+    found = shutil.which(binary)
+    if not found:
         sys.stderr.write(
-            "Error: minipro not found on PATH. Build it from "
-            "https://gitlab.com/DavidGriffith/minipro (no Debian/Ubuntu "
-            "package exists) and either put it on PATH or point "
-            "EPIC8_MINIPRO_PATH at the binary. See "
+            "Error: %s not found. It ships in the %s tool package "
+            "(selected automatically with upload_protocol=%s), or put it "
+            "on PATH, or point %s at the binary. %s. See "
             "docs/getting-started.md#upload.\n"
+            % (binary, package, protocol, env_var, homepage)
         )
+        return None, None
+    return found, None
+
+
+def _minipro_env(package_dir):
+    """Environment for the packaged minipro.
+
+    The binary reads its device databases from MINIPRO_HOME (upstream
+    database.c), compiled as /usr/local/share/minipro, so the package
+    layout needs the variable pointed at its own share dir.
+    """
+    if package_dir is None:
+        return None
+    return {"MINIPRO_HOME": join(package_dir, "share", "minipro")}
+
+
+def _upload_minipro(source):
+    binary, package_dir = _find_tool("minipro", "tool-minipro", "minipro",
+                                     "EPIC8_MINIPRO_PATH",
+                                     "https://gitlab.com/DavidGriffith/minipro")
+    if not binary:
         return 1
+    device = _device_name("minipro", "minipro")
+    if device is None:
+        return 1
+    args = ["-p", device, "-w", str(source[0])] + _upload_flags()
+    return _run("minipro", args, [binary] + args, _minipro_env(package_dir))
+
+
+def _erase_minipro(source):
+    binary, package_dir = _find_tool("minipro", "tool-minipro", "minipro",
+                                     "EPIC8_MINIPRO_PATH",
+                                     "https://gitlab.com/DavidGriffith/minipro")
+    if not binary:
+        return 1
+    device = _device_name("minipro", "minipro")
+    if device is None:
+        return 1
+    args = ["-p", device, "-E"] + _upload_flags()
+    return _run("minipro", args, [binary] + args, _minipro_env(package_dir))
+
+
+def _readback_minipro(source):
+    binary, package_dir = _find_tool("minipro", "tool-minipro", "minipro",
+                                     "EPIC8_MINIPRO_PATH",
+                                     "https://gitlab.com/DavidGriffith/minipro")
+    if not binary:
+        return 1
+    device = _device_name("minipro", "minipro")
+    if device is None:
+        return 1
+    out = _readback_path()
+    args = ["-p", device, "-r", out, "-f", "ihex"] + _upload_flags()
+    result = _run("minipro", args, [binary] + args, _minipro_env(package_dir))
+    if result == 0:
+        print("Readback written to %s" % out)
+    return result
 
 
 def _device_name(protocol, tool):
@@ -434,64 +529,217 @@ def _device_name(protocol, tool):
     return device
 
 
-def _upload_minipro(source):
-    binary = os.environ.get("EPIC8_MINIPRO_PATH") or shutil.which("minipro")
-    if not binary:
-        sys.stderr.write(
-            "Error: minipro not found on PATH. Build it from "
-            "https://gitlab.com/DavidGriffith/minipro (no Debian/Ubuntu "
-            "package exists) and either put it on PATH or point "
-            "EPIC8_MINIPRO_PATH at the binary. See "
-            "docs/getting-started.md#upload.\n"
-        )
-        return 1
-    device = _device_name("minipro", "minipro")
-    if device is None:
-        return 1
-    cmd = [binary, "-p", device, "-w", str(source[0])]
-    print("minipro %s" % " ".join(cmd[1:]))
-    return subprocess.call(cmd)
-
-
 def _upload_pk2cmd(source):
-    binary = os.environ.get("EPIC8_PK2CMD_PATH") or shutil.which("pk2cmd")
+    binary, _ = _find_tool("pk2cmd", "tool-pk2cmd", "pk2cmd",
+                           "EPIC8_PK2CMD_PATH",
+                           "https://github.com/jaka-fi/pk2cmd")
     if not binary:
-        sys.stderr.write(
-            "Error: pk2cmd not found on PATH. Build it from "
-            "https://github.com/cjacker/pk2cmd-minus (no Debian/Ubuntu "
-            "package exists) and either put it on PATH or point "
-            "EPIC8_PK2CMD_PATH at the binary. See "
-            "docs/getting-started.md#upload.\n"
-        )
         return 1
     device = _device_name("pk2cmd", "pk2cmd")
     if device is None:
         return 1
     # `pk2cmd -P<part> -F <hex> -M -E` programs the whole chip (program +
     # config, and erase first), the same one-shot shape minipro's `-w` uses.
-    cmd = [binary, "-P" + device, "-F", str(source[0]), "-M", "-E"]
-    print("pk2cmd %s" % " ".join(cmd[1:]))
-    return subprocess.call(cmd)
+    args = ["-P" + device, "-F", str(source[0]), "-M", "-E"] + _upload_flags()
+    return _run("pk2cmd", args, [binary] + args)
 
 
-UPLOAD_PROTOCOLS = {"minipro": _upload_minipro, "pk2cmd": _upload_pk2cmd}
+def _erase_pk2cmd(source):
+    binary, _ = _find_tool("pk2cmd", "tool-pk2cmd", "pk2cmd",
+                           "EPIC8_PK2CMD_PATH",
+                           "https://github.com/jaka-fi/pk2cmd")
+    if not binary:
+        return 1
+    device = _device_name("pk2cmd", "pk2cmd")
+    if device is None:
+        return 1
+    args = ["-P" + device, "-E"] + _upload_flags()
+    return _run("pk2cmd", args, [binary] + args)
 
 
-def _upload(target, source, env):
-    protocol = env.get("UPLOAD_PROTOCOL") or board.get("upload.protocol", "")
-    handler = UPLOAD_PROTOCOLS.get(protocol)
-    if handler is None:
+def _readback_pk2cmd(source):
+    binary, _ = _find_tool("pk2cmd", "tool-pk2cmd", "pk2cmd",
+                           "EPIC8_PK2CMD_PATH",
+                           "https://github.com/jaka-fi/pk2cmd")
+    if not binary:
+        return 1
+    device = _device_name("pk2cmd", "pk2cmd")
+    if device is None:
+        return 1
+    out = _readback_path()
+    # `-GF<file>` reads flash into a HEX file (upstream cmd_app.cpp).
+    args = ["-P" + device, "-GF" + out] + _upload_flags()
+    result = _run("pk2cmd", args, [binary] + args)
+    if result == 0:
+        print("Readback written to %s" % out)
+    return result
+
+
+def _picpro_base():
+    """Argv prefix running picpro, plus any environment it needs.
+
+    Override, then the tool package, then PATH: the same order _find_tool
+    uses, so an explicitly selected protocol favors the pinned package
+    over any pip-installed copy. The package vendors picpro, so it runs
+    under this interpreter with the vendor dir importable (docs/46 D-10).
+    """
+    override = os.environ.get("EPIC8_PICPRO_PATH")
+    if override:
+        return [override], None
+    package_dir = env.PioPlatform().get_package_dir("tool-picpro")
+    if package_dir:
+        vendor = join(package_dir, "vendor")
+        return [sys.executable, join(vendor, "bin", "picpro")], {"PYTHONPATH": vendor}
+    found = shutil.which("picpro")
+    if found:
+        return [found], None
+    sys.stderr.write(
+        "Error: picpro not found. It ships in the tool-picpro package "
+        "(selected automatically with upload_protocol=picpro), or install "
+        "it from https://github.com/Salamek/picpro, or point "
+        "EPIC8_PICPRO_PATH at the binary. The K150 needs P18A firmware. "
+        "See docs/programmers/picpro.md.\n"
+    )
+    return None, None
+
+
+def _picpro_port():
+    port = env.get("UPLOAD_PORT", "")
+    if not port:
+        sys.stderr.write(
+            "Error: upload_protocol=picpro needs upload_port, the K150 "
+            "serial device (e.g. /dev/ttyUSB0).\n"
+        )
+        return None
+    return port
+
+
+def _upload_picpro(source):
+    base, extra_env = _picpro_base()
+    if base is None:
+        return 1
+    port = _picpro_port()
+    if port is None:
+        return 1
+    device = _device_name("picpro", "picpro")
+    if device is None:
+        return 1
+    args = ["program", "-p", port, "-i", str(source[0]), "-t", device]
+    args += _upload_flags()
+    return _run("picpro", args, base + args, extra_env)
+
+
+def _erase_picpro(source):
+    base, extra_env = _picpro_base()
+    if base is None:
+        return 1
+    port = _picpro_port()
+    if port is None:
+        return 1
+    device = _device_name("picpro", "picpro")
+    if device is None:
+        return 1
+    args = ["erase", "-p", port, "-t", device] + _upload_flags()
+    return _run("picpro", args, base + args, extra_env)
+
+
+def _readback_picpro(source):
+    base, extra_env = _picpro_base()
+    if base is None:
+        return 1
+    port = _picpro_port()
+    if port is None:
+        return 1
+    device = _device_name("picpro", "picpro")
+    if device is None:
+        return 1
+    out = _readback_path()
+    # picpro's program memory is the `rom` type (upstream bin/picpro.py).
+    args = ["dump", "rom", "-p", port, "-o", out, "-t", device]
+    args += _upload_flags()
+    result = _run("picpro", args, base + args, extra_env)
+    if result == 0:
+        print("Readback written to %s" % out)
+    return result
+
+def _upload_custom(source):
+    # PlatformIO exposes upload_command as UPLOADCMD (core builder/main.py).
+    command = env.get("UPLOADCMD", "") or env.get("UPLOAD_COMMAND", "")
+    if not command:
+        sys.stderr.write(
+            "Error: upload_protocol=custom needs upload_command in "
+            "platformio.ini. $SOURCE names the firmware HEX.\n"
+        )
+        return 1
+    hex_path = str(source[0])
+    cmd = command.replace("$SOURCES", hex_path).replace("$SOURCE", hex_path)
+    cmd = env.subst(cmd)
+    print(cmd)
+    return subprocess.call(cmd, shell=True)
+
+
+def _readback_path():
+    return join(env.subst("$BUILD_DIR"), "readback.hex")
+
+
+# protocol -> (upload, erase, readback). custom defines only upload: its
+# command is the project's own, so there is no erase or readback to run.
+UPLOAD_PROTOCOLS = {
+    "minipro": (_upload_minipro, _erase_minipro, _readback_minipro),
+    "pk2cmd": (_upload_pk2cmd, _erase_pk2cmd, _readback_pk2cmd),
+    "picpro": (_upload_picpro, _erase_picpro, _readback_picpro),
+    "custom": (_upload_custom, None, None),
+}
+
+
+def _dispatch(protocol, action):
+    handlers = UPLOAD_PROTOCOLS.get(protocol)
+    if handlers is None:
         sys.stderr.write(
             "Error: upload protocol %r is not supported by platform-epic8. "
             "Supported: %s\n"
             % (protocol or "(none)", ", ".join(sorted(UPLOAD_PROTOCOLS)))
         )
+        return None
+    handler = handlers[action]
+    if handler is None:
+        sys.stderr.write(
+            "Error: upload_protocol=custom defines only upload, through "
+            "upload_command. There is no erase or readback command to run.\n"
+        )
+        return None
+    return handler
+
+
+def _protocol():
+    return env.get("UPLOAD_PROTOCOL") or board.get("upload.protocol", "")
+
+
+def _upload(target, source, env):
+    handler = _dispatch(_protocol(), 0)
+    if handler is None:
+        return 1
+    return handler(source)
+
+
+def _erase(target, source, env):
+    handler = _dispatch(_protocol(), 1)
+    if handler is None:
+        return 1
+    return handler(source)
+
+
+def _readback(target, source, env):
+    handler = _dispatch(_protocol(), 2)
+    if handler is None:
         return 1
     return handler(source)
 
 
 AlwaysBuild(env.Alias("upload", firmware, _upload))
 AlwaysBuild(env.Alias("program", firmware, _upload))
+AlwaysBuild(env.Alias("erase", firmware, _erase))
+AlwaysBuild(env.Alias("readback", firmware, _readback))
 
 # Size report. epic-cc emits the whole flash image, so usage cannot be
 # derived from the HEX; the compiler's own report (CC-6) is the source,

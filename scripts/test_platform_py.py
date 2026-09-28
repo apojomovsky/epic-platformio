@@ -191,7 +191,11 @@ class ConfigureDefaultPackagesTests(unittest.TestCase):
         module = _load_platform_module(systype, packages)
         return module, module.Epic8Platform(ROOT / "platform.json")
 
-    TOOLS = {"tool-minipro": {"optional": True}, "tool-pk2cmd": {"optional": True}}
+    TOOLS = {
+        "tool-minipro": {"optional": True},
+        "tool-pk2cmd": {"optional": True},
+        "tool-picpro": {"optional": True},
+    }
 
     def test_selecting_a_protocol_pulls_its_tool_package(self):
         module, platform = self._platform("linux_x86_64", self.TOOLS)
@@ -245,11 +249,25 @@ class MappingContractTests(unittest.TestCase):
     def test_every_mapped_protocol_is_one_the_builder_dispatches(self):
         # A mapped protocol the builder does not dispatch would pull a tool
         # package and then fail the upload with "protocol not supported".
+        # custom is dispatched but maps to nothing: it is the project's
+        # own upload_command, so it is the one dispatched name allowed to
+        # stay out of the mapping.
         module = _load_platform_module("linux_x86_64")
         builder = (ROOT / "builder" / "main.py").read_text()
         block = re.search(r"UPLOAD_PROTOCOLS = \{(.*?)\}", builder, re.S).group(1)
         dispatched = set(re.findall(r'"(\w+)":', block))
-        self.assertEqual(set(module.PROTOCOL_TOOL_PACKAGES), dispatched)
+        self.assertEqual(set(module.PROTOCOL_TOOL_PACKAGES), dispatched - {"custom"})
+
+    def test_selecting_picpro_pulls_its_tool_package(self):
+        module = _load_platform_module("linux_x86_64")
+        platform = module.Epic8Platform(ROOT / "platform.json")
+        platform._manifest["packages"].update(
+            {k: dict(v) for k, v in ConfigureDefaultPackagesTests.TOOLS.items()}
+        )
+        platform.configure_default_packages(
+            {"board": "pic16f877a", "upload_protocol": "picpro"}, ["upload"]
+        )
+        self.assertFalse(platform.packages["tool-picpro"]["optional"])
 
 
 if __name__ == "__main__":

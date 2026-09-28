@@ -1,0 +1,31 @@
+# udev rules for the programmers platform-epic8 flashes with (docs/46 D-8).
+#
+# Covers what PlatformIO's own 99-platformio-udev.rules does not: the
+# PICkit family and the XGecu programmers. The K150 section names the
+# USB-serial chips K150 clones ship with; those overlap PlatformIO's
+# file, and are repeated here so one file suffices for all three guides.
+# Install: sudo cp udev/99-epic8.rules /etc/udev/rules.d/
+# then replug the programmer (or run sudo udevadm trigger).
+# Membership in plugdev owns the device nodes below.
+
+ACTION!="add|change", GOTO="epic8_rules_end"
+
+# PICkit2 (04d8:0033), PICkit3 (04d8:900a), PKOB (04d8:8107): IDs from
+# jaka-fi/pk2cmd's own 60-pickit.rules and pk2usb.cpp.
+ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="0033", MODE="0660", GROUP="plugdev"
+ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="900a", MODE="0660", GROUP="plugdev"
+ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="8107", MODE="0660", GROUP="plugdev"
+
+# TL866A/CS (04d8:e11c), TL866II Plus (a466:0a53): IDs from minipro's
+# udev rules and usb_nix.c. The T48 and T56 answer to the TL866II Plus
+# ID, so the one entry covers all three.
+ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="e11c", MODE="0660", GROUP="plugdev"
+ATTRS{idVendor}=="a466", ATTRS{idProduct}=="0a53", MODE="0660", GROUP="plugdev"
+
+# K150 serial adapters. Clones vary: CH340 (1a86:7523), PL2303
+# (067b:2303), FTDI (0403:6001). Check yours with lsusb.
+ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", MODE="0660", GROUP="plugdev", ENV{ID_MM_DEVICE_IGNORE}="1"
+ATTRS{idVendor}=="067b", ATTRS{idProduct}=="2303", MODE="0660", GROUP="plugdev", ENV{ID_MM_DEVICE_IGNORE}="1"
+ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", MODE="0660", GROUP="plugdev", ENV{ID_MM_DEVICE_IGNORE}="1"
+
+LABEL="epic8_rules_end"
