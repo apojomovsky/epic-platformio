@@ -161,8 +161,9 @@ as its own source goes.
 
 **Never vendored** (docs/platform-decisions.md): Microchip's EULA forbids
 redistributing XC8, so `platform.json` carries no toolchain package for it,
-unlike the upload tools below, which download automatically. Install it yourself (the free
-tier is enough) from
+unlike the upload tools below, which download automatically once
+`upload_protocol` selects them. Install it yourself (the free tier is
+enough) from
 <https://www.microchip.com/en-us/tools-resources/develop/mplab-xc-compilers>
 and put its `bin/` on `PATH`, or point `EPIC8_XC8_PATH` at the `xc8-cc`
 binary directly.

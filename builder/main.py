@@ -6,8 +6,9 @@ linker. XC8 is a fully supported alternate toolchain (`board_build.toolchain
 = xc8`, default `epic-cc`): the ordinary compile-then-link shape, one object
 per source file. XC8 is never vendored (Microchip's EULA forbids
 redistribution, docs/platform-decisions.md), so this script finds a binary
-the user already installed, on PATH or via EPIC8_XC8_PATH, the same pattern
-already used for the upload tools below.
+the user already installed, on PATH or via EPIC8_XC8_PATH. The upload tools
+below use that lookup only as a fallthrough before their own tool package;
+for XC8 it is the only path.
 """
 
 import hashlib
@@ -73,7 +74,7 @@ if toolchain == "epic-cc":
     epiccc = join(toolchain_dir, "epic-cc")
 else:
     # Never vendored (EULA forbids redistribution): found via PATH or an
-    # env var override, exactly like minipro/pk2cmd below.
+    # env var override, with no package to fall back to.
     xc8cc = os.environ.get("EPIC8_XC8_PATH") or shutil.which("xc8-cc")
     if not xc8cc:
         sys.stderr.write(

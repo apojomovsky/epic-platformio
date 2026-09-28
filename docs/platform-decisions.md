@@ -174,8 +174,8 @@ ship as tool packages ("Upload" below), `platform.json` carries no
 binary the user already installed, on `PATH` or via `EPIC8_XC8_PATH`, and
 an optional `EPIC8_XC8_DFP_DIR` for a device family pack. That is the
 same discovery shape the programmers keep as their bring-your-own
-fallthrough (`EPIC8_MINIPRO_PATH`/`EPIC8_PK2CMD_PATH`), except that for
-XC8 it is the only path. Documented in `docs/getting-started.md#xc8`.
+fallthrough (`EPIC8_*_PATH`), except that for XC8 it is the only path.
+Documented in `docs/getting-started.md#xc8`.
 
 **Why now, why not earlier.** The framework package (`framework-epichal`)
 platform-epic8 already downloads has shipped XC8-shaped sources
