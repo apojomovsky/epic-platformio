@@ -50,6 +50,12 @@ The build produces `firmware.hex` in `.pio/build/epic8/`. That HEX is the
 deliverable; see [Upload](#upload) for what the platform does and does not
 do with it.
 
+`pio run -t size` prints PlatformIO's program-size bar from the driver's
+own build report (the compiler emits the whole flash image, so usage
+cannot be read back from the HEX). The same check runs before
+`pio run -t upload`, so an image over the board's `maximum_size` is
+refused before the programmer is driven.
+
 ## Using the HAL
 
 The epic-hal framework is optional. Enable it with `framework = epichal`
@@ -114,8 +120,25 @@ clock. The PIC18F4550's clock tree needs the oscillator, PLL and CPU
 divider named explicitly:
 
 ```c
-EPIC_CONFIG("osc=hs, xtal_hz=4000000, cpudiv=div1, plldiv=noprescale, usbdiv=off, wdt=off, lvp=off");
+EPIC_CONFIG("osc=hs, xtal_hz=20000000, cpudiv=div1, plldiv=noprescale, usbdiv=off, wdt=off, lvp=off");
 ```
+
+### The clock has to agree with itself
+
+A board may carry `board_build.f_cpu`, and the builder passes it to the
+driver as `--f-cpu`. The driver resolves the clock from the first source
+that fixes one (the config, the code's `#define _XTAL_FREQ`, the board's
+`f_cpu`) and **fails the build if two of them disagree**, naming both
+values. So a crystal the config declares and the board's `f_cpu` measure
+the same clock, or the build stops:
+
+```
+src/main.c:12:1: error: clock disagreement: the config gives 4000000 Hz but --f-cpu gives 20000000 Hz
+```
+
+The beta boards with `f_cpu` set are `pic16f877a`, `pic16f887` (4000000)
+and `pic18f4550` (20000000); the others leave the clock to the config or
+to the code's own `_XTAL_FREQ`.
 
 ## XC8
 

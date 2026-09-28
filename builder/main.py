@@ -90,6 +90,32 @@ else:
     # epic-hal's own epic_build.py --dfp-dir default.
     xc8_dfp_dir = os.environ.get("EPIC8_XC8_DFP_DIR", "")
 
+# Where the driver writes its build report (ADR-025): the size bar, the
+# pre-flash warnings (#47) and every later consumer read this one file,
+# so the name is fixed and shared rather than spelled per call site.
+REPORT_PATH = join(env.subst("$BUILD_DIR"), "firmware-report.json")
+
+
+def _board_f_cpu():
+    """`board_build.f_cpu` as the driver's `--f-cpu` wants it: a bare Hz
+    integer. Boards spell it XC8-style (`4000000L`), and the driver's
+    parser is `str.replace('_','').parse::<u64>()`, so the suffix has to
+    go or the build fails on the value itself. None when unset.
+    """
+    raw = str(board.get("build.f_cpu", "")).strip()
+    if not raw:
+        return None
+    digits = raw.rstrip("uUlL")
+    return digits if digits.isdigit() else None
+
+
+# The board's clock, passed unconditionally when set (epic-platformio#48):
+# the driver owns agreement, failing the build when the config or the
+# code's `_XTAL_FREQ` fixes a different value (docs/46 D-4). Re-deriving
+# which sources are present here would duplicate the driver's own prescan
+# and silently disable its check.
+F_CPU = _board_f_cpu()
+
 # Framework wiring. When `framework = epichal` is set, the epic-hal
 # framework package joins the build: the board's build.epichal_family
 # (PIO-6, scripts/gen_boards.py) picks the family, and EPIC_HAL_MODULES
@@ -270,9 +296,40 @@ for d in fw_includes:
     if d not in include_dirs:
         include_dirs.append(d)
 
+# The toolchain's own `include/` (docs/46 D-6, epic-cc#690): the driver
+# resolves it exe-relative for the compile either way, but an editor and
+# PlatformIO's generated IntelliSense config read CPPPATH, so it is
+# published there too. epic-cc only: an xc8 project must keep XC8's own
+# <xc.h> first, so its CPPPATH stays untouched.
+def _toolchain_include():
+    toolchain_dir = env.subst(env.PioPlatform().get_package_dir("toolchain-epiccc"))
+    candidate = join(toolchain_dir, "include")
+    if os.path.isdir(candidate):
+        return candidate
+    # Fall back to the driver's own answer if the package layout ever
+    # stops putting include/ at the root; the shipped bundle does today.
+    try:
+        printed = subprocess.check_output(
+            [epiccc, "--print-include-dir"], text=True
+        ).strip()
+    except (OSError, subprocess.CalledProcessError):
+        return ""
+    return printed
+
+
+if toolchain == "epic-cc":
+    tc_include = _toolchain_include()
+    if tc_include:
+        env.AppendUnique(CPPPATH=[tc_include])
+        if tc_include not in include_dirs:
+            include_dirs.append(tc_include)
+
 
 def _epiccc(target, source, env):
     cmd = [epiccc, "--target", mcu, "-o", str(target[0])]
+    cmd += ["--report", REPORT_PATH]
+    if F_CPU:
+        cmd += ["--f-cpu", F_CPU]
     for d in include_dirs:
         cmd += ["-I", d]
     cmd += defines
@@ -717,6 +774,10 @@ def _protocol():
 
 
 def _upload(target, source, env):
+    # Refuse an oversized image before flashing, the gate core gives a
+    # SIZETOOL platform (docs/46 D-7). #47's hazard warnings land here too.
+    if _check_size(target, source, env):
+        return 1
     handler = _dispatch(_protocol(), 0)
     if handler is None:
         return 1
@@ -742,15 +803,45 @@ AlwaysBuild(env.Alias("program", firmware, _upload))
 AlwaysBuild(env.Alias("erase", firmware, _erase))
 AlwaysBuild(env.Alias("readback", firmware, _readback))
 
-# Size report. epic-cc emits the whole flash image, so usage cannot be
-# derived from the HEX; the compiler's own report (CC-6) is the source,
-# and the released toolchain does not print it yet.
-def _size(target, source, env):
-    print(
-        "Size: not reported; needs epic-cc size reporting (CC-6), "
-        "not in the released toolchain"
+# Size bar (docs/46 D-7). epic-cc emits the whole flash image, so usage
+# cannot be derived from the HEX; the driver's --report JSON is the source.
+# PlatformIO's own program-size check reads a size-tool command, but its
+# `checkprogsize` node hangs off an ELF `program` target this platform
+# never builds, so the epic-cc path drives `CheckUploadSize` directly:
+# on `-t size` to print the bar, and in `_upload` before flashing so an
+# oversized image is refused, the wiring core does for SIZETOOL platforms.
+if toolchain == "epic-cc":
+    env.Replace(
+        SIZECHECKCMD=env.subst("$PYTHONEXE")
+        + " "
+        + join(env.PioPlatform().get_dir(), "builder", "size_report.py")
+        + " "
+        + REPORT_PATH,
+        SIZEPROGREGEXP=r"^(\d+)\s",
+        SIZEDATAREGEXP=r"^\d+\s+\d+\s+(\d+)\s",
     )
-    return 0
+
+
+def _check_size(target, source, env):
+    """Print the size bar and return nonzero when the image does not fit.
+
+    SIZECHECKCMD is set for the epic-cc path only. xc8 has no equivalent
+    here: its output is a HEX too, and PlatformIO's ELF-based check needs a
+    `program` target this platform never builds, so the size target says so
+    rather than printing nothing.
+    """
+    if not env.get("SIZECHECKCMD"):
+        print(
+            "Size: not reported for this build. The epic-cc toolchain "
+            "reports size from the driver's build report; select a board "
+            "built with epic-cc (the default) to use it."
+        )
+        return 0
+    return env.CheckUploadSize(target, source, env) or 0
+
+
+def _size(target, source, env):
+    return _check_size(target, source, env)
 
 
 AlwaysBuild(env.Alias("size", firmware, _size))

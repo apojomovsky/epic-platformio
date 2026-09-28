@@ -106,8 +106,10 @@ as the alternate. Flashing works through `pio run -t upload` (plus
 `erase` and `readback`) with a TL866 programmer, a PICkit, a K150, or a
 custom `upload_command`; see
 [`docs/getting-started.md#upload`](docs/getting-started.md#upload) and one
-guide per programmer under [`docs/programmers/`](docs/programmers/). HEX
-size reporting is not wired to `pio run -t size` yet. Not yet published
+guide per programmer under [`docs/programmers/`](docs/programmers/). `pio
+run -t size` prints PlatformIO's program-size bar from the driver's own
+build report, and the same check gates `pio run -t upload` so an oversized
+image is refused before flashing. Not yet published
 to the PlatformIO registry: install from the git URL above until it is.
 
 <details>

@@ -1,15 +1,17 @@
 /*
  * Bare blink for the PIC18F4550: no HAL, no framework. The PIC18 clock
  * tree is nastier than PIC14's, so the config words name the oscillator,
- * the PLL and the CPU divider explicitly (docs/31 D-4). The LED is driven
- * through the LATB latch, which avoids the read-modify-write hazard of
- * toggling PORTB directly.
+ * the PLL and the CPU divider explicitly (docs/31 D-4). The crystal is
+ * 20 MHz and the board's f_cpu says so too, so the driver's agreement
+ * check (docs/46 D-4) sees both sources give the same clock. The LED is
+ * driven through the LATB latch, which avoids the read-modify-write
+ * hazard of toggling PORTB directly.
  */
 
 #include <stdint.h>
 #include <epic-cc.h>
 
-EPIC_CONFIG("osc=hs, xtal_hz=4000000, cpudiv=div1, plldiv=noprescale, usbdiv=off, wdt=off, lvp=off");
+EPIC_CONFIG("osc=hs, xtal_hz=20000000, cpudiv=div1, plldiv=noprescale, usbdiv=off, wdt=off, lvp=off");
 
 /* SFR addresses (DS39632D Tables 2-1..2-3): TRISB is the direction
  * register, LATB the output latch. */

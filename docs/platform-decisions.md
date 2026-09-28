@@ -271,15 +271,34 @@ note for whoever picked this back up: when a programmer integration
 lands, it belongs in a `tool-*` package (PIO-2 shape), not the platform
 core. See the superseding section above for what actually changed.
 
-## Size reporting: deferred to epic-cc CC-6
+## Size reporting: the driver's `--report`, driven through PlatformIO's check
 
-PlatformIO's `size` target expects a toolchain size report. epic-cc's own
-report (CC-6, `epic-cc#74`) landed on master but is not in the released
-toolchain (v0.0.3), so `pio run -t size` states that the report is not
-available rather than deriving a number from the HEX. The HEX is the whole
-flash image, so usage cannot be computed from it; the compiler's report is
-the source of truth and the target flips to it when a toolchain with CC-6
-is released.
+PlatformIO's `size` target expects a toolchain size report, and epic-cc
+has one now: the v0.4.0 toolchain prints it to stderr after every build and
+writes it as JSON under `--report` (CC-6/CC-g, ADR-025). The HEX is the
+whole flash image, so usage cannot be derived from it; the JSON is the
+source of truth.
+
+The builder drives PlatformIO's own program-size check rather than a
+bespoke printer, so the bar and the over-maximum refusal are the standard
+ones (`SIZEPROGREGEXP`/`SIZEDATAREGEXP` feed `CheckUploadSize`).
+`builder/size_report.py` is the adapter: it reads the report and prints
+`<flash_used> <flash_total> <ram_used> <ram_total>` in bytes (flash is
+words times two, docs/46 D-7). It is a real script invoked by path, not an
+inline `python -c`, because `CheckUploadSize` splits `SIZECHECKCMD` on
+whitespace.
+
+Core's `checkprogsize` node hangs off an ELF `program` target this platform
+never builds (epic-cc is a whole-program compiler, no ELF), so wiring
+`SIZETOOL` alone fails with "Do not know how to make File target
+`checkprogsize`". The epic-cc path therefore calls `env.CheckUploadSize`
+directly: on `pio run -t size` to print the bar, and in the `upload` action
+before flashing, so an oversized image is refused the way a SIZETOOL
+platform refuses it. The xc8 path keeps core's own wiring.
+
+The toolchain's `include/` joins `CPPPATH` for the epic-cc path only
+(docs/46 D-6), so an editor and PlatformIO's generated IntelliSense config
+resolve `<xc.h>`; an xc8 project keeps XC8's own header first.
 
 ## Manifest schema: verified against PlatformIO 6.1.19
 
