@@ -17,7 +17,7 @@
 #include "peripherals/hal_gpio.h"
 
 #ifndef FOSC_HZ
-#define FOSC_HZ 20000000UL
+#define FOSC_HZ 4000000UL
 #endif
 
 #define BLINK_MS 500u

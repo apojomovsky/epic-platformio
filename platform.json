@@ -49,6 +49,18 @@
     "examples/blink-pic16f877a",
     "examples/blink-pic16f887",
     "examples/blink-pic18f4550",
-    "examples/hal-tick-pic16f877a"
+    "examples/blink-tutorial-pic12f675",
+    "examples/blink-tutorial-pic16f1937",
+    "examples/blink-tutorial-pic16f628a",
+    "examples/blink-tutorial-pic16f877a",
+    "examples/blink-tutorial-pic16f887",
+    "examples/blink-tutorial-pic18f4550",
+    "examples/blink-xc8-pic16f877a",
+    "examples/blink-xc8-pic16f887",
+    "examples/blink-xc8-pic18f4550",
+    "examples/hal-tick-pic16f877a",
+    "examples/hal-tick-pic16f887",
+    "examples/hal-tick-pic18f4550",
+    "examples/hal-tick-xc8-pic16f877a"
   ]
 }
