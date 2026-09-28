@@ -15,6 +15,12 @@ upstream stays pinned. The same rule holds for `framework-epichal` against
 This is the point of D-6 in `epic-cc/docs/31-ecosystem-integration-design.md`:
 a board-definition fix landing here never forces a compiler release.
 
+The programmer tool packages (`tool-minipro`, `tool-pk2cmd`,
+`tool-picpro`) are the exception: epic-tools versions and publishes
+them, so `platform.json` pins their release URLs directly and
+`packages/versions.json` does not list them. The consistency checker
+only covers packages listed there.
+
 ## Host selection (PIO-1, epic-platformio#44)
 
 The upstream bundles are per host, and so are the packages built from them
