@@ -140,7 +140,7 @@ host-specific fact is resolved. It does two jobs and refuses nothing:
   (the bring-your-own-binary path, "Upload" below). `custom` maps to
   nothing: it is the project's own `upload_command`.
 
-**The tool packages do not exist yet** (epic8-tools' `tool-minipro`,
+**The tool packages do not exist yet** (epic-tools' `tool-minipro`,
 `tool-pk2cmd`, `tool-picpro`; epic-platformio#40..#43). The hook is the
 mapping plus a guard that only touches a package `platform.json` actually
 declares, so a protocol named there but not yet carried is a no-op and its

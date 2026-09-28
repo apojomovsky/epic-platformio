@@ -220,7 +220,7 @@ class ConfigureDefaultPackagesTests(unittest.TestCase):
         self.assertTrue(platform.packages["tool-pk2cmd"]["optional"])
 
     def test_a_protocol_with_no_package_declared_is_a_no_op(self):
-        # Until epic8-tools publishes, a mapped protocol must build, not
+        # Until epic-tools publishes, a mapped protocol must build, not
         # fail on a package that does not exist yet.
         module, platform = self._platform("linux_x86_64")
         self.assertIn("minipro", module.PROTOCOL_TOOL_PACKAGES)

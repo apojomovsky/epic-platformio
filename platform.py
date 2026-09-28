@@ -31,7 +31,7 @@ TOOLCHAIN_HOSTS = {
     "windows_x86_64": "windows_amd64",
 }
 
-# Upload protocol -> the epic8-tools package providing that programmer
+# Upload protocol -> the epic-tools package providing that programmer
 # (D-10). Keys are exactly the protocols builder/main.py dispatches today;
 # picpro joins both ends with epic-platformio#46. Activation below only
 # touches a package platform.json declares, so a name here is inert until
