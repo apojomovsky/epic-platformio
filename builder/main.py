@@ -773,11 +773,108 @@ def _protocol():
     return env.get("UPLOAD_PROTOCOL") or board.get("upload.protocol", "")
 
 
+# Whether a tool is known to restore the calibration data a 12F629/675
+# needs kept when flashing (docs/46 D-9). `True` verified, `False` known
+# not to, `None` the mechanism exists but the per-part device-file flag is
+# unverified, so it warns like `False` does. Only a `True` suppresses the
+# warning. Sources: pk2cmd PICkitFunctions.cpp (OSSCALSave/BandGapMask),
+# picpro chipdata.cid (12F675 CALword=Y) plus its missing bandgap
+# read-back, minipro's unread osccal_save/bg_mask.
+TOOL_CALIBRATION = {
+    "pk2cmd": {"osccal": None, "bandgap": None},
+    "picpro": {"osccal": True, "bandgap": False},
+    "minipro": {"osccal": False, "bandgap": False},
+}
+
+
+def _calibration_safe(protocol, field):
+    return TOOL_CALIBRATION.get(protocol, {}).get(field) is True
+
+
+def _build_report():
+    """The driver's --report JSON as a dict, or None when there is nothing
+    usable (missing, unreadable, not JSON, or not an object: a foreign or
+    future report must not crash the warn-only path).
+    """
+    try:
+        with open(REPORT_PATH) as fp:
+            report = json.load(fp)
+    except (OSError, ValueError):
+        return None
+    return report if isinstance(report, dict) else None
+
+
+def _config_warnings(protocol):
+    """The D-9 rules that read the resolved config (they need the report).
+
+    Only the epic-cc path writes the report, so an xc8 upload must not act
+    on a stale one left in the build dir by an earlier epic-cc build.
+    """
+    if toolchain != "epic-cc":
+        return []
+    report = _build_report()
+    if not report:
+        return []
+    config = report.get("config", {}) or {}
+    fields = config.get("fields", {}) or {}
+    hazards = board.get("upload.hazards", {}) or {}
+    lines = []
+
+    # LVP on puts the part's PGM pin in play, where an undriven pin can
+    # drop the chip into programming mode; it needs a pull-down.
+    if fields.get("lvp") == "on" and hazards.get("lvp_scheme") == "pgm_pin":
+        lines.append(
+            "LVP is enabled: %s is the PGM pin and needs a pull-down"
+            % (hazards.get("pgm_pin") or "the PGM pin")
+        )
+
+    # Every internal-oscillator mode value in the registries starts with
+    # "int", so no per-part list is needed to spot one.
+    osc = str(fields.get("osc", ""))
+    if fields.get("mclre") == "off" and osc.startswith("int"):
+        lines.append(
+            "MCLR is disabled with the internal oscillator: recovery needs "
+            "a programmer that applies Vpp before Vdd"
+        )
+    return lines
+
+
+def _calibration_warnings(protocol):
+    """The D-9 12F629/675 calibration rules, which need no build report:
+    the part is known from the board and the tool from the protocol, so
+    they hold under either toolchain.
+    """
+    hazards = board.get("upload.hazards", {}) or {}
+    lines = []
+    if hazards.get("osccal_word") and not _calibration_safe(protocol, "osccal"):
+        lines.append(
+            "%s is not known to restore this part's OSCCAL calibration "
+            "word (%s); the factory value may be lost"
+            % (protocol, hazards["osccal_word"])
+        )
+    if hazards.get("bandgap_bits") and not _calibration_safe(protocol, "bandgap"):
+        lines.append(
+            "%s is not known to keep this part's factory bandgap bits "
+            "(config %s); the factory value may be lost"
+            % (protocol, hazards["bandgap_bits"])
+        )
+    return lines
+
+
+def _hazard_warnings():
+    """The D-9 pre-flash warnings for this part and tool, as text lines."""
+    protocol = _protocol()
+    return _config_warnings(protocol) + _calibration_warnings(protocol)
+
+
 def _upload(target, source, env):
     # Refuse an oversized image before flashing, the gate core gives a
-    # SIZETOOL platform (docs/46 D-7). #47's hazard warnings land here too.
+    # SIZETOOL platform (docs/46 D-7). The programming hazards are warned
+    # here too, never refused (docs/46 D-9).
     if _check_size(target, source, env):
         return 1
+    for warning in _hazard_warnings():
+        print("Warning: %s" % warning)
     handler = _dispatch(_protocol(), 0)
     if handler is None:
         return 1
