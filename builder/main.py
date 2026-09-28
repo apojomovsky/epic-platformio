@@ -419,7 +419,13 @@ if toolchain == "xc8":
         xc8_objs.append(env.Command(obj_path, src, _xc8_compile_action(src_path, xc8_cflags)))
     firmware = env.Command(join("$BUILD_DIR", "${PROGNAME}.hex"), xc8_objs, _xc8_link)
 else:
-    firmware = env.Command(join("$BUILD_DIR", "${PROGNAME}.hex"), sources, _epiccc)
+    # The report is a second product of the same compile, so it is a
+    # second target: an up-to-date HEX with the report gone (a partial
+    # .pio build wipe) must rebuild rather than let the size check read a
+    # missing file and pass the over-max gate silently.
+    firmware = env.Command(
+        [join("$BUILD_DIR", "${PROGNAME}.hex"), REPORT_PATH], sources, _epiccc
+    )
 
 # Header edits must rebuild the HEX: SCons only tracks listed sources, and
 # epic-cc reads headers through -I, so depend on every header under the
