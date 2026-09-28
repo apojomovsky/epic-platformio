@@ -167,14 +167,15 @@ supported") at the PlatformIO layer, and epic-hal's own build driver
 (`epic_build.py`) already defaults to xc8 on its side, so this closes a
 gap in platform-epic8 specifically, not a new position for the ecosystem.
 
-**Never vendored, same reasoning as minipro/pk2cmd below, sharper.**
-Microchip's EULA forbids redistributing XC8 at all (not merely "no
-package exists," `pk2cmd`'s situation); `platform.json` carries no
+**Never vendored, because the licence forbids it.** Microchip's EULA
+forbids redistributing XC8 at all, so unlike the programmers, which
+ship as tool packages ("Upload" below), `platform.json` carries no
 `packages.*` entry for it, and never will. `builder/main.py` finds a
 binary the user already installed, on `PATH` or via `EPIC8_XC8_PATH`, and
-an optional `EPIC8_XC8_DFP_DIR` for a device family pack, the same
-discovery shape as `EPIC8_MINIPRO_PATH`/`EPIC8_PK2CMD_PATH`. Documented in
-`docs/getting-started.md#xc8`.
+an optional `EPIC8_XC8_DFP_DIR` for a device family pack. That is the
+same discovery shape the programmers keep as their bring-your-own
+fallthrough (`EPIC8_*_PATH`), except that for XC8 it is the only path.
+Documented in `docs/getting-started.md#xc8`.
 
 **Why now, why not earlier.** The framework package (`framework-epichal`)
 platform-epic8 already downloads has shipped XC8-shaped sources
