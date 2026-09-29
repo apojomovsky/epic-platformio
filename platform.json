@@ -38,11 +38,6 @@
       "type": "tool",
       "optional": true,
       "version": "https://github.com/apojomovsky/epic-tools/releases/download/tool-pk2cmd-v1.27.1/tool-pk2cmd-linux_x86_64-1.27.1.tar.gz"
-    },
-    "tool-picpro": {
-      "type": "tool",
-      "optional": true,
-      "version": "https://github.com/apojomovsky/epic-tools/releases/download/tool-picpro-v0.4.1/tool-picpro-linux_x86_64-0.4.1.tar.gz"
     }
   },
   "examples": [

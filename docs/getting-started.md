@@ -234,7 +234,7 @@ package (installed automatically when the protocol is selected), then
 |---|---|---|
 | `minipro` (default) | XGecu T48, TL866II Plus (TL866CS has no ICSP header and cannot be used) | `tool-minipro` |
 | `pk2cmd` | PICkit2, PICkit3, PKOB, "PICkit3.5" clones | `tool-pk2cmd` |
-| `picpro` | Kitsrus K150 and siblings, P18A firmware only | `tool-picpro` |
+| `picpro` | Kitsrus K150 and siblings, P18A firmware only | `tool-picpro` (no release yet, epic-platformio#43; `PATH` until then) |
 | `custom` | anything, through your own `upload_command` | none |
 
 ```bash
