@@ -9,8 +9,11 @@ supports [MPLAB XC8](#xc8) as a fully supported alternate toolchain:
 
 ## Install the platform
 
-The beta lives on the PlatformIO registry as `apojomovsky/epic8`
-(compatibility table: [`README.md#compatibility`](../README.md#compatibility)):
+The beta will publish to the PlatformIO registry as `apojomovsky/epic8`
+(compatibility table: [`README.md#compatibility`](../README.md#compatibility)).
+The registry publication lands on go-ahead after this change merges;
+until then the git URL below is the working install, used both to
+install and as the `platform` value:
 
 ```bash
 platformio platform install apojomovsky/epic8
@@ -66,7 +69,7 @@ and pick the modules with `-DEPIC_HAL_MODULES`:
 
 ```ini
 [env:epic8]
-platform = epic8
+platform = apojomovsky/epic8
 board = pic16f877a
 framework = epichal
 build_flags = -DEPIC_HAL_MODULES=tick
@@ -170,7 +173,7 @@ rows in [Supported parts](#supported-parts)), with or without
 ```ini
 ; platformio.ini
 [env:epic8]
-platform = epic8
+platform = apojomovsky/epic8
 board = pic16f877a
 board_build.toolchain = xc8
 ```

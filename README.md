@@ -33,6 +33,10 @@ instead.
 platformio platform install apojomovsky/epic8
 ```
 
+Registry publication lands on go-ahead after this change merges; until
+then install from `https://github.com/apojomovsky/epic-platformio` and
+use that URL as the `platform` value.
+
 ```ini
 ; platformio.ini
 [env:epic8]
@@ -99,7 +103,7 @@ sets.
 
 ## Compatibility
 
-The beta ships platform, toolchain and framework to the PlatformIO
+The beta will publish platform, toolchain and framework to the PlatformIO
 registry under the personal owner. The platform pins exact package
 versions, so a beta project builds the same toolchain and framework
 everywhere:
@@ -128,8 +132,9 @@ custom `upload_command`; see
 guide per programmer under [`docs/programmers/`](docs/programmers/). `pio
 run -t size` prints PlatformIO's program-size bar from the driver's own
 build report, and the same check gates `pio run -t upload` so an oversized
-image is refused before flashing. Published
-to the PlatformIO registry as `apojomovsky/epic8`, installed as above.
+image is refused before flashing. The beta publishes
+to the PlatformIO registry as `apojomovsky/epic8`, installed as above,
+once the post-merge publication lands; until then the git URL installs it.
 
 <details>
 <summary><strong>Under the hood</strong>: how this repo fits with epic-cc and epic-hal</summary>
