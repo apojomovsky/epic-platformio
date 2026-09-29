@@ -30,13 +30,13 @@ instead.
 ## Quickstart
 
 ```bash
-platformio platform install https://github.com/apojomovsky/epic-platformio
+platformio platform install apojomovsky/epic8
 ```
 
 ```ini
 ; platformio.ini
 [env:epic8]
-platform = epic8
+platform = apojomovsky/epic8
 board = pic16f877a
 ```
 
@@ -97,6 +97,26 @@ two upstream registries rather than hand-maintained; see
 for what each board's capability fields mean and how to regenerate the
 sets.
 
+## Compatibility
+
+The beta ships platform, toolchain and framework to the PlatformIO
+registry under the personal owner. The platform pins exact package
+versions, so a beta project builds the same toolchain and framework
+everywhere:
+
+| Piece | Registry package | Version | Upstream |
+|---|---|---|---|
+| platform | `apojomovsky/epic8` | `0.0.1` | this repo |
+| toolchain | `apojomovsky/toolchain-epiccc` | `0.4.0` | [epic-cc `v0.4.0`](https://github.com/apojomovsky/epic-cc/releases/tag/v0.4.0) |
+| framework | `apojomovsky/framework-epichal` | `0.6.0` | [epic-hal `v0.6.0`](https://github.com/apojomovsky/epic-hal/releases/tag/v0.6.0) |
+
+Programmer tools install only when the project selects their protocol.
+`tool-minipro` (`0.7.4`) and `tool-pk2cmd` (`1.27.1`) are live: selecting
+`minipro` or `pk2cmd` pulls the package, otherwise the builder falls back
+to `EPIC8_*_PATH` or `PATH`. `tool-picpro` (`0.4.1`) has no release yet
+(epic-platformio#43), so `picpro` always resolves from `EPIC8_PICPRO_PATH`
+or `PATH` until it lands.
+
 ## Status
 
 **Early.** Building works end-to-end today: `pio run` compiles a supported
@@ -108,8 +128,8 @@ custom `upload_command`; see
 guide per programmer under [`docs/programmers/`](docs/programmers/). `pio
 run -t size` prints PlatformIO's program-size bar from the driver's own
 build report, and the same check gates `pio run -t upload` so an oversized
-image is refused before flashing. Not yet published
-to the PlatformIO registry: install from the git URL above until it is.
+image is refused before flashing. Published
+to the PlatformIO registry as `apojomovsky/epic8`, installed as above.
 
 <details>
 <summary><strong>Under the hood</strong>: how this repo fits with epic-cc and epic-hal</summary>
