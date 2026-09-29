@@ -44,4 +44,5 @@ pio run -t readback              # dump flash to .pio/build/<env>/readback.hex
 - `Chip ID mismatch`: the socket holds a different part than the board
   names. `minipro -p <device> -D` reads the ID without touching flash.
 - A part missing from `minipro -l` is a device-database gap upstream,
-  not a wiring fault: file it with the database spelling attached.
+  not a wiring fault: report it to the minipro project with the database
+  spelling attached (agents: file a `dispatch-only` issue here instead).
