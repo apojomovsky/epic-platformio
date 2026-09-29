@@ -2,9 +2,11 @@
 
 Two facts `platform.json` cannot express by itself:
 
-- epic-cc ships one bundle per host, while `platform.json` pins one download
-  URL per package. Which asset that URL should be is only knowable from the
-  running machine, so the pin is remapped here (D-5, the shape
+- epic-cc ships one bundle per host. `platform.json` pins the registry
+  version, which needs no remap; a URL pin (a project's own
+  `platform_packages` override) still names one host's asset, and which
+  asset that URL should be is only knowable from the running machine, so
+  the URL pin is remapped here (D-5, the shape
   Community-PIO-CH32V's `configure_default_packages` uses).
 - A programmer tool package is worth downloading only for a project that
   asked for the protocol needing it (D-5).

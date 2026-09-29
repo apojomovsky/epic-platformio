@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Write back a just-published package version to the three places that
 must agree: packages/versions.json (the D-6 mapping, docs/packages.md),
-packages/<name>/package.json, and platform.json's download URL. Before
+packages/<name>/package.json, and platform.json's registry pin. Before
 this script existed those were hand-edited in a separate PR, which is
 exactly how they drifted (stale platform.json version, stale package.json
 version, upstream_url pointing at an old zip).
@@ -26,13 +26,7 @@ import json
 import pathlib
 import re
 
-REPO = "apojomovsky/epic-platformio"
 SEMVER_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
-
-DEFAULT_ASSET = {
-    "toolchain-epiccc": "toolchain-epiccc-linux_x86_64-{ver}.tar.gz",
-    "framework-epichal": "framework-epichal-{ver}.tar.gz",
-}
 
 
 def semver_key(version: str) -> tuple[int, int, int]:
@@ -84,13 +78,11 @@ def sync_package_json(root: pathlib.Path, package: str, pkg_version: str) -> Non
     write_json(path, data)
 
 
-def sync_platform_json(root: pathlib.Path, package: str, pkg_version: str,
-                        asset_name: str) -> None:
+def sync_platform_json(root: pathlib.Path, package: str, pkg_version: str) -> None:
     path = root / "platform.json"
     data = load_json(path)
-    tag = f"{package}-v{pkg_version}"
-    url = f"https://github.com/{REPO}/releases/download/{tag}/{asset_name}"
-    data["packages"][package]["version"] = url
+    data["packages"][package]["owner"] = "apojomovsky"
+    data["packages"][package]["version"] = pkg_version
     write_json(path, data)
 
 
@@ -103,7 +95,6 @@ def main() -> None:
     ap.add_argument("--upstream-tag", required=True, help="e.g. v0.1.1")
     ap.add_argument("--upstream-url-linux")
     ap.add_argument("--upstream-url-windows")
-    ap.add_argument("--asset-name", help="release asset platform.json's URL should point at")
     ap.add_argument("--note")
     ap.add_argument("--root", default=".", help="repo root, default cwd")
     ap.add_argument("--github-output", help="also append old_upstream_tag= here")
@@ -116,7 +107,6 @@ def main() -> None:
         raise SystemExit("toolchain-epiccc requires --upstream-url-linux and --upstream-url-windows")
 
     root = pathlib.Path(args.root)
-    asset_name = args.asset_name or DEFAULT_ASSET[args.package].format(ver=args.pkg_version)
 
     old_upstream_tag = sync_versions_json(
         root, args.package, args.pkg_version, args.upstream_tag,
@@ -132,7 +122,7 @@ def main() -> None:
     is_latest = max(all_versions, key=semver_key) == args.pkg_version
     if is_latest:
         sync_package_json(root, args.package, args.pkg_version)
-        sync_platform_json(root, args.package, args.pkg_version, asset_name)
+        sync_platform_json(root, args.package, args.pkg_version)
     else:
         print(
             f"{args.pkg_version} is not the newest entry for {args.package} "

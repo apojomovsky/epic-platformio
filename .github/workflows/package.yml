@@ -137,7 +137,6 @@ jobs:
           upstream_tag="${{ steps.ver.outputs.tag }}"
           bash scripts/finish_release.sh toolchain-epiccc "$pkg_ver" "$upstream_tag" \
             apojomovsky/epic-cc \
-            "toolchain-epiccc-linux_x86_64-${pkg_ver}.tar.gz" \
             "https://github.com/apojomovsky/epic-cc/releases/download/${upstream_tag}/epic-cc-${upstream_ver}-x86_64-linux.zip" \
             "https://github.com/apojomovsky/epic-cc/releases/download/${upstream_tag}/epic-cc-${upstream_ver}-x86_64-windows.zip"
 
@@ -295,5 +294,4 @@ jobs:
           pkg_ver="${{ steps.ver.outputs.pkg_ver }}"
           upstream_tag="${{ steps.ver.outputs.tag }}"
           bash scripts/finish_release.sh framework-epichal "$pkg_ver" "$upstream_tag" \
-            apojomovsky/epic-hal \
-            "framework-epichal-${pkg_ver}.tar.gz"
+            apojomovsky/epic-hal

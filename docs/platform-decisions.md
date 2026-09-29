@@ -103,16 +103,17 @@ epic-hal to close per family, not a packaging-pipeline bug.
 **Decision (PIO-1, epic-platformio#44).** `platform.py` is the one place a
 host-specific fact is resolved. It does two jobs and refuses nothing:
 
-- **One toolchain package per host, remapped from the `platform.json`
-  pin.** epic-cc ships a bundle per host while `platform.json` pins a
-  single download URL per package, so the pin names one host's asset and
+- **One toolchain package per host, remapped from a URL pin.**
+  epic-cc ships a bundle per host. `platform.json` pins the registry
+  version, which needs no remap; a URL pin (a project's own
+  `platform_packages` override) still names one host's asset, so
   `platform.py` swaps the host token in that asset's file name for the
   running machine's, the shape Community-PIO-CH32V uses. `platform.json`
   stays the only place a version is pinned (D-5, `docs/packages.md`) and
-  the remap is a pure function of it, so the two hosts cannot drift to two
-  versions the way two hand-kept pins would. Both Windows spellings
-  PlatformIO can report (`windows_amd64`, `windows_x86_64`) resolve to the
-  one Windows bundle this repo packs.
+  the remap is a pure function of the URL pin, so the two hosts cannot
+  drift to two versions the way two hand-kept pins would. Both Windows
+  spellings PlatformIO can report (`windows_amd64`, `windows_x86_64`)
+  resolve to the one Windows bundle this repo packs.
 
   **The remap answers on the `packages` property, not in
   `configure_default_packages`.** `PlatformBase.packages` rebuilds its dict
@@ -309,7 +310,8 @@ Platforms"):
 
 - `platform.json` `packages[].version` accepts a direct URL; the docs
   example is `"version": "https://github.com/user/repo.git"`. The
-  toolchain package is referenced by its release URL, per D-6.
+  toolchain package used that shape until the PIO-3 registry publish
+  (epic-platformio#51); it now pins the registry version instead.
 - Board manifests require `name`, `url`, `vendor`; `build.mcu`,
   `build.f_cpu` and `upload.maximum_*` are the fields the builder and the
   size check read.

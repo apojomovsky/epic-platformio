@@ -4,8 +4,8 @@ platform.json disagree about a package's current version.
 
 packages/versions.json is the single source of truth (docs/packages.md,
 D-6): its highest-inserted version per package must match the
-package.json in that package's dir, and platform.json's download URL for
-that package must point at a release tag built from the same version.
+package.json in that package's dir, and platform.json's registry pin for
+that package must name the same version under owner apojomovsky.
 Catches the exact drift class this repo shipped with before scripts/
 sync_versions.py existed: a hand-edit to one file that forgot the others.
 """
@@ -16,7 +16,6 @@ import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-REPO = "apojomovsky/epic-platformio"
 
 
 def load(path: pathlib.Path):
@@ -51,15 +50,16 @@ def main() -> int:
         platform_entry = platform.get("packages", {}).get(package)
         if platform_entry is None:
             continue
-        url = platform_entry.get("version", "")
-        expected_prefix = (
-            f"https://github.com/{REPO}/releases/download/{package}-v{current_version}/"
+        if (
+            platform_entry.get("owner") == "apojomovsky"
+            and platform_entry.get("version") == current_version
+        ):
+            continue
+        errors.append(
+            f"platform.json packages.{package} must pin owner apojomovsky "
+            f"version {current_version!r} (latest in packages/versions.json), "
+            f"got {platform_entry!r}"
         )
-        if not url.startswith(expected_prefix):
-            errors.append(
-                f"platform.json packages.{package}.version {url!r} does not "
-                f"point at tag {package}-v{current_version} (latest in packages/versions.json)"
-            )
 
     if errors:
         print("version consistency check failed:")
