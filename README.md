@@ -60,10 +60,9 @@ pio run
 
 That produces `firmware.hex` in `.pio/build/epic8/`. Full walkthrough,
 including wiring in the HAL, is in
-[`docs/getting-started.md`](docs/getting-started.md); eight worked examples,
-the same four again under each toolchain (blink and epic-tick plus GPIO),
-live under
-[`examples/`](examples/).
+[`docs/getting-started.md`](docs/getting-started.md); worked examples live
+under [`examples/`](examples/), a tutorial-style blink per beta board plus
+the HAL integration proof and the XC8 variants.
 
 ## What you get
 
@@ -136,7 +135,7 @@ builder/main.py    # SCons builder: sources through epic-cc in one invocation
 boards/             # the curated beta boards
 boards-experimental # generated copy-into-your-project boards
 packages/           # package manifests and the version mapping
-examples/           # worked examples, one per supported board
+examples/           # worked examples, tutorial-style and HAL, per beta board
 docs/               # getting started and platform decisions
 ```
 

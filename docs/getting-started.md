@@ -90,19 +90,36 @@ module list is comma-separated and resolved transitively, so
 
 ## Worked examples
 
-The `examples/` directory holds one project per supported board, each
-buildable from a clean checkout:
+The `examples/` directory holds one project per beta board, each buildable
+from a clean checkout:
 
 | Example | Board | What it proves |
 |---|---|---|
-| `blink-pic16f877a` | PIC16F877A | the compiler path alone |
+| `blink-tutorial-pic16f877a` | PIC16F877A | XC8 tutorial source (`#pragma config`, `__delay_ms`) compiles unchanged |
+| `blink-tutorial-pic16f887` | PIC16F887 | the same, on a second PIC14 part |
+| `blink-tutorial-pic16f628a` | PIC16F628A | the same, on the atdf-tier part |
+| `blink-tutorial-pic12f675` | PIC12F675 | the same on a baseline-adjacent part, internal oscillator |
+| `blink-tutorial-pic16f1937` | PIC16F1937 | the same on the PIC14E backend |
+| `blink-tutorial-pic18f4550` | PIC18F4550 | the same on the PIC18 backend |
+| `blink-pic16f877a` | PIC16F877A | the minimal `EPIC_CONFIG` compiler path |
 | `blink-pic16f887` | PIC16F887 | a new device on a supported core |
 | `blink-pic18f4550` | PIC18F4550 | the PIC18 backend |
 | `hal-tick-pic16f877a` | PIC16F877A | epic-tick plus GPIO, the integration proof |
+| `hal-tick-pic16f887` | PIC16F887 | the same on a second PIC14 part |
+| `hal-tick-pic18f4550` | PIC18F4550 | the same on the PIC18 backend |
 | `blink-xc8-pic16f877a` | PIC16F877A | the xc8 toolchain path alone ([XC8](#xc8)) |
 | `blink-xc8-pic16f887` | PIC16F887 | xc8 on a new device on a supported core |
 | `blink-xc8-pic18f4550` | PIC18F4550 | xc8 on the PIC18 backend |
 | `hal-tick-xc8-pic16f877a` | PIC16F877A | epic-tick plus GPIO under xc8 |
+
+The `blink-tutorial-*` set is the source a PIC tutorial writes: no HAL,
+`#pragma config` and the `__delay_ms` macro, which compile unchanged on
+the epic-cc path (docs/46 D-3). The `hal-tick-*` set covers the three beta
+boards whose epic-hal family ships a tick module (`pic16f877a`,
+`pic16f887`, `pic18f4550`); the other three cannot take `framework =
+epichal` yet, because their family bundles carry no tick module
+(`pic16f628a`, `pic16f1937`) or no framework content at all (`pic12f675`).
+That gap is epic-hal's, tracked as a follow-up, not a platform choice.
 
 Copy one into a fresh directory and run `pio run`.
 
