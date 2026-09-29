@@ -16,7 +16,7 @@
   "support": "simulator",
   "upload": {
     "devices": {
-      "minipro": "PIC16F877A",
+      "minipro": "PIC16F877A@DIP40",
       "picpro": "16F877A",
       "pk2cmd": "PIC16F877A"
     },

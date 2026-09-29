@@ -50,7 +50,8 @@ CURATED = {
         "maximum_ram_size": 368,
         "f_cpu": "4000000L",
         "devices": {
-            "minipro": "PIC16F877A",
+            # Same per-package naming as the 1937 below: no bare 877A row.
+            "minipro": "PIC16F877A@DIP40",
             "pk2cmd": "PIC16F877A",
             "picpro": "16F877A",
         },
@@ -66,7 +67,8 @@ CURATED = {
         "maximum_ram_size": 368,
         "f_cpu": "4000000L",
         "devices": {
-            "minipro": "PIC16F887",
+            # No bare 887 row either, same per-package naming as the 1937.
+            "minipro": "PIC16F887@DIP40",
             "pk2cmd": "PIC16F887",
         },
         "hazards": {
@@ -81,7 +83,8 @@ CURATED = {
         "maximum_ram_size": 224,
         "f_cpu": None,
         "devices": {
-            "minipro": "PIC16F628A",
+            # The 628A is an 18-pin part: DIP18 is its minipro token.
+            "minipro": "PIC16F628A@DIP18",
             "pk2cmd": "PIC16F628A",
             "picpro": "16F628A",
         },
@@ -132,7 +135,8 @@ CURATED = {
         "maximum_ram_size": 2048,
         "f_cpu": "20000000L",
         "devices": {
-            "minipro": "PIC18F4550",
+            # No bare 4550 row, same per-package naming as the 1937 above.
+            "minipro": "PIC18F4550@DIP40",
             "pk2cmd": "PIC18F4550",
             "picpro": "18F4550",
         },
