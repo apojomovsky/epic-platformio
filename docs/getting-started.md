@@ -9,8 +9,14 @@ supports [MPLAB XC8](#xc8) as a fully supported alternate toolchain:
 
 ## Install the platform
 
+The beta will publish to the PlatformIO registry as `apojomovsky/epic8`
+(compatibility table: [`README.md#compatibility`](../README.md#compatibility)).
+The registry publication lands on go-ahead after this change merges;
+until then the git URL below is the working install, used both to
+install and as the `platform` value:
+
 ```bash
-pio pkg install -p epic8
+platformio platform install apojomovsky/epic8
 ```
 
 or, from a checkout of this repository:
@@ -24,7 +30,7 @@ platformio platform install https://github.com/apojomovsky/epic-platformio
 ```ini
 ; platformio.ini
 [env:epic8]
-platform = epic8
+platform = apojomovsky/epic8
 board = pic16f877a
 ```
 
@@ -63,7 +69,7 @@ and pick the modules with `-DEPIC_HAL_MODULES`:
 
 ```ini
 [env:epic8]
-platform = epic8
+platform = apojomovsky/epic8
 board = pic16f877a
 framework = epichal
 build_flags = -DEPIC_HAL_MODULES=tick
@@ -167,7 +173,7 @@ rows in [Supported parts](#supported-parts)), with or without
 ```ini
 ; platformio.ini
 [env:epic8]
-platform = epic8
+platform = apojomovsky/epic8
 board = pic16f877a
 board_build.toolchain = xc8
 ```
@@ -228,7 +234,7 @@ package (installed automatically when the protocol is selected), then
 |---|---|---|
 | `minipro` (default) | XGecu T48, TL866II Plus (TL866CS has no ICSP header and cannot be used) | `tool-minipro` |
 | `pk2cmd` | PICkit2, PICkit3, PKOB, "PICkit3.5" clones | `tool-pk2cmd` |
-| `picpro` | Kitsrus K150 and siblings, P18A firmware only | `tool-picpro` |
+| `picpro` | Kitsrus K150 and siblings, P18A firmware only | `tool-picpro` (no release yet, epic-platformio#43; `PATH` until then) |
 | `custom` | anything, through your own `upload_command` | none |
 
 ```bash

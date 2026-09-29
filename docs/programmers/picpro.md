@@ -31,9 +31,9 @@ anything below works.
 
 ## Install
 
-Selecting the protocol pulls `tool-picpro` automatically. To use your
-own install instead (`pip install picpro`), put it on `PATH` or point
-`EPIC8_PICPRO_PATH` at it.
+`tool-picpro` will pull automatically once its release lands
+(epic-platformio#43); until then use your own install
+(`pip install picpro`) on `PATH` or point `EPIC8_PICPRO_PATH` at it.
 
 ## udev
 
