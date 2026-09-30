@@ -80,9 +80,10 @@ the ICSP clock for loaded PGx lines or long cables.
 The default flags preserve the factory OSCCAL word and bandgap bits:
 pk2cmd reads them before the bulk erase and writes them back after
 (epic-platformio#62, verified from source and the device file, not on
-hardware). Appending `-U` in `upload_flags` cannot silently override
-this: it needs `-M<value>`, but the platform's own bare `-M` comes
-first on the command line, so pk2cmd exits with a usage error instead.
+hardware). Appending `-U<value>` (attached hex, e.g. `-U3400`) in
+`upload_flags` silently replaces the factory OSCCAL with that value:
+the platform already passes `-M`, which is all `-U` checks for before
+overwriting. A space-separated `-U 3400` fails with a usage error.
 
 ## Troubleshooting
 
