@@ -781,13 +781,14 @@ def _protocol():
 
 # Whether a tool is known to restore the calibration data a 12F629/675
 # needs kept when flashing (docs/46 D-9). `True` verified, `False` known
-# not to, `None` the mechanism exists but the per-part device-file flag is
-# unverified, so it warns like `False` does. Only a `True` suppresses the
-# warning. Sources: pk2cmd PICkitFunctions.cpp (OSSCALSave/BandGapMask),
-# picpro chipdata.cid (12F675 CALword=Y) plus its missing bandgap
-# read-back, minipro's unread osccal_save/bg_mask.
+# not to, `None` the mechanism exists but the per-part device-file flag
+# is unverified, so it warns like `False` does. Sources: pk2cmd at pin
+# 2974776 plus the 12F675 record of PK2DeviceFile.dat 1.62.14
+# (OSSCALSave=1, BandGapMask=0x3000), picpro chipdata.cid (12F675
+# CALword=Y) plus its missing bandgap read-back, minipro's unread
+# osccal_save/bg_mask.
 TOOL_CALIBRATION = {
-    "pk2cmd": {"osccal": None, "bandgap": None},
+    "pk2cmd": {"osccal": True, "bandgap": True},
     "picpro": {"osccal": True, "bandgap": False},
     "minipro": {"osccal": False, "bandgap": False},
 }
