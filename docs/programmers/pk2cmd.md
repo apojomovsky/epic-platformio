@@ -75,6 +75,16 @@ pio run -t readback              # dump flash to .pio/build/<env>/readback.hex
 `upload_flags` appends tool arguments, e.g. `upload_flags = -L4` slows
 the ICSP clock for loaded PGx lines or long cables.
 
+## Calibration data on the 12F629/675
+
+The default flags preserve the factory OSCCAL word and bandgap bits:
+pk2cmd reads them before the bulk erase and writes them back after
+(epic-platformio#62, verified from source and the device file, not on
+hardware). Appending `-U<value>` (attached hex, e.g. `-U3400`) in
+`upload_flags` silently replaces the factory OSCCAL with that value:
+the platform already passes `-M`, which is all `-U` checks for before
+overwriting. A space-separated `-U 3400` fails with a usage error.
+
 ## Troubleshooting
 
 - `PICkit 2/3/PKOB not found`: udev rules missing, or the clone
