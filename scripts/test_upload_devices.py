@@ -42,7 +42,7 @@ def fixture_names(tool, version):
     assert path.is_file(), "missing %s: re-dump it per its header" % path.name
     names = set()
     for line in path.read_text().splitlines():
-        line = line.strip()
+        line = CASE[tool](line.strip())
         if line and not line.startswith("#"):
             names.add(line)
     assert names, "empty fixture %s" % path.name
