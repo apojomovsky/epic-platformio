@@ -3,10 +3,15 @@ name: package
 # Cuts PlatformIO packages from upstream release assets. No hand repacking.
 # Triggered manually with the epic-cc and/or epic-hal tag that should be
 # wrapped. The mapping between package version and upstream tag lives in
-# packages/versions.json (D-6), so a packaging-only bump does not need a
-# new compiler or HAL release. Each job's last step, scripts/finish_release.sh,
+# packages/versions.json (D-6), so a packaging-only revision does not need
+# a new compiler or HAL release. Each job's last step, scripts/finish_release.sh,
 # writes that mapping plus platform.json and CHANGELOG.md back to master
 # (no branch protection here, see AGENTS.md).
+#
+# Release titles and notes follow the cross-repo release policy:
+# `<package> vX.Y.Z` titles, provenance in a Compatibility section, empty
+# sections omitted. The version overrides exist only for packaging
+# revisions (`<upstream>+pioN`, rule 1e) and are rejected otherwise.
 
 on:
   workflow_dispatch:
@@ -16,7 +21,7 @@ on:
         required: false
         type: string
       package_version:
-        description: "toolchain-epiccc package version override for packaging-only bumps (default: epic tag without v)"
+        description: "packaging-revision override, <upstream>+pioN (default: epic tag without v)"
         required: false
         type: string
       epic_hal_version:
@@ -24,7 +29,7 @@ on:
         required: false
         type: string
       framework_package_version:
-        description: "framework-epichal package version override for packaging-only bumps (default: hal tag without v)"
+        description: "packaging-revision override, <upstream>+pioN (default: hal tag without v)"
         required: false
         type: string
 
@@ -53,12 +58,25 @@ jobs:
 
       - name: Resolve versions
         id: ver
+        # The override arrives via env, not template-expanded into the
+        # script: a workflow_dispatch input is free text, and expanding it
+        # straight into run: is the standard Actions script-injection
+        # hole (same reason boards-refresh.yml indirects its tag inputs).
+        env:
+          PKG_OVERRIDE: ${{ inputs.package_version }}
         run: |
           tag="${{ inputs.epic_cc_version }}"
           if [ -z "$tag" ]; then echo "epic_cc_version required"; exit 1; fi
           upstream_ver="${tag#v}"
-          pkg_ver="${{ inputs.package_version }}"
+          pkg_ver="$PKG_OVERRIDE"
           if [ -z "$pkg_ver" ]; then pkg_ver="$upstream_ver"; fi
+          # The override exists only for packaging revisions (rule 1e):
+          # empty (wrap the upstream tag 1:1) or <upstream>+pioN.
+          if [ -n "$PKG_OVERRIDE" ] && [ "$pkg_ver" != "$upstream_ver" ] \
+            && ! [[ "$pkg_ver" =~ ^"$upstream_ver"\+pio[1-9][0-9]*$ ]]; then
+            echo "error: package_version must be <upstream>+pioN (got '$pkg_ver' for upstream $upstream_ver)"
+            exit 1
+          fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "upstream_ver=$upstream_ver" >> "$GITHUB_OUTPUT"
           echo "pkg_ver=$pkg_ver" >> "$GITHUB_OUTPUT"
@@ -117,15 +135,24 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pkg_ver="${{ steps.ver.outputs.pkg_ver }}"
+          upstream_ver="${{ steps.ver.outputs.upstream_ver }}"
           upstream_tag="${{ steps.ver.outputs.tag }}"
           tag="toolchain-epiccc-v${pkg_ver}"
+          if [ "$pkg_ver" = "$upstream_ver" ]; then
+            compat="Wraps epic-cc ${upstream_tag} 1:1."
+          else
+            compat="Packaging revision of epic-cc ${upstream_tag} (no new upstream)."
+          fi
+          notes="## Compatibility
+          ${compat}
+          Upstream release: https://github.com/apojomovsky/epic-cc/releases/tag/$upstream_tag"
           if gh release view "$tag" >/dev/null 2>&1; then
             echo "release $tag already exists, uploading assets"
             gh release upload "$tag" dist/*.tar.gz --clobber
           else
             gh release create "$tag" dist/*.tar.gz \
-              --title "toolchain-epiccc $pkg_ver (from epic-cc $upstream_tag)" \
-              --notes "Built from https://github.com/apojomovsky/epic-cc/releases/tag/$upstream_tag"
+              --title "toolchain-epiccc v${pkg_ver}" \
+              --notes "$notes"
           fi
 
       - name: Sync versions and roll up the changelog
@@ -159,12 +186,23 @@ jobs:
 
       - name: Resolve versions
         id: ver
+        # Env indirection for the override, same injection reason as the
+        # toolchain job above.
+        env:
+          PKG_OVERRIDE: ${{ inputs.framework_package_version }}
         run: |
           tag="${{ inputs.epic_hal_version }}"
           if [ -z "$tag" ]; then echo "epic_hal_version required"; exit 1; fi
           upstream_ver="${tag#v}"
-          pkg_ver="${{ inputs.framework_package_version }}"
+          pkg_ver="$PKG_OVERRIDE"
           if [ -z "$pkg_ver" ]; then pkg_ver="$upstream_ver"; fi
+          # The override exists only for packaging revisions (rule 1e):
+          # empty (wrap the upstream tag 1:1) or <upstream>+pioN.
+          if [ -n "$PKG_OVERRIDE" ] && [ "$pkg_ver" != "$upstream_ver" ] \
+            && ! [[ "$pkg_ver" =~ ^"$upstream_ver"\+pio[1-9][0-9]*$ ]]; then
+            echo "error: framework_package_version must be <upstream>+pioN (got '$pkg_ver' for upstream $upstream_ver)"
+            exit 1
+          fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "upstream_ver=$upstream_ver" >> "$GITHUB_OUTPUT"
           echo "pkg_ver=$pkg_ver" >> "$GITHUB_OUTPUT"
@@ -277,15 +315,24 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pkg_ver="${{ steps.ver.outputs.pkg_ver }}"
+          upstream_ver="${{ steps.ver.outputs.upstream_ver }}"
           upstream_tag="${{ steps.ver.outputs.tag }}"
           tag="framework-epichal-v${pkg_ver}"
+          if [ "$pkg_ver" = "$upstream_ver" ]; then
+            compat="Wraps epic-hal ${upstream_tag} 1:1."
+          else
+            compat="Packaging revision of epic-hal ${upstream_tag} (no new upstream)."
+          fi
+          notes="## Compatibility
+          ${compat}
+          Upstream release: https://github.com/apojomovsky/epic-hal/releases/tag/$upstream_tag"
           if gh release view "$tag" >/dev/null 2>&1; then
             echo "release $tag already exists, uploading assets"
             gh release upload "$tag" dist/*.tar.gz --clobber
           else
             gh release create "$tag" dist/*.tar.gz \
-              --title "framework-epichal $pkg_ver (from epic-hal $upstream_tag)" \
-              --notes "Built from https://github.com/apojomovsky/epic-hal/releases/tag/$upstream_tag"
+              --title "framework-epichal v${pkg_ver}" \
+              --notes "$notes"
           fi
 
       - name: Sync versions and roll up the changelog

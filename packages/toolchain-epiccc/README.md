@@ -85,8 +85,9 @@ The builder (`builder/main.py`, PIO-1) resolves the compiler as
 ## Version mapping
 
 Package version equals the upstream `epic-cc` tag with the leading `v`
-stripped (`v0.0.3` -> `0.0.3`). When packaging needs a fix without a compiler
-change, bump the package patch version (`0.0.3` -> `0.0.4`) and record the
-upstream still pinned to `v0.0.3` in `packages/versions.json`. That file is
-the single place where the mapping lives, per D-6, so a board-definition fix
-here never forces a compiler release.
+stripped (`v0.4.0` -> `0.4.0`). A packaging-only fix without a compiler
+change takes the revision `<upstream>+pioN` from N=1 (`0.4.0+pio1`),
+recorded against the still-pinned upstream tag in
+`packages/versions.json`. That file is the single place where the mapping
+lives, per D-6, so a board-definition fix here never forces a compiler
+release.

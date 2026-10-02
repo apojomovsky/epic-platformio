@@ -2,15 +2,22 @@
 
 ## Version mapping (D-6)
 
-Package versions are not welded to upstream release tags. The mapping lives
-in `packages/versions.json`, the single source that decides which upstream
-asset a package version wraps.
+Package versions map 1:1 to upstream release tags: the package version is
+the upstream tag without the leading `v` (`epic-cc v0.4.0` wraps as
+`toolchain-epiccc 0.4.0`). The mapping lives in `packages/versions.json`,
+the single source that decides which upstream asset a package version
+wraps. `packages/versions.json` records the upstream tag plus a note,
+exactly as the release policy requires.
 
-For `toolchain-epiccc` the package version tracks the upstream `epic-cc`
-tag with the leading `v` stripped (`v0.0.3` -> `0.0.3`). When only packaging
-needs a fix, bump the package patch version (`0.0.3` -> `0.0.4`) while the
-upstream stays pinned. The same rule holds for `framework-epichal` against
-`epic-hal` tags.
+A packaging-only fix, with no new upstream, never reuses an upstream
+version number. It takes the policy's packaging revision, `<upstream>+pio<N>`
+starting at N=1 (`0.4.0+pio1`), which stays valid SemVer where a fourth
+component would not, and sorts alongside the version it fixes instead of
+before it the way a pre-release suffix would. The `package_version` /
+`framework_package_version` overrides in `package.yml` exist only for these
+revisions. History stays untouched: `toolchain-epiccc 0.0.4` wrapped
+untagged master and cannot be renamed into this scheme, so it stands as
+the precedent this rule prevents repeating.
 
 This is the point of D-6 in `epic-cc/docs/31-ecosystem-integration-design.md`:
 a board-definition fix landing here never forces a compiler release.
@@ -20,6 +27,28 @@ The programmer tool packages (`tool-minipro`, `tool-pk2cmd`,
 them, so `platform.json` pins their release URLs directly and
 `packages/versions.json` does not list them. The consistency checker
 only covers packages listed there.
+
+## Platform versioning
+
+The `epic8` platform itself is versioned independently of the packages it
+pins. `platform.json`'s `version` is the source of truth: `0.0.1` since
+day one, `0.1.0` from this policy. A platform release is cut as tag
+`epic8-vX.Y.Z` and published to the registry at that version. Before 1.0,
+breaking changes bump minor, features bump minor, fixes bump patch, per
+the release policy.
+
+Breaking for the platform means one of three surfaces:
+
+- board ids: a board renamed, removed, or moved between `boards/` and
+  `boards-experimental/`;
+- `platformio.ini` options: a `board_build.*` or `upload_*` option this
+  platform reads, renamed, removed, or given new required values;
+- minimum package versions: a platform release that no longer installs
+  against an older pinned package.
+
+The platform pins the exact epic-cc and epic-hal pair its CI proved: the
+`compat` workflow builds the examples against those pins, and a platform
+release follows only on green.
 
 ## Host selection (PIO-1, epic-platformio#44)
 
@@ -102,12 +131,12 @@ epic-hal checkout. The builder uses the slice when present.
 packages from the upstream release assets and publishes them as a GitHub
 Release in this repository. The release URL is what `platform.json` references
 until the packages are uploaded to the PlatformIO registry (PIO-3). For a
-packaging-only fix without a new compiler tag, pass the override:
-`-f epic_cc_version=v0.0.3 -f package_version=0.0.4`.
+packaging-only fix without a new compiler tag, pass the packaging-revision
+override: `-f epic_cc_version=v0.0.3 -f package_version=0.0.3+pio1`.
 
 `-f epic_hal_version=v0.5.0` does the same for the framework package (with
 its own `-f framework_package_version=...` override for a packaging-only
-bump). Both inputs can be set in the same dispatch; the `framework` job
+revision). Both inputs can be set in the same dispatch; the `framework` job
 waits on `toolchain` so the two never race to push to master. The
 `framework` job discovers which family bundles that epic-hal tag actually
 published (`epic-hal-<family>-<tag>.tar.gz` assets on its GitHub Release)
