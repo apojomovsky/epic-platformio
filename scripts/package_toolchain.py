@@ -18,10 +18,11 @@ import argparse
 import json
 import pathlib
 import shutil
+import subprocess
+import sys
 import tarfile
 import tempfile
 import zipfile
-import sys
 
 
 TEMPLATE = pathlib.Path(__file__).resolve().parent.parent / "packages" / "toolchain-epiccc" / "package.json"
