@@ -1,0 +1,88 @@
+name: compat
+
+# Compatibility proof for the exact epic-cc / epic-hal pair platform.json
+# pins (release policy, section 4): builds every epic-cc example against
+# those pins, so a platform release never ships an unproven pair. The xc8
+# examples are xc8-ci's, not this job's.
+
+on:
+  pull_request:
+    paths:
+      - "builder/**"
+      - "boards/**"
+      - "boards-experimental/**"
+      - "platform.json"
+      - "packages/**"
+      - "examples/**"
+      - "scripts/package_*.py"
+      - ".github/workflows/compat.yml"
+  push:
+    branches: [master]
+    paths:
+      - "builder/**"
+      - "boards/**"
+      - "boards-experimental/**"
+      - "platform.json"
+      - "packages/**"
+      - "examples/**"
+      - "scripts/package_*.py"
+      - ".github/workflows/compat.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compat:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the epic-cc examples with the pinned pair
+        run: |
+          set -e
+          pip install -q platformio==6.1.19
+
+          # The pair under proof: exactly what platform.json pins, so a
+          # green run means these two URLs build every example below.
+          tc_url=$(python3 -c "import json; print(json.load(open('platform.json'))['packages']['toolchain-epiccc']['version'])")
+          fw_url=$(python3 -c "import json; print(json.load(open('platform.json'))['packages']['framework-epichal']['version'])")
+          echo "toolchain: $tc_url"
+          echo "framework: $fw_url"
+
+          # framework-epichal is an optional platform package: pio run
+          # never auto-installs an optional package on its own, so the
+          # hal-tick examples need it fetched explicitly, from the URL
+          # platform.json itself declares. "pio pkg install --tool" needs
+          # a real project directory to run in, and rewrites its ini in
+          # place (a "platform_packages" line), so it runs against a
+          # throwaway scratch project, never a real example directory.
+          mkdir -p /tmp/scratch
+          printf "[env:epic8]\nplatform = epic8\nboard = pic16f877a\n" > /tmp/scratch/platformio.ini
+          pio pkg install --tool "$fw_url" -d /tmp/scratch
+
+          build_example() {
+            example="$1"
+            sed "s#platform = epic8#platform = file://$GITHUB_WORKSPACE#" \
+              "examples/${example}/platformio.ini" > /tmp/pio.ini
+            pio run -d "examples/${example}" --project-conf /tmp/pio.ini
+          }
+
+          # Run every example regardless of an earlier failure and report
+          # all of them: one broken example must not hide a second,
+          # unrelated regression in the ones after it in this list.
+          failed=0
+          for dir in examples/*/; do
+            example="$(basename "$dir")"
+            # blink-p16f877a is an empty legacy directory with no project
+            # in it; the xc8 examples are xc8-ci's, not this job's.
+            if [ ! -f "examples/${example}/platformio.ini" ]; then
+              echo "skip ${example}: no platformio.ini"
+              continue
+            fi
+            case "$example" in
+              *-xc8-*) echo "skip ${example}: covered by xc8-ci"; continue ;;
+            esac
+            build_example "$example" || failed=1
+          done
+          exit "$failed"
