@@ -8,6 +8,10 @@ package.json in that package's dir, and platform.json's download URL for
 that package must point at a release tag built from the same version.
 Catches the exact drift class this repo shipped with before scripts/
 sync_versions.py existed: a hand-edit to one file that forgot the others.
+
+Package versions are X.Y.Z, or X.Y.Z+pioN for a packaging-only revision
+with no new upstream. platform.json's own version is the platform's
+source of truth and must be plain X.Y.Z.
 """
 
 import json
@@ -17,6 +21,7 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 REPO = "apojomovsky/epic-platformio"
+PLATFORM_VERSION_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 
 
 def load(path: pathlib.Path):
@@ -33,6 +38,13 @@ def main() -> int:
     versions = load(versions_path)
     platform = load(platform_path)
     errors = []
+
+    platform_version = platform.get("version", "")
+    if not PLATFORM_VERSION_RE.match(str(platform_version)):
+        errors.append(
+            f"platform.json version {platform_version!r} is not X.Y.Z "
+            f"(the platform's source of truth, docs/packages.md)"
+        )
 
     for package, entries in versions.items():
         if not entries:

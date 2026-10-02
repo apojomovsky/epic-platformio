@@ -15,6 +15,9 @@ Usage:
   sync_versions.py --package framework-epichal --pkg-version 0.6.0 \\
     --upstream-tag v0.6.0
 
+A packaging-only fix keeps the upstream tag and takes the policy's
+packaging revision: --upstream-tag v0.1.1 --pkg-version 0.1.1+pio1.
+
 Prints "old_upstream_tag=<value>" (empty if this is the package's first
 entry) to stdout, the range start the changelog rollup needs, before this
 script overwrites packages/versions.json with the new pin. Pass
@@ -27,7 +30,7 @@ import pathlib
 import re
 
 REPO = "apojomovsky/epic-platformio"
-SEMVER_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
+SEMVER_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(\+pio[0-9]+)?$")
 
 DEFAULT_ASSET = {
     "toolchain-epiccc": "toolchain-epiccc-linux_x86_64-{ver}.tar.gz",
@@ -35,8 +38,12 @@ DEFAULT_ASSET = {
 }
 
 
-def semver_key(version: str) -> tuple[int, int, int]:
-    return tuple(int(p) for p in version.split("."))
+def semver_key(version: str) -> tuple[int, int, int, int]:
+    # Build metadata does not order under SemVer, but a packaging revision
+    # supersedes the version it fixes, so it sorts after it here.
+    base, _, revision = version.partition("+pio")
+    nums = tuple(int(p) for p in base.split("."))
+    return (*nums, int(revision) if revision else 0)
 
 
 def load_json(path: pathlib.Path) -> dict:
@@ -98,8 +105,8 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                   formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--package", required=True,
-                     choices=["toolchain-epiccc", "framework-epichal"])
-    ap.add_argument("--pkg-version", required=True, help="e.g. 0.1.1")
+                    choices=["toolchain-epiccc", "framework-epichal"])
+    ap.add_argument("--pkg-version", required=True, help="e.g. 0.1.1 or 0.1.1+pio1")
     ap.add_argument("--upstream-tag", required=True, help="e.g. v0.1.1")
     ap.add_argument("--upstream-url-linux")
     ap.add_argument("--upstream-url-windows")
@@ -110,7 +117,7 @@ def main() -> None:
     args = ap.parse_args()
 
     if not SEMVER_RE.match(args.pkg_version):
-        raise SystemExit(f"--pkg-version {args.pkg_version!r} is not X.Y.Z")
+        raise SystemExit(f"--pkg-version {args.pkg_version!r} is not X.Y.Z or X.Y.Z+pioN")
 
     if args.package == "toolchain-epiccc" and not (args.upstream_url_linux and args.upstream_url_windows):
         raise SystemExit("toolchain-epiccc requires --upstream-url-linux and --upstream-url-windows")
