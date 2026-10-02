@@ -117,9 +117,9 @@ everywhere:
 Programmer tools install only when the project selects their protocol.
 `tool-minipro` (`0.7.4`) and `tool-pk2cmd` (`1.27.1`) are live: selecting
 `minipro` or `pk2cmd` pulls the package, otherwise the builder falls back
-to `EPIC8_*_PATH` or `PATH`. `tool-picpro` (`0.4.1`) has no release yet
-(epic-platformio#43), so `picpro` always resolves from `EPIC8_PICPRO_PATH`
-or `PATH` until it lands.
+to `EPIC8_*_PATH` or `PATH`. `tool-picpro` (`0.4.1`) is released, but the
+platform does not declare it yet (epic-platformio#43), so `picpro` still
+resolves from `EPIC8_PICPRO_PATH` or `PATH`.
 
 ## Status
 

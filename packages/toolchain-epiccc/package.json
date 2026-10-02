@@ -1,12 +1,26 @@
 {
   "name": "toolchain-epiccc",
   "version": "0.4.0",
-  "description": "epic-cc toolchain for PIC14/PIC18, with bundled clang 20.1.8",
+  "description": "Free, open-source C compiler for 8-bit PIC (PIC14/PIC18). No XC8 licence needed, with bundled clang 20.1.8",
   "keywords": [
     "toolchain",
     "compiler",
     "pic",
-    "epic-cc"
+    "microchip",
+    "pic12",
+    "pic14",
+    "pic16",
+    "pic18",
+    "8-bit",
+    "epic-cc",
+    "xc8-alternative",
+    "sdcc",
+    "pic12f675",
+    "pic16f1937",
+    "pic16f628a",
+    "pic16f877a",
+    "pic16f887",
+    "pic18f4550"
   ],
   "license": "MIT",
   "homepage": "https://github.com/apojomovsky/epic-cc",

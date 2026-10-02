@@ -1,12 +1,24 @@
 {
   "name": "framework-epichal",
   "version": "0.6.0",
-  "description": "epic-hal register-level HAL and module shelf for PIC14/PIC18",
+  "description": "Register-level HAL and driver modules for 8-bit PIC. One framework line wires epic-hal into your build",
   "keywords": [
     "framework",
     "hal",
+    "drivers",
     "pic",
-    "epic-hal"
+    "microchip",
+    "pic12",
+    "pic16",
+    "pic18",
+    "8-bit",
+    "epic-hal",
+    "pic12f675",
+    "pic16f1937",
+    "pic16f628a",
+    "pic16f877a",
+    "pic16f887",
+    "pic18f4550"
   ],
   "license": "MIT",
   "homepage": "https://github.com/apojomovsky/epic-hal",

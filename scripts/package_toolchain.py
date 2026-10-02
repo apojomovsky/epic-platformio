@@ -3,7 +3,8 @@
 
 Inputs are the upstream bundle zips already produced by epic-cc's release
 workflow (docs/30-distribution-design.md "Bundle layout"). This script only
-adds package.json and repacks as tar.gz. No system clang is ever consulted.
+adds package.json and the package README and repacks as tar.gz. No system
+clang is ever consulted.
 
 Usage:
   package_toolchain.py --zip epic-cc-0.0.3-x86_64-linux.zip --system linux_x86_64 --version 0.0.3 --out toolchain-epiccc-linux_x86_64-0.0.3.tar.gz
@@ -16,11 +17,12 @@ stripped of leading v. See packages/versions.json and packages/README.
 import argparse
 import json
 import pathlib
+import shutil
+import subprocess
+import sys
 import tarfile
 import tempfile
 import zipfile
-import subprocess
-import sys
 
 
 TEMPLATE = pathlib.Path(__file__).resolve().parent.parent / "packages" / "toolchain-epiccc" / "package.json"
@@ -65,6 +67,10 @@ def build(zip_path: pathlib.Path, system: str, version: str, out_path: pathlib.P
             raise SystemExit(f"bundle {zip_path} missing clang/")
 
         (top / "package.json").write_text(json.dumps(data, indent=2) + "\n")
+        readme = TEMPLATE.parent / "README.md"
+        if not readme.exists():
+            raise SystemExit(f"package README {readme} missing, the registry renders it")
+        shutil.copy2(readme, top / "README.md")
 
         with tarfile.open(out_path, "w:gz") as tf:
             for child in sorted(top.iterdir()):

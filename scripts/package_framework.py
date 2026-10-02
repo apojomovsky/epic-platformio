@@ -158,6 +158,10 @@ def build(tar_paths: list[pathlib.Path], version: str, out_path: pathlib.Path,
             )
 
         (root / "package.json").write_text(json.dumps(data, indent=2) + "\n")
+        readme = TEMPLATE.parent / "README.md"
+        if not readme.exists():
+            raise SystemExit(f"package README {readme} missing, the registry renders it")
+        (root / "README.md").write_bytes(readme.read_bytes())
 
         with tarfile.open(out_path, "w:gz") as out:
             for child in sorted(root.iterdir()):
