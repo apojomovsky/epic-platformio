@@ -73,7 +73,7 @@ jobs:
           # The override exists only for packaging revisions (rule 1e):
           # empty (wrap the upstream tag 1:1) or <upstream>+pioN.
           if [ -n "$PKG_OVERRIDE" ] && [ "$pkg_ver" != "$upstream_ver" ] \
-            && ! [[ "$pkg_ver" =~ ^"$upstream_ver"\+pio[0-9]+$ ]]; then
+            && ! [[ "$pkg_ver" =~ ^"$upstream_ver"\+pio[1-9][0-9]*$ ]]; then
             echo "error: package_version must be <upstream>+pioN (got '$pkg_ver' for upstream $upstream_ver)"
             exit 1
           fi
@@ -199,7 +199,7 @@ jobs:
           # The override exists only for packaging revisions (rule 1e):
           # empty (wrap the upstream tag 1:1) or <upstream>+pioN.
           if [ -n "$PKG_OVERRIDE" ] && [ "$pkg_ver" != "$upstream_ver" ] \
-            && ! [[ "$pkg_ver" =~ ^"$upstream_ver"\+pio[0-9]+$ ]]; then
+            && ! [[ "$pkg_ver" =~ ^"$upstream_ver"\+pio[1-9][0-9]*$ ]]; then
             echo "error: framework_package_version must be <upstream>+pioN (got '$pkg_ver' for upstream $upstream_ver)"
             exit 1
           fi

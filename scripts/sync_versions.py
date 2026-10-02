@@ -30,7 +30,7 @@ import pathlib
 import re
 
 REPO = "apojomovsky/epic-platformio"
-SEMVER_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(\+pio[0-9]+)?$")
+SEMVER_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(\+pio[1-9][0-9]*)?$")
 
 DEFAULT_ASSET = {
     "toolchain-epiccc": "toolchain-epiccc-linux_x86_64-{ver}.tar.gz",
