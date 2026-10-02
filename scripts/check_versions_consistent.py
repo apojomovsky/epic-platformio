@@ -3,7 +3,7 @@
 platform.json disagree about a package's current version.
 
 packages/versions.json is the single source of truth (docs/packages.md,
-D-6): its highest-inserted version per package must match the
+D-6): its newest version per package must match the
 package.json in that package's dir, and platform.json's download URL for
 that package must point at a release tag built from the same version.
 Catches the exact drift class this repo shipped with before scripts/
@@ -18,6 +18,9 @@ import json
 import pathlib
 import re
 import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from sync_versions import semver_key
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 REPO = "apojomovsky/epic-platformio"
@@ -49,7 +52,10 @@ def main() -> int:
     for package, entries in versions.items():
         if not entries:
             continue
-        current_version = list(entries.keys())[-1]
+        # Newest by version order, the same rule sync_versions.py applies
+        # when it moves the live pointers, so an out-of-order re-cut
+        # never reads as drift here.
+        current_version = max(entries, key=semver_key)
 
         pkg_json_path = ROOT / "packages" / package / "package.json"
         if pkg_json_path.exists():

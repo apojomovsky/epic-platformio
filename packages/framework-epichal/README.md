@@ -33,5 +33,6 @@ compilation happens inside the package itself.
 ## Version mapping
 
 Package version equals the upstream `epic-hal` tag with the leading `v`
-stripped (`v0.4.0` -> `0.4.0`). A packaging-only fix bumps the package patch
-version, recorded in `packages/versions.json` (D-6).
+stripped (`v0.6.0` -> `0.6.0`). A packaging-only fix takes the revision
+`<upstream>+pioN` from N=1 (`0.6.0+pio1`), recorded in
+`packages/versions.json` (D-6).
