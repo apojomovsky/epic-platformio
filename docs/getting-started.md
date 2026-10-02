@@ -163,6 +163,27 @@ The beta boards with `f_cpu` set are `pic16f877a`, `pic16f887` (4000000)
 and `pic18f4550` (20000000); the others leave the clock to the config or
 to the code's own `_XTAL_FREQ`.
 
+## Optimization profile
+
+`board_build.opt_level` picks the epic-cc optimization profile: `O0`,
+`O1`, `O2` or `Os` (the default). Anything but `Os` is passed to the
+driver as `-O<profile>`, and the driver's build report names the
+profile per build as `opt_level`:
+
+```ini
+; platformio.ini
+[env:epic8]
+platform = apojomovsky/epic8
+board = pic18f4550
+board_build.opt_level = O2
+```
+
+Without the flag the build is identical to today: `Os` emits no flag,
+it is the driver's own size-first pipeline. `O2` trades flash for
+speed; `O0` keeps the IR closest to the source for stepping. Profiles
+select epic-cc's own passes, so XC8 builds ignore this flag. Anything
+but `Os` needs a `toolchain-epiccc` package past epic-cc#839.
+
 ## XC8
 
 `board_build.toolchain = xc8` builds with MPLAB XC8 instead of epic-cc, on

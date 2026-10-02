@@ -116,6 +116,26 @@ def _board_f_cpu():
 # and silently disable its check.
 F_CPU = _board_f_cpu()
 
+
+def _board_opt_level():
+    """`board_build.opt_level` as the driver's `-O` flag wants it: one of
+    O0, O1, O2, Os. Os is the default and emits no flag: it is the
+    driver's own size-first pipeline, so the default command stays
+    exactly as today. Anything but Os needs a driver past epic-cc#839.
+    XC8 never sees it: that path keeps its own fixed flags.
+    """
+    raw = str(board.get("build.opt_level", "Os")).strip()
+    if raw not in ("O0", "O1", "O2", "Os"):
+        sys.stderr.write(
+            "Error: board_build.opt_level %r is not supported. "
+            "Supported: O0, O1, O2, Os (default)\n" % raw
+        )
+        env.Exit(1)
+    return raw
+
+
+OPT_LEVEL = _board_opt_level()
+
 # Framework wiring. When `framework = epichal` is set, the epic-hal
 # framework package joins the build: the board's build.epichal_family
 # (PIO-6, scripts/gen_boards.py) picks the family, and EPIC_HAL_MODULES
@@ -326,7 +346,14 @@ if toolchain == "epic-cc":
 
 
 def _epiccc(target, source, env):
-    cmd = [epiccc, "--target", mcu, "-o", str(target[0])]
+    # The profile rides only when it is not the default: -Os is the
+    # driver's own default, and the default command stays flag-free so
+    # installed toolchain-epiccc packages predating epic-cc#839 keep
+    # building. The report's opt_level still names it per build.
+    cmd = [epiccc, "--target", mcu]
+    if OPT_LEVEL != "Os":
+        cmd += ["-" + OPT_LEVEL]
+    cmd += ["-o", str(target[0])]
     cmd += ["--report", REPORT_PATH]
     if F_CPU:
         cmd += ["--f-cpu", F_CPU]
