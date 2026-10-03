@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/epic-platformio-logo-dark-mode.svg">
-    <img src="docs/assets/epic-platformio-logo-light-mode.svg" width="120" alt="Epic8 logo: a chip-temple inside a laurel wreath">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/apojomovsky/epic-platformio/master/docs/assets/epic-platformio-logo-dark-mode.svg">
+    <img src="https://raw.githubusercontent.com/apojomovsky/epic-platformio/master/docs/assets/epic-platformio-logo-light-mode.svg" width="120" alt="Epic8 logo: a chip-temple inside a laurel wreath">
   </picture>
 </p>
 
@@ -11,31 +11,28 @@
 
 <p align="center">
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![CI](https://github.com/apojomovsky/epic-platformio/actions/workflows/ci.yml/badge.svg)](https://github.com/apojomovsky/epic-platformio/actions/workflows/ci.yml) [![Toolchain: epic-cc](https://img.shields.io/badge/toolchain-epic--cc-blue.svg)](https://github.com/apojomovsky/epic-cc) [![Toolchain: MPLAB XC8](https://img.shields.io/badge/toolchain-MPLAB%20XC8-green.svg)](https://www.microchip.com/mpgb/xc8.html) [![HAL: epic-hal](https://img.shields.io/badge/HAL-epic--hal-blue.svg)](https://github.com/apojomovsky/epic-hal) [![status: early](https://img.shields.io/badge/status-early-yellow.svg)](#status)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/apojomovsky/epic-platformio/blob/master/LICENSE) [![CI](https://github.com/apojomovsky/epic-platformio/actions/workflows/ci.yml/badge.svg)](https://github.com/apojomovsky/epic-platformio/actions/workflows/ci.yml) [![Toolchain: epic-cc](https://img.shields.io/badge/toolchain-epic--cc-blue.svg)](https://github.com/apojomovsky/epic-cc) [![Toolchain: MPLAB XC8](https://img.shields.io/badge/toolchain-MPLAB%20XC8-green.svg)](https://www.microchip.com/mpgb/xc8.html) [![HAL: epic-hal](https://img.shields.io/badge/HAL-epic--hal-blue.svg)](https://github.com/apojomovsky/epic-hal) [![status: early](https://img.shields.io/badge/status-early-yellow.svg)](#status)
 
 </p>
 
 PlatformIO is the workflow most embedded developers already use; 8-bit PIC has
-so far meant leaving it for Microchip's licence-gated MPLAB X and XC8.
-`platform-epic8` closes that gap: it's the PlatformIO platform that builds a
-PIC14/PIC18 project with [epic-cc](https://github.com/apojomovsky/epic-cc), a
-real open-source compiler, and wires in
-[epic-hal](https://github.com/apojomovsky/epic-hal) as an optional framework.
-`pio run` just works with epic-cc, and no Microchip download is needed for
-that default path. And where a device or workflow needs it, the same project
-builds with MPLAB XC8 as a fully supported alternate toolchain: set
+so far meant leaving it for Microchip's MPLAB X and XC8.
+`platform-epic8` closes that gap with a fully open-source, MIT licensed
+toolchain you can read and audit from C to HEX: it's the PlatformIO platform
+that builds a PIC14/PIC18 project with [epic-cc](https://github.com/apojomovsky/epic-cc)
+and wires in [epic-hal](https://github.com/apojomovsky/epic-hal) as an
+optional framework under the same licence. `pio run` just works with
+epic-cc, and no Microchip download is needed for that default path. And
+where a device or workflow needs it, the same project builds with MPLAB
+XC8 as a fully supported alternate toolchain: set
 `board_build.toolchain = xc8` and the platform drives your own installed XC8
 instead.
 
 ## Quickstart
 
 ```bash
-platformio platform install apojomovsky/epic8
+pio pkg install -g --platform apojomovsky/epic8
 ```
-
-Registry publication lands on go-ahead after this change merges; until
-then install from `https://github.com/apojomovsky/epic-platformio` and
-use that URL as the `platform` value.
 
 ```ini
 ; platformio.ini
@@ -64,9 +61,11 @@ pio run
 
 That produces `firmware.hex` in `.pio/build/epic8/`. Full walkthrough,
 including wiring in the HAL, is in
-[`docs/getting-started.md`](docs/getting-started.md); worked examples live
-under [`examples/`](examples/), a tutorial-style blink per beta board plus
-the HAL integration proof and the XC8 variants.
+[`docs/getting-started.md`](https://github.com/apojomovsky/epic-platformio/blob/master/docs/getting-started.md);
+worked examples live under
+[`examples/`](https://github.com/apojomovsky/epic-platformio/tree/master/examples/),
+a tutorial-style blink per beta board plus the HAL integration proof and the
+XC8 variants.
 
 ## What you get
 
@@ -89,33 +88,34 @@ the HAL integration proof and the XC8 variants.
 
 ## Supported parts
 
-[`boards/`](boards/) is the curated beta set: six boards, one per beta part
+[`boards/`](https://github.com/apojomovsky/epic-platformio/tree/master/boards/) is the curated beta set: six boards, one per beta part
 (`pic16f877a`, `pic16f887`, `pic16f628a`, `pic12f675`, `pic16f1937`,
 `pic18f4550`), each carrying sizes, per-tool device names and the
 programming hazards its part needs warned about. Everything else either
 registry knows lives in
-[`boards-experimental/`](boards-experimental/), capability-only files you
-copy into your project's own `boards/`. Both sets are generated from the
-two upstream registries rather than hand-maintained; see
-[`docs/getting-started.md#supported-parts`](docs/getting-started.md#supported-parts)
+[`boards-experimental/`](https://github.com/apojomovsky/epic-platformio/tree/master/boards-experimental/),
+capability-only files you copy into your project's own `boards/`. Both sets
+are generated from the two upstream registries rather than hand-maintained;
+see
+[`docs/getting-started.md#supported-parts`](https://github.com/apojomovsky/epic-platformio/blob/master/docs/getting-started.md#supported-parts)
 for what each board's capability fields mean and how to regenerate the
 sets.
 
 ## Compatibility
 
-The beta will publish platform, toolchain and framework to the PlatformIO
+The beta publishes platform, toolchain and framework to the PlatformIO
 registry under the personal owner. The platform pins exact package
 versions, so a beta project builds the same toolchain and framework
 everywhere:
 
 | Piece | Registry package | Version | Upstream |
 |---|---|---|---|
-| platform | `apojomovsky/epic8` | `0.0.1` | this repo |
-| toolchain | `apojomovsky/toolchain-epiccc` | `0.4.0` | [epic-cc `v0.4.0`](https://github.com/apojomovsky/epic-cc/releases/tag/v0.4.0) |
-| framework | `apojomovsky/framework-epichal` | `0.6.0` | [epic-hal `v0.6.0`](https://github.com/apojomovsky/epic-hal/releases/tag/v0.6.0) |
+| platform | `apojomovsky/epic8` | `0.1.0` | this repo |
+| toolchain | `apojomovsky/toolchain-epiccc` | `0.4.0+pio1` | [epic-cc `v0.4.0`](https://github.com/apojomovsky/epic-cc/releases/tag/v0.4.0) |
+| framework | `apojomovsky/framework-epichal` | `0.6.0+pio1` | [epic-hal `v0.6.0`](https://github.com/apojomovsky/epic-hal/releases/tag/v0.6.0) |
 
 Programmer tools install only when the project selects their protocol.
-`tool-minipro` (`0.7.4`) and `tool-pk2cmd` (`1.27.1`) are live: selecting
+`tool-minipro` (`0.7.4`) and `tool-pk2cmd` (`1.27.1`) are published to the registry by #85:
 `minipro` or `pk2cmd` pulls the package, otherwise the builder falls back
 to `EPIC8_*_PATH` or `PATH`. `tool-picpro` (`0.4.1+pio1`) is live: selecting
 `picpro` pulls the package, otherwise the builder falls back to
@@ -128,13 +128,12 @@ part, with epic-cc (no Microchip download on that path) or with MPLAB XC8
 as the alternate. Flashing works through `pio run -t upload` (plus
 `erase` and `readback`) with a TL866 programmer, a PICkit, a K150, or a
 custom `upload_command`; see
-[`docs/getting-started.md#upload`](docs/getting-started.md#upload) and one
-guide per programmer under [`docs/programmers/`](docs/programmers/). `pio
+[`docs/getting-started.md#upload`](https://github.com/apojomovsky/epic-platformio/blob/master/docs/getting-started.md#upload) and one
+guide per programmer under [`docs/programmers/`](https://github.com/apojomovsky/epic-platformio/tree/master/docs/programmers/). `pio
 run -t size` prints PlatformIO's program-size bar from the driver's own
 build report, and the same check gates `pio run -t upload` so an oversized
-image is refused before flashing. The beta publishes
-to the PlatformIO registry as `apojomovsky/epic8`, installed as above,
-once the post-merge publication lands; until then the git URL installs it.
+image is refused before flashing. The beta is on the PlatformIO registry
+as `apojomovsky/epic8`: install it with the command above.
 
 <details>
 <summary><strong>Under the hood</strong>: how this repo fits with epic-cc and epic-hal</summary>
@@ -171,4 +170,4 @@ The full decomposition (why this is three repos, and what's left) is in
 
 ## License
 
-MIT, matching epic-cc and epic-hal. See [LICENSE](LICENSE).
+MIT, matching epic-cc and epic-hal. See [LICENSE](https://github.com/apojomovsky/epic-platformio/blob/master/LICENSE).

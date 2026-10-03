@@ -1,7 +1,7 @@
 {
   "name": "epic8",
   "title": "Epic8",
-  "description": "Free, open-source C development for 8-bit PIC. No XC8 licence needed: pio run builds and flashes with the epic-cc compiler",
+  "description": "Fully open-source, MIT licensed C development for 8-bit PIC: pio run builds and flashes with the epic-cc compiler",
   "homepage": "https://github.com/apojomovsky/epic-platformio",
   "license": "MIT",
   "keywords": [

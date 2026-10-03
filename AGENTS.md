@@ -3,7 +3,7 @@
 `platform-epic8` (registry id `epic8`) is the PlatformIO platform for the
 open-source 8-bit PIC ecosystem: `platform.json`, the SCons builder, and board definitions that make
 `pio run` compile a project with [epic-cc](https://github.com/apojomovsky/epic-cc)
-instead of Microchip's licence-gated XC8. It is the PlatformIO glue only. The
+instead of Microchip's XC8. It is the PlatformIO glue only. The
 compiler is epic-cc, the HAL is epic-hal, and this repository is neither.
 
 ## The decomposition of record
