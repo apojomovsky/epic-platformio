@@ -2,6 +2,53 @@
 
 All notable changes to this project are documented here, generated from
 Conventional Commits. Dates are UTC.
+## [toolchain-epiccc-v0.4.0+pio1] - 2026-10-03
+
+### Documentation
+
+- Tutorial-style and HAL examples per beta board (#65)
+
+- Registry install and compatibility table for the publish (#71)
+
+- Never post to third-party repositories (#74)
+
+- Default flags preserve 12F629/675 calibration, -U overrides (#80)
+
+- Inviting copy, keywords and READMEs for registry packages (#87)
+
+- Open-source positioning, fresh versions and absolute links (#92)
+
+
+### Features
+
+- Consume the v0.4.0 toolchain for size, includes and the clock (#63)
+
+- Warn about the D-9 programming hazards before flashing (#64)
+
+- Platform versions, packaging revisions and compat proof (#88)
+
+- Build flag for the epic-cc optimization profile (#89)
+
+- Declare tool-picpro pinned at 0.4.1+pio1 (#91)
+
+
+### Fixes
+
+- Make the size report a build target so a partial wipe rebuilds it (#66)
+
+- Use DIP-suffixed minipro device names on four beta boards (#70)
+
+- Pk2cmd restores 12F675 OSCCAL and bandgap, drop the warning (#76)
+
+
+### Testing
+
+- Gate upload.devices spellings against pinned tool fixtures (#78)
+
+### Upstream: epic-cc v0.4.0 -> v0.4.0
+
+No upstream changelog available at this tag.
+
 ## [toolchain-epiccc-v0.4.0] - 2026-09-28
 
 ### Bug Fixes

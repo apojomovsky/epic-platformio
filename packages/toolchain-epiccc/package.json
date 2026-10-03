@@ -1,6 +1,6 @@
 {
   "name": "toolchain-epiccc",
-  "version": "0.4.0",
+  "version": "0.4.0+pio1",
   "description": "Fully open-source, MIT licensed C compiler for 8-bit PIC (PIC14/PIC18), with bundled clang 20.1.8",
   "keywords": [
     "toolchain",
