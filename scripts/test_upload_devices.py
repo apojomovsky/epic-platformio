@@ -33,8 +33,8 @@ CASE = {
 
 
 def platform_tool_version(tool):
-    url = json.loads(PLATFORM.read_text())["packages"][tool]["version"]
-    return re.search(r"(\d+\.\d+\.\d+)", url).group(1)
+    pin = json.loads(PLATFORM.read_text())["packages"][tool]["version"]
+    return re.search(r"(\d+\.\d+\.\d+)", pin).group(1)
 
 
 def fixture_names(tool, version):

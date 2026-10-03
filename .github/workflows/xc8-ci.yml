@@ -85,15 +85,15 @@ jobs:
 
             # framework-epichal is an optional platform package: pio run
             # never auto-installs an optional package on its own, so the
-            # hal-tick example needs it fetched explicitly, from the URL
-            # platform.json itself declares. "pio pkg install --tool" needs
+            # hal-tick example needs it fetched explicitly, as the registry
+            # spec platform.json itself pins. "pio pkg install --tool" needs
             # a real project directory to run in, and rewrites its ini in
             # place (a "platform_packages" line), so it runs against a
             # throwaway scratch project, never a real example directory.
-            fw_url=$(python3 -c "import json; print(json.load(open(\"/repo/platform.json\"))[\"packages\"][\"framework-epichal\"][\"version\"])")
+            fw_spec=$(python3 -c "import json; p=json.load(open(\"/repo/platform.json\"))[\"packages\"][\"framework-epichal\"]; print(p[\"owner\"] + \"/framework-epichal@\" + p[\"version\"])")
             mkdir -p /tmp/scratch
             printf "[env:epic8]\nplatform = epic8\nboard = pic16f877a\n" > /tmp/scratch/platformio.ini
-            pio pkg install --tool "$fw_url" -d /tmp/scratch
+            pio pkg install --tool "$fw_spec" -d /tmp/scratch
 
             xc8_bin="/opt/microchip/xc8/v${XC8_VERSION}/bin/xc8-cc"
             packs="/opt/microchip/xc8/v${XC8_VERSION}/pic/packs"

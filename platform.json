@@ -38,27 +38,32 @@
   "packages": {
     "toolchain-epiccc": {
       "type": "toolchain",
-      "version": "https://github.com/apojomovsky/epic-platformio/releases/download/toolchain-epiccc-v0.4.0+pio1/toolchain-epiccc-linux_x86_64-0.4.0+pio1.tar.gz"
+      "owner": "apojomovsky",
+      "version": "0.4.0+pio1"
     },
     "framework-epichal": {
       "type": "framework",
       "optional": true,
-      "version": "https://github.com/apojomovsky/epic-platformio/releases/download/framework-epichal-v0.6.0+pio1/framework-epichal-0.6.0+pio1.tar.gz"
+      "owner": "apojomovsky",
+      "version": "0.6.0+pio1"
     },
     "tool-minipro": {
       "type": "tool",
       "optional": true,
-      "version": "https://github.com/apojomovsky/epic-tools/releases/download/tool-minipro-v0.7.4/tool-minipro-linux_x86_64-0.7.4.tar.gz"
+      "owner": "apojomovsky",
+      "version": "0.7.4+pio1"
     },
     "tool-pk2cmd": {
       "type": "tool",
       "optional": true,
-      "version": "https://github.com/apojomovsky/epic-tools/releases/download/tool-pk2cmd-v1.27.1/tool-pk2cmd-linux_x86_64-1.27.1.tar.gz"
+      "owner": "apojomovsky",
+      "version": "1.27.1+pio1"
     },
     "tool-picpro": {
       "type": "tool",
       "optional": true,
-      "version": "https://github.com/apojomovsky/epic-tools/releases/download/tool-picpro-v0.4.1+pio1/tool-picpro-linux_x86_64-0.4.1+pio1.tar.gz"
+      "owner": "apojomovsky",
+      "version": "0.4.1+pio2"
     }
   },
   "examples": [
