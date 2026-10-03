@@ -1,6 +1,6 @@
 {
   "name": "framework-epichal",
-  "version": "0.6.0",
+  "version": "0.6.0+pio1",
   "description": "Register-level HAL and driver modules for 8-bit PIC. One framework line wires epic-hal into your build",
   "keywords": [
     "framework",

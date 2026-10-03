@@ -2,6 +2,7 @@
 
 All notable changes to this project are documented here, generated from
 Conventional Commits. Dates are UTC.
+## [framework-epichal-v0.6.0+pio1] - 2026-10-03
 ## [toolchain-epiccc-v0.4.0+pio1] - 2026-10-03
 
 ### Documentation
@@ -46,6 +47,10 @@ Conventional Commits. Dates are UTC.
 - Gate upload.devices spellings against pinned tool fixtures (#78)
 
 ### Upstream: epic-cc v0.4.0 -> v0.4.0
+
+No upstream changelog available at this tag.
+
+### Upstream: epic-hal v0.6.0 -> v0.6.0
 
 No upstream changelog available at this tag.
 
