@@ -1,7 +1,7 @@
 {
   "name": "toolchain-epiccc",
   "version": "0.4.0",
-  "description": "Free, open-source C compiler for 8-bit PIC (PIC14/PIC18). No XC8 licence needed, with bundled clang 20.1.8",
+  "description": "Fully open-source, MIT licensed C compiler for 8-bit PIC (PIC14/PIC18), with bundled clang 20.1.8",
   "keywords": [
     "toolchain",
     "compiler",
