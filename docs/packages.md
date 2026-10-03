@@ -24,7 +24,7 @@ a board-definition fix landing here never forces a compiler release.
 
 The programmer tool packages (`tool-minipro`, `tool-pk2cmd`,
 `tool-picpro`) are the exception: epic-tools versions and publishes
-them, so `platform.json` pins their release URLs directly and
+them, so `platform.json` pins their registry versions directly and
 `packages/versions.json` does not list them. The consistency checker
 only covers packages listed there.
 
@@ -54,9 +54,12 @@ release follows only on green.
 
 The upstream bundles are per host, and so are the packages built from them
 (`toolchain-epiccc-linux_x86_64-<ver>.tar.gz`,
-`toolchain-epiccc-windows_amd64-<ver>.tar.gz`). `platform.json` pins only
-one of them, the Linux asset, and `platform.py` remaps that pin to the
-running host's asset at build time (the reasoning is in
+`toolchain-epiccc-windows_amd64-<ver>.tar.gz`). `platform.json` pins the
+registry version under owner `apojomovsky`; which hosts that version
+covers is the package's own `system` list. A URL pin (a project's own
+`platform_packages` override) still names one host's asset, and
+`platform.py` remaps that pin to the running host's asset at build time
+(the reasoning is in
 [`docs/platform-decisions.md`](platform-decisions.md#distribution-platformpy-picks-the-hosts-toolchain-tools-arrive-on-selection)).
 
 Consequences for a release:
@@ -71,8 +74,8 @@ Consequences for a release:
   and never calls `configure_default_packages`. A project's own
   `platform_packages` pin is remapped too, since `packages` re-applies those
   pins on every read.
-- A host with no bundle is not refused: the pinned URL is passed through
-  unchanged, and the toolchain package's own `system` list is what stops it
+- A host with no bundle is not refused: a URL pin naming it is passed
+  through unchanged, and the toolchain package's own `system` list is what stops it
   installing there. `packages` is read on uninstall, update and `pio pkg
   list` as well as on install, so raising from it would leave the platform
   unremovable and unlistable outside the beta hosts, and would break a
@@ -129,10 +132,11 @@ epic-hal checkout. The builder uses the slice when present.
 
 `gh workflow run package.yml -f epic_cc_version=v0.1.0` cuts the toolchain
 packages from the upstream release assets and publishes them as a GitHub
-Release in this repository. The release URL is what `platform.json` references
-until the packages are uploaded to the PlatformIO registry (PIO-3). For a
-packaging-only fix without a new compiler tag, pass the packaging-revision
-override: `-f epic_cc_version=v0.0.3 -f package_version=0.0.3+pio1`.
+Release in this repository. `platform.json` pins the registry package
+(owner `apojomovsky`, exact version), not the release URL; the GitHub
+Release stays the build artifact each registry upload is cut from (PIO-3).
+For a packaging-only fix without a new compiler tag, pass the
+packaging-revision override: `-f epic_cc_version=v0.0.3 -f package_version=0.0.3+pio1`.
 
 `-f epic_hal_version=v0.5.0` does the same for the framework package (with
 its own `-f framework_package_version=...` override for a packaging-only
@@ -160,7 +164,7 @@ time, not a dependency between these two workflows.
 Neither job stops at publishing the GitHub Release: each finishes by
 running `scripts/finish_release.sh`, which writes the new version back into
 `packages/versions.json`, the package's own `package.json` and
-`platform.json`'s download URL (so those three never drift the way they
+`platform.json`'s registry pin (so those three never drift the way they
 did before this existed), rolls the upstream repo's `CHANGELOG.md` section
 for the new tag into this repo's own `CHANGELOG.md` via
 `scripts/rollup_changelog.py`, and commits and pushes the result straight
