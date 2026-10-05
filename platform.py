@@ -26,7 +26,7 @@ TOOLCHAIN_PACKAGE = "toolchain-epiccc"
 # PlatformIO systype -> the host token in that host's release asset name.
 # Both Windows spellings PlatformIO can report map to the one asset this
 # repo packs, as packages/toolchain-epiccc/package.json declares them; the
-# beta is Linux x86_64 with Windows next (docs/46 D-1).
+# registry version platform.json pins serves both hosts since 0.4.0+pio1.
 TOOLCHAIN_HOSTS = {
     "linux_x86_64": "linux_x86_64",
     "windows_amd64": "windows_amd64",
