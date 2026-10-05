@@ -128,8 +128,9 @@ class HostAssetUrlTests(unittest.TestCase):
             )
 
     def test_leaves_a_url_with_no_host_token_alone(self):
-        # A project's own platform_packages pin names no host to move.
-        for url in ("0.3.0", "https://example.com/toolchain.tar.gz"):
+        # A project's own platform_packages pin names no host to move,
+        # and neither does a registry pin (owner plus bare version).
+        for url in ("0.3.0", "0.4.0+pio1", "https://example.com/toolchain.tar.gz"):
             self.assertEqual(self.module.host_asset_url(url, "windows_amd64"), url)
 
     def test_an_unpacked_host_leaves_the_url_alone(self):

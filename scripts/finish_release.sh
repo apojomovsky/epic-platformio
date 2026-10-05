@@ -5,7 +5,7 @@
 # logic only exists once.
 #
 # finish_release.sh <package> <pkg_ver> <upstream_tag> <owner/upstream-repo> \
-#   <release-asset-name> [upstream_url_linux upstream_url_windows]
+#   [upstream_url_linux upstream_url_windows]
 # The last two args are toolchain-epiccc only, omit for framework-epichal.
 set -euo pipefail
 
@@ -13,9 +13,8 @@ package="$1"
 pkg_ver="$2"
 upstream_tag="$3"
 upstream_repo="$4"
-asset_name="$5"
-upstream_url_linux="${6:-}"
-upstream_url_windows="${7:-}"
+upstream_url_linux="${5:-}"
+upstream_url_windows="${6:-}"
 upstream_name="${upstream_repo#*/}"
 repo_tag="${package}-v${pkg_ver}"
 
@@ -39,7 +38,7 @@ fetch_upstream_changelog() {
 # correct instead, since every file this touches is fully generated.
 fetch_upstream_changelog
 for attempt in 1 2 3 4 5; do
-  sync_args=(--package "$package" --pkg-version "$pkg_ver" --upstream-tag "$upstream_tag" --asset-name "$asset_name")
+  sync_args=(--package "$package" --pkg-version "$pkg_ver" --upstream-tag "$upstream_tag")
   if [ -n "$upstream_url_linux" ]; then
     sync_args+=(--upstream-url-linux "$upstream_url_linux" --upstream-url-windows "$upstream_url_windows")
   fi
