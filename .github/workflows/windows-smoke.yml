@@ -1,0 +1,89 @@
+name: windows-smoke
+
+# Windows proof for the registry path (epic-platformio#97, closes the
+# remaining #73 step). GitHub-hosted windows-latest runners are free for
+# public repos, so this job installs epic8 from the registry, the published
+# path users take, and builds a real beta blink plus the size report.
+# No hardware flashing: no programmer exists on CI, so only pio run and
+# the size target run here, never an upload target.
+
+on:
+  pull_request:
+    paths:
+      - "platform.json"
+      - "platform.py"
+      - "builder/**"
+      - "packages/**"
+      - "boards/**"
+      - ".github/workflows/windows-smoke.yml"
+  push:
+    branches: [master]
+    paths:
+      - "platform.json"
+      - "platform.py"
+      - "builder/**"
+      - "packages/**"
+      - "boards/**"
+      - ".github/workflows/windows-smoke.yml"
+    tags:
+      - "v*"
+      - "toolchain-epiccc-v*"
+      - "framework-epichal-v*"
+  workflow_dispatch:
+  schedule:
+    - cron: "9 6 * * 0"
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  windows-smoke:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install the pinned PlatformIO
+        run: |
+          pip install -q platformio==6.1.19
+          pio --version
+
+      - name: Cache the PlatformIO core packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: windows-smoke-${{ hashFiles('platform.json', 'packages/versions.json') }}
+          restore-keys: |
+            windows-smoke-
+
+      - name: Install epic8 from the registry
+        run: |
+          pio pkg install -g --platform apojomovsky/epic8
+
+      - name: Log the resolved toolchain and system
+        run: |
+          python -c "import platform; print(platform.system(), platform.machine())"
+          pio pkg list -g
+          tc_dir="$HOME/.platformio/packages/toolchain-epiccc"
+          echo "toolchain dir: $tc_dir"
+          ls "$tc_dir"
+          "$tc_dir/epic-cc.exe" --version
+
+      - name: Build the pic16f877a blink and assert firmware.hex
+        run: |
+          pio run -d examples/blink-tutorial-pic16f877a
+          hex="examples/blink-tutorial-pic16f877a/.pio/build/epic8/firmware.hex"
+          test -s "$hex"
+          echo "smoke passed: $hex $(wc -c < "$hex") bytes"
+
+      - name: Print the size report
+        run: |
+          pio run -d examples/blink-tutorial-pic16f877a -t size
