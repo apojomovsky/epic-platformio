@@ -11,6 +11,9 @@
       "xc8"
     ]
   },
+  "frameworks": [
+    "epichal"
+  ],
   "name": "Microchip PIC16LF628A",
   "url": "https://www.microchip.com/en-us/product/PIC16LF628A",
   "vendor": "Microchip"

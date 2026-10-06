@@ -12,6 +12,9 @@
       "xc8"
     ]
   },
+  "frameworks": [
+    "epichal"
+  ],
   "name": "Microchip PIC16F887",
   "support": "simulator",
   "upload": {

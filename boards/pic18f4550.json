@@ -12,6 +12,9 @@
       "xc8"
     ]
   },
+  "frameworks": [
+    "epichal"
+  ],
   "name": "Microchip PIC18F4550",
   "support": "simulator",
   "upload": {

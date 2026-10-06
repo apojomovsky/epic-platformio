@@ -11,6 +11,9 @@
       "xc8"
     ]
   },
+  "frameworks": [
+    "epichal"
+  ],
   "name": "Microchip PIC18F2550",
   "url": "https://www.microchip.com/en-us/product/PIC18F2550",
   "vendor": "Microchip"
