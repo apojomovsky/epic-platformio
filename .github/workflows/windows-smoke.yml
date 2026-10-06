@@ -43,6 +43,10 @@ defaults:
 jobs:
   windows-smoke:
     runs-on: windows-latest
+    env:
+      # Git bash leaves stdout in cp1252, which cannot encode pio's tree
+      # glyphs, so every pio step below runs in UTF-8 mode instead.
+      PYTHONUTF8: "1"
     steps:
       - uses: actions/checkout@v4
 
