@@ -142,11 +142,11 @@ from a clean checkout:
 
 The `blink-tutorial-*` set is the source a PIC tutorial writes: no HAL,
 `#pragma config` and the `__delay_ms` macro, which compile unchanged on
-the epic-cc path (docs/46 D-3). The `hal-tick-*` set covers the three beta
-boards whose epic-hal family ships a tick module (`pic16f877a`,
-`pic16f887`, `pic18f4550`); the other three cannot take `framework =
-epichal` yet, because their family bundles carry no tick module
-(`pic16f628a`, `pic16f1937`) or no framework content at all (`pic12f675`).
+The `hal-tick-*` set covers the three beta boards whose epic-hal family
+ships a tick module (`pic16f877a`, `pic16f887`, `pic18f4550`).
+`pic16f628a` and `pic16f1937` also take `framework = epichal`, with
+their own families' modules, but those families ship no tick module so
+they have no tick example. Only `pic12f675` takes no framework at all.
 That gap is epic-hal's, tracked as a follow-up, not a platform choice.
 
 Copy one into a fresh directory and run `pio run`.
