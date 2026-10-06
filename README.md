@@ -110,14 +110,14 @@ everywhere:
 
 | Piece | Registry package | Version | Upstream |
 |---|---|---|---|
-| platform | `apojomovsky/epic8` | `0.1.0` | this repo |
+| platform | `apojomovsky/epic8` | `0.1.1` | this repo |
 | toolchain | `apojomovsky/toolchain-epiccc` | `0.4.0+pio1` | [epic-cc `v0.4.0`](https://github.com/apojomovsky/epic-cc/releases/tag/v0.4.0) |
 | framework | `apojomovsky/framework-epichal` | `0.6.0+pio1` | [epic-hal `v0.6.0`](https://github.com/apojomovsky/epic-hal/releases/tag/v0.6.0) |
 
 Programmer tools install only when the project selects their protocol.
-`tool-minipro` (`0.7.4+pio1`) and `tool-pk2cmd` (`1.27.1+pio1`) are published to the registry by #85:
+`tool-minipro` (`0.7.4+pio3`) and `tool-pk2cmd` (`1.27.1+pio2`) are published to the registry by #85:
 `minipro` or `pk2cmd` pulls the package, otherwise the builder falls back
-to `EPIC8_*_PATH` or `PATH`. `tool-picpro` (`0.4.1+pio2`) is live: selecting
+to `EPIC8_*_PATH` or `PATH`. `tool-picpro` (`0.4.1+pio3`) is live: selecting
 `picpro` pulls the package, otherwise the builder falls back to
 `EPIC8_PICPRO_PATH` or `PATH`.
 

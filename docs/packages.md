@@ -32,10 +32,10 @@ only covers packages listed there.
 
 The `epic8` platform itself is versioned independently of the packages it
 pins. `platform.json`'s `version` is the source of truth: `0.0.1` since
-day one, `0.1.0` from this policy. A platform release is cut as tag
-`epic8-vX.Y.Z` and published to the registry at that version. Before 1.0,
-breaking changes bump minor, features bump minor, fixes bump patch, per
-the release policy.
+day one, `0.1.0` from this policy, `0.1.1` for the Windows-capable tool
+pins. A platform release is cut as tag `epic8-vX.Y.Z` and published to the
+registry at that version. Before 1.0, breaking changes bump minor, features
+bump minor, fixes bump patch, per the release policy.
 
 Breaking for the platform means one of three surfaces:
 
