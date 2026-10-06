@@ -71,7 +71,9 @@ jobs:
 
       - name: Log the resolved toolchain and system
         run: |
-          python -c "import platform; print(platform.system(), platform.machine())"
+          # -P keeps the repo root off sys.path so this imports the stdlib
+          # platform module, not this repo's platform.py next to it.
+          python -P -c "import platform; print(platform.system(), platform.machine())"
           pio pkg list -g
           tc_dir="$HOME/.platformio/packages/toolchain-epiccc"
           echo "toolchain dir: $tc_dir"
