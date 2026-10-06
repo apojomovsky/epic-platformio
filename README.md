@@ -39,6 +39,57 @@ pio pkg install -g --platform apojomovsky/epic8
 [env:epic8]
 platform = apojomovsky/epic8
 board = pic16f877a
+framework = epichal
+build_flags = -DEPIC_HAL_MODULES=tick
+```
+
+```c
+// src/main.c
+#include "epic_tick.h"
+#include "peripherals/hal_gpio.h"
+
+#ifndef FOSC_HZ
+#define FOSC_HZ 4000000UL
+#endif
+
+#define BLINK_MS 500u
+
+void main(void)
+{
+    EPIC_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
+    epic_tick_init(FOSC_HZ);
+    for (;;) {
+        EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+        epic_tick_delay_ms(BLINK_MS);
+    }
+}
+```
+
+```bash
+pio run
+```
+
+That produces `firmware.hex` in `.pio/build/epic8/`, toggling PB0 every
+500 ms off the 1 ms epic-tick timebase. The HAL is the recommended path,
+not an automatic one: PlatformIO has no default-framework setting, so a
+project without `framework = epichal` builds bare metal. Full walkthrough
+is in
+[`docs/getting-started.md`](https://github.com/apojomovsky/epic-platformio/blob/master/docs/getting-started.md);
+worked examples live under
+[`examples/`](https://github.com/apojomovsky/epic-platformio/tree/master/examples/),
+HAL blinks first, then a tutorial-style blink per beta board and the
+XC8 variants.
+
+### Without the HAL (bare metal)
+
+Drop the `framework` and `build_flags` lines and write plain C against
+the compiler's own header:
+
+```ini
+; platformio.ini
+[env:epic8]
+platform = apojomovsky/epic8
+board = pic16f877a
 ```
 
 ```c
@@ -55,17 +106,8 @@ void main(void)
 }
 ```
 
-```bash
-pio run
-```
-
-That produces `firmware.hex` in `.pio/build/epic8/`. Full walkthrough,
-including wiring in the HAL, is in
-[`docs/getting-started.md`](https://github.com/apojomovsky/epic-platformio/blob/master/docs/getting-started.md);
-worked examples live under
-[`examples/`](https://github.com/apojomovsky/epic-platformio/tree/master/examples/),
-a tutorial-style blink per beta board plus the HAL integration proof and the
-XC8 variants.
+Choose bare metal for the smallest code, full register control, or a
+board with no HAL content such as the PIC12F675.
 
 ## What you get
 
@@ -113,6 +155,10 @@ everywhere:
 | platform | `apojomovsky/epic8` | `0.1.0` | this repo |
 | toolchain | `apojomovsky/toolchain-epiccc` | `0.4.0+pio1` | [epic-cc `v0.4.0`](https://github.com/apojomovsky/epic-cc/releases/tag/v0.4.0) |
 | framework | `apojomovsky/framework-epichal` | `0.6.0+pio1` | [epic-hal `v0.6.0`](https://github.com/apojomovsky/epic-hal/releases/tag/v0.6.0) |
+
+The framework is the recommended path: `framework = epichal` on a board
+that lists it pulls the framework package automatically through the
+platform's declared framework entry.
 
 Programmer tools install only when the project selects their protocol.
 `tool-minipro` (`0.7.4+pio1`) and `tool-pk2cmd` (`1.27.1+pio1`) are published to the registry by #85:
