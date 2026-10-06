@@ -50,16 +50,10 @@ jobs:
           echo "toolchain: $tc_pin"
           echo "framework: $fw_spec"
 
-          # framework-epichal is an optional platform package: pio run
-          # never auto-installs an optional package on its own, so the
-          # hal-tick examples need it fetched explicitly, as the registry
-          # spec platform.json itself pins. "pio pkg install --tool" needs
-          # a real project directory to run in, and rewrites its ini in
-          # place (a "platform_packages" line), so it runs against a
-          # throwaway scratch project, never a real example directory.
-          mkdir -p /tmp/scratch
-          printf "[env:epic8]\nplatform = epic8\nboard = pic16f877a\n" > /tmp/scratch/platformio.ini
-          pio pkg install --tool "$fw_spec" -d /tmp/scratch
+          # framework-epichal stays an optional platform package, but a
+          # project with `framework = epichal` auto-installs it through
+          # the platform's declared framework entry, so the hal-tick
+          # examples below also prove that install path on every run.
 
           build_example() {
             example="$1"

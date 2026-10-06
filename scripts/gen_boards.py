@@ -250,6 +250,14 @@ def board_json(entry: dict, board_id: str, dest: pathlib.Path, curated: dict | N
         build["epichal_family"] = entry["family"]
     else:
         build.pop("epichal_family", None)
+    # Registry, wizards and `pio boards` read the top-level frameworks
+    # list, not build.framework_epichal_toolchains, so a board whose
+    # family ships HAL content declares epichal here. A bare-metal-only
+    # board carries no key at all rather than an empty list.
+    if entry["framework_toolchains"]:
+        doc["frameworks"] = ["epichal"]
+    else:
+        doc.pop("frameworks", None)
     bare = curated_bare(board_id) if curated else cc_name_to_bare(entry["mcu"])
     doc.setdefault("name", f"Microchip PIC{bare}")
     doc.setdefault("vendor", "Microchip")

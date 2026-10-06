@@ -172,6 +172,7 @@ class BoardJsonTests(unittest.TestCase):
         self.assertNotIn("epichal_family", doc["build"])
         self.assertNotIn("upload", doc)
         self.assertNotIn("support", doc)
+        self.assertNotIn("frameworks", doc)
         self.assertEqual(doc["name"], "Microchip PIC10F320")
         self.assertEqual(doc["vendor"], "Microchip")
         self.assertIn("PIC10F320", doc["url"])
@@ -205,6 +206,7 @@ class BoardJsonTests(unittest.TestCase):
         self.assertEqual(doc["upload"]["devices"]["minipro"], "PIC16F877A")
         self.assertEqual(doc["upload"]["hazards"]["pgm_pin"], "RB3")
         self.assertEqual(doc["support"], "simulator")
+        self.assertEqual(doc["frameworks"], ["epichal"])
 
     def test_curated_board_with_no_board_crystal_omits_f_cpu(self):
         # D-4's clock check treats board_build.f_cpu as the last source,
@@ -250,6 +252,27 @@ class BoardJsonTests(unittest.TestCase):
         self.assertEqual(doc["upload"]["protocol"], "minipro")
         self.assertEqual(doc["build"]["epichal_family"], "pic16f87xa")
         self.assertEqual(doc["build"]["toolchains"], ["epic-cc", "xc8"])
+        self.assertEqual(doc["frameworks"], ["epichal"])
+
+    def test_board_without_hal_content_carries_no_frameworks_key(self):
+        # The PIC12F675 shape: epic-cc only, no HAL family. The registry
+        # and wizards must not offer a framework the board cannot build.
+        e = entry("p12f675", ["epic-cc"], [], cc_name="p12f675")
+        with tempfile.TemporaryDirectory() as td:
+            dest = pathlib.Path(td)
+            (dest / "pic12f675.json").write_text(
+                json.dumps({"frameworks": ["epichal"]})
+            )
+            doc = gen_boards.board_json(e, "pic12f675", dest, None)
+        self.assertNotIn("frameworks", doc)
+
+    def test_experimental_board_with_hal_family_declares_epichal(self):
+        # An xc8-only part epic-hal covers: framework support under the
+        # one toolchain that builds it, advertised the same way.
+        e = entry("p16f882", ["xc8"], ["xc8"], family="pic16f88x", cc_name=None)
+        with tempfile.TemporaryDirectory() as td:
+            doc = gen_boards.board_json(e, "p16f882", pathlib.Path(td), None)
+        self.assertEqual(doc["frameworks"], ["epichal"])
 
 
 class CuratedTableTests(unittest.TestCase):

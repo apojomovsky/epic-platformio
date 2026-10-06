@@ -51,6 +51,20 @@ what it does support, rather than silently building with the wrong
 include set or resolving a toolchain binary the board can never use
 correctly.
 
+**Declared, not just built (epic-platformio#102).** `platform.json`
+names `epichal` under `frameworks` with its package, and every board
+whose family ships HAL content lists it under top-level `frameworks`,
+so the registry page, PIO Home and `pio boards` advertise the HAL path
+instead of leaving `framework = epichal` as builder-only knowledge.
+The script entry points at `builder/frameworks/epichal.py`, a no-op
+that exists so the entry resolves per PlatformIO's convention. The real
+build stays in `builder/main.py`, which already serves both paths and
+branches on whether the project sets the framework; pointing the entry
+at it instead would re-run the whole build if ever SConscripted.
+`build.framework_epichal_toolchains` stays the build-time check; the
+top-level list is the advertisement. Selecting the framework also
+installs its package automatically through the declared entry.
+
 **The join key is the bare device name**, not a live call into either
 toolchain: epic-cc's own device names in its manifest are already
 canonical ("p" + epic-hal's own spelling, lowercased), a fixed

@@ -9,6 +9,9 @@
       "xc8"
     ]
   },
+  "frameworks": [
+    "epichal"
+  ],
   "name": "Microchip PIC16F886",
   "url": "https://www.microchip.com/en-us/product/PIC16F886",
   "vendor": "Microchip"

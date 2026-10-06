@@ -1,7 +1,7 @@
 {
   "name": "epic8",
   "title": "Epic8",
-  "description": "Fully open-source, MIT licensed C development for 8-bit PIC: pio run builds and flashes with the epic-cc compiler",
+  "description": "Fully open-source, MIT licensed C for 8-bit PIC under PlatformIO: the epic-cc compiler plus epic-hal, a register-level HAL and drivers, built in.",
   "homepage": "https://github.com/apojomovsky/epic-platformio",
   "license": "MIT",
   "keywords": [
@@ -35,6 +35,12 @@
   "engines": {
     "platformio": "^6"
   },
+  "frameworks": {
+    "epichal": {
+      "package": "framework-epichal",
+      "script": "builder/frameworks/epichal.py"
+    }
+  },
   "packages": {
     "toolchain-epiccc": {
       "type": "toolchain",
@@ -67,6 +73,10 @@
     }
   },
   "examples": [
+    "examples/hal-tick-pic16f877a",
+    "examples/hal-tick-pic16f887",
+    "examples/hal-tick-pic18f4550",
+    "examples/hal-tick-xc8-pic16f877a",
     "examples/blink-pic16f877a",
     "examples/blink-pic16f887",
     "examples/blink-pic18f4550",
@@ -78,10 +88,6 @@
     "examples/blink-tutorial-pic18f4550",
     "examples/blink-xc8-pic16f877a",
     "examples/blink-xc8-pic16f887",
-    "examples/blink-xc8-pic18f4550",
-    "examples/hal-tick-pic16f877a",
-    "examples/hal-tick-pic16f887",
-    "examples/hal-tick-pic18f4550",
-    "examples/hal-tick-xc8-pic16f877a"
+    "examples/blink-xc8-pic18f4550"
   ]
 }

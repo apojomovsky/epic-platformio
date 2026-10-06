@@ -32,6 +32,51 @@ platformio platform install https://github.com/apojomovsky/epic-platformio
 [env:epic8]
 platform = apojomovsky/epic8
 board = pic16f877a
+framework = epichal
+build_flags = -DEPIC_HAL_MODULES=tick
+```
+
+```c
+// src/main.c
+#include "epic_tick.h"
+#include "peripherals/hal_gpio.h"
+
+#ifndef FOSC_HZ
+#define FOSC_HZ 4000000UL
+#endif
+
+#define BLINK_MS 500u
+
+void main(void)
+{
+    EPIC_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
+    epic_tick_init(FOSC_HZ);
+    for (;;) {
+        EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+        epic_tick_delay_ms(BLINK_MS);
+    }
+}
+```
+
+```bash
+pio run
+```
+
+The build produces `firmware.hex` in `.pio/build/epic8/`, toggling PB0
+every 500 ms off the 1 ms epic-tick timebase. That HEX is the
+deliverable; see [Upload](#upload) for what the platform does and does
+not do with it.
+
+### Without the HAL (bare metal)
+
+Drop the `framework` and `build_flags` lines and write plain C against
+the compiler's own header:
+
+```ini
+; platformio.ini
+[env:epic8]
+platform = apojomovsky/epic8
+board = pic16f877a
 ```
 
 ```c
@@ -48,13 +93,11 @@ void main(void)
 }
 ```
 
-```bash
-pio run
-```
-
-The build produces `firmware.hex` in `.pio/build/epic8/`. That HEX is the
-deliverable; see [Upload](#upload) for what the platform does and does not
-do with it.
+Choose bare metal for the smallest code, full register control, or a
+board with no HAL content such as the PIC12F675. The HAL stays the
+recommended path, never the automatic one: PlatformIO has no
+default-framework setting, so omitting `framework = epichal` always
+builds bare metal.
 
 `pio run -t size` prints PlatformIO's program-size bar from the driver's
 own build report (the compiler emits the whole flash image, so usage
@@ -64,34 +107,13 @@ refused before the programmer is driven.
 
 ## Using the HAL
 
-The epic-hal framework is optional. Enable it with `framework = epichal`
-and pick the modules with `-DEPIC_HAL_MODULES`:
+The minimal project above already enables it: `framework = epichal`
+selects the framework, and `-DEPIC_HAL_MODULES` picks the modules.
+Selecting the framework installs its package automatically through the
+platform's declared framework entry. The builder wires in the family
+HAL and the selected module sources.
 
-```ini
-[env:epic8]
-platform = apojomovsky/epic8
-board = pic16f877a
-framework = epichal
-build_flags = -DEPIC_HAL_MODULES=tick
-```
-
-```c
-#include "epic_tick.h"
-#include "peripherals/hal_gpio.h"
-
-void main(void)
-{
-    EPIC_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
-    epic_tick_init(FOSC_HZ);
-    for (;;) {
-        EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
-        epic_tick_delay_ms(500);
-    }
-}
-```
-
-The builder wires in the family HAL and the selected module sources. The
-module list is comma-separated and resolved transitively, so
+The module list is comma-separated and resolved transitively, so
 `-DEPIC_HAL_MODULES=tick` pulls in `epic-common` and the family HAL.
 
 ## Worked examples
@@ -101,30 +123,31 @@ from a clean checkout:
 
 | Example | Board | What it proves |
 |---|---|---|
+| `hal-tick-pic16f877a` | PIC16F877A | epic-tick plus GPIO, the integration proof |
+| `hal-tick-pic16f887` | PIC16F887 | the same on a second PIC14 part |
+| `hal-tick-pic18f4550` | PIC18F4550 | the same on the PIC18 backend |
+| `hal-tick-xc8-pic16f877a` | PIC16F877A | epic-tick plus GPIO under xc8 |
+| `blink-pic16f877a` | PIC16F877A | the bare-metal `EPIC_CONFIG` compiler path |
+| `blink-pic16f887` | PIC16F887 | a new device on a supported core |
+| `blink-pic18f4550` | PIC18F4550 | the PIC18 backend |
 | `blink-tutorial-pic16f877a` | PIC16F877A | XC8 tutorial source (`#pragma config`, `__delay_ms`) compiles unchanged |
 | `blink-tutorial-pic16f887` | PIC16F887 | the same, on a second PIC14 part |
 | `blink-tutorial-pic16f628a` | PIC16F628A | the same, on the atdf-tier part |
 | `blink-tutorial-pic12f675` | PIC12F675 | the same on a baseline-adjacent part, internal oscillator |
 | `blink-tutorial-pic16f1937` | PIC16F1937 | the same on the PIC14E backend |
 | `blink-tutorial-pic18f4550` | PIC18F4550 | the same on the PIC18 backend |
-| `blink-pic16f877a` | PIC16F877A | the minimal `EPIC_CONFIG` compiler path |
-| `blink-pic16f887` | PIC16F887 | a new device on a supported core |
-| `blink-pic18f4550` | PIC18F4550 | the PIC18 backend |
-| `hal-tick-pic16f877a` | PIC16F877A | epic-tick plus GPIO, the integration proof |
-| `hal-tick-pic16f887` | PIC16F887 | the same on a second PIC14 part |
-| `hal-tick-pic18f4550` | PIC18F4550 | the same on the PIC18 backend |
 | `blink-xc8-pic16f877a` | PIC16F877A | the xc8 toolchain path alone ([XC8](#xc8)) |
 | `blink-xc8-pic16f887` | PIC16F887 | xc8 on a new device on a supported core |
 | `blink-xc8-pic18f4550` | PIC18F4550 | xc8 on the PIC18 backend |
-| `hal-tick-xc8-pic16f877a` | PIC16F877A | epic-tick plus GPIO under xc8 |
 
 The `blink-tutorial-*` set is the source a PIC tutorial writes: no HAL,
 `#pragma config` and the `__delay_ms` macro, which compile unchanged on
-the epic-cc path (docs/46 D-3). The `hal-tick-*` set covers the three beta
-boards whose epic-hal family ships a tick module (`pic16f877a`,
-`pic16f887`, `pic18f4550`); the other three cannot take `framework =
-epichal` yet, because their family bundles carry no tick module
-(`pic16f628a`, `pic16f1937`) or no framework content at all (`pic12f675`).
+the epic-cc path (docs/46 D-3). The `hal-tick-*` set covers the three
+beta boards whose epic-hal family ships a tick module (`pic16f877a`,
+`pic16f887`, `pic18f4550`).
+`pic16f628a` and `pic16f1937` also take `framework = epichal`, with
+their own families' modules, but those families ship no tick module so
+they have no tick example. Only `pic12f675` takes no framework at all.
 That gap is epic-hal's, tracked as a follow-up, not a platform choice.
 
 Copy one into a fresh directory and run `pio run`.
@@ -325,7 +348,11 @@ lands without a hand edit. A board's `build.toolchains` lists which
 `board_build.toolchain` values it accepts, and
 `build.framework_epichal_toolchains` lists which of those also support
 `framework = epichal` (empty when epic-hal doesn't cover the device at
-all). Picking a combination a board doesn't support fails the build with a
+all). The same answer is advertised where PlatformIO looks for it: every
+board whose family ships HAL content carries top-level `frameworks:
+["epichal"]`, so the registry, PIO Home and `pio boards` offer the HAL
+there and stay silent on bare-metal-only boards such as `pic12f675`.
+Picking a combination a board doesn't support fails the build with a
 message naming what it does support, rather than a silent wrong build.
 
 The beta parts are `pic16f877a`, `pic16f887`, `pic16f628a`, `pic12f675`,

@@ -11,6 +11,9 @@
       "xc8"
     ]
   },
+  "frameworks": [
+    "epichal"
+  ],
   "name": "Microchip PIC16F874A",
   "url": "https://www.microchip.com/en-us/product/PIC16F874A",
   "vendor": "Microchip"
