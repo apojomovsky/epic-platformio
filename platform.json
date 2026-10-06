@@ -38,7 +38,7 @@
   "frameworks": {
     "epichal": {
       "package": "framework-epichal",
-      "script": "builder/main.py"
+      "script": "builder/frameworks/epichal.py"
     }
   },
   "packages": {
