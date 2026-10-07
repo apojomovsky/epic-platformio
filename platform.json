@@ -31,7 +31,7 @@
     "type": "git",
     "url": "https://github.com/apojomovsky/epic-platformio.git"
   },
-  "version": "0.1.0",
+  "version": "0.1.1",
   "engines": {
     "platformio": "^6"
   },
@@ -57,19 +57,19 @@
       "type": "tool",
       "optional": true,
       "owner": "apojomovsky",
-      "version": "0.7.4+pio1"
+      "version": "0.7.4+pio3"
     },
     "tool-pk2cmd": {
       "type": "tool",
       "optional": true,
       "owner": "apojomovsky",
-      "version": "1.27.1+pio1"
+      "version": "1.27.1+pio2"
     },
     "tool-picpro": {
       "type": "tool",
       "optional": true,
       "owner": "apojomovsky",
-      "version": "0.4.1+pio2"
+      "version": "0.4.1+pio3"
     }
   },
   "examples": [
