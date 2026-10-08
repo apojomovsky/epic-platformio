@@ -45,5 +45,23 @@
     "0.6.0+pio1": {
       "upstream": "v0.6.0"
     }
+  },
+  "tool-minipro": {
+    "0.7.4+pio3": {
+      "upstream": "0.7.4",
+      "note": "provenance only, versioned and published by epic-tools; platform.json pins the bare upstream so a registry cleanup cannot strand a release (epic-platformio#104)"
+    }
+  },
+  "tool-picpro": {
+    "0.4.1+pio3": {
+      "upstream": "0.4.1",
+      "note": "provenance only, versioned and published by epic-tools; platform.json pins the bare upstream so a registry cleanup cannot strand a release (epic-platformio#104)"
+    }
+  },
+  "tool-pk2cmd": {
+    "1.27.1+pio2": {
+      "upstream": "v1.27.01",
+      "note": "provenance only, versioned and published by epic-tools; platform.json pins the bare upstream so a registry cleanup cannot strand a release (epic-platformio#104)"
+    }
   }
 }

@@ -161,11 +161,12 @@ that lists it pulls the framework package automatically through the
 platform's declared framework entry.
 
 Programmer tools install only when the project selects their protocol.
-`tool-minipro` (`0.7.4+pio3`) and `tool-pk2cmd` (`1.27.1+pio2`) are published to the registry by #85:
+`tool-minipro` (`0.7.4`) and `tool-pk2cmd` (`1.27.1`) are published to the registry by #85:
 `minipro` or `pk2cmd` pulls the package, otherwise the builder falls back
-to `EPIC8_*_PATH` or `PATH`. `tool-picpro` (`0.4.1+pio3`) is live: selecting
+to `EPIC8_*_PATH` or `PATH`. `tool-picpro` (`0.4.1`) is live: selecting
 `picpro` pulls the package, otherwise the builder falls back to
-`EPIC8_PICPRO_PATH` or `PATH`.
+`EPIC8_PICPRO_PATH` or `PATH`. The platform pins the bare upstream, never
+the `+pioN` build, so a registry cleanup cannot strand a release (#104).
 
 ## Status
 

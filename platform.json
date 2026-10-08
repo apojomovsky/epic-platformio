@@ -57,19 +57,19 @@
       "type": "tool",
       "optional": true,
       "owner": "apojomovsky",
-      "version": "0.7.4+pio3"
+      "version": "0.7.4"
     },
     "tool-pk2cmd": {
       "type": "tool",
       "optional": true,
       "owner": "apojomovsky",
-      "version": "1.27.1+pio2"
+      "version": "1.27.1"
     },
     "tool-picpro": {
       "type": "tool",
       "optional": true,
       "owner": "apojomovsky",
-      "version": "0.4.1+pio3"
+      "version": "0.4.1"
     }
   },
   "examples": [

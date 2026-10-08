@@ -24,9 +24,15 @@ a board-definition fix landing here never forces a compiler release.
 
 The programmer tool packages (`tool-minipro`, `tool-pk2cmd`,
 `tool-picpro`) are the exception: epic-tools versions and publishes
-them, so `platform.json` pins their registry versions directly and
-`packages/versions.json` does not list them. The consistency checker
-only covers packages listed there.
+them, so `platform.json` pins the bare upstream (`0.7.4`, never
+`0.7.4+pio3`) and `packages/versions.json` records the exact `+pioN`
+build each pin was cut against as provenance. The registry drops older
+`+pioN` builds without warning, which stranded the exact pins
+(epic-platformio#104). SemVer ignores build metadata when matching, so
+the bare pin resolves to a surviving build but never floats to an
+untested upstream the way a `~` range would. A new tool build is a
+hand-edit to both files, and the consistency checker fails the PR when
+the pin is not the bare upstream of the newest provenance entry.
 
 ## Platform versioning
 

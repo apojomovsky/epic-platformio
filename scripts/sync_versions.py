@@ -16,7 +16,11 @@ Usage:
     --upstream-tag v0.6.0
 
 A packaging-only fix keeps the upstream tag and takes the policy's
-packaging revision: --upstream-tag v0.1.1 --pkg-version 0.1.1+pio1.
+packaging revision: --upstream-tag v0.1.1 --pkg-version 0.1.1+pio1. The
+programmer tools are outside this script: epic-tools versions and
+publishes them, so platform.json pins their bare upstream and
+packages/versions.json records the exact build as provenance
+(epic-platformio#104, docs/packages.md).
 
 Prints "old_upstream_tag=<value>" (empty if this is the package's first
 entry) to stdout, the range start the changelog rollup needs, before this
