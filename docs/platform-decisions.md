@@ -166,9 +166,11 @@ not yet carried is a no-op and its build still finds the binary on
 `PATH`. `picpro` joined both ends with epic-platformio#46. Two rules
 for whoever publishes these entries: keep each entry's name equal to
 the value in `PROTOCOL_TOOL_PACKAGES`, or update that line with it; and
-keep the versions pinned to the epic-tools releases (those packages
-are versioned there, not in `packages/versions.json`, whose checker
-covers this repo's own builds).
+pin the bare upstream version, never the `+pioN` build (those packages
+are versioned in epic-tools, and the registry drops older builds
+without warning, which stranded the exact pins in epic-platformio#104).
+`packages/versions.json` records the exact build each pin was cut
+against as provenance, and its checker covers that pin too.
 
 ## Toolchain: xc8 lands as a fully supported alternate, never vendored
 
