@@ -141,6 +141,7 @@ by every epic repository (canonical checks live in
    the ``pr-body.yml`` CI workflow that fails on literal ``\n``/``\r`` exists in
    epic-cc and epic-hal, not here yet, so CI does not enforce it. Heal with
    ``gh pr edit --body-file``.
+7. README freshness (canonical: epic-tasks AGENTS.md): a PR that changes user-visible surface (boards, platform or builder behavior, install steps, release or packaging) updates README.md in the same PR or notes README: n/a in the PR body; takeoff check_readme warns (advisory, never blocking).
 
 The ritual exits 1 with the exact fix list while blocking items are
 outstanding. Don't skip it; the CI gate does not cover the ritual. The
