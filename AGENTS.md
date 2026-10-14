@@ -177,6 +177,12 @@ fails the ritual and blocks the push.
   clone) refuses it. If the guard is triggered, rebase onto master and
   get the human's explicit go-ahead before re-running with
   `EPIC_FORCE_PUSH_APPROVED=1 git push --force-with-lease`.
+- **Push through the helper.** Run `epic-tasks push` instead of `git push`: it
+  verifies the remote ref after the pre-push hook and retries once without
+  re-running the suite. Trust its exit code: 0 means the branch landed and the
+  remote matches `HEAD`, 3 means the remote is unreachable, anything else means
+  the push did not land (check the output, never push again by hand to "make
+  sure"). The helper runs the hooks; `--no-verify` stays forbidden.
 - **Never post to a third-party repository.** No issue, pull request,
   comment, review, fork or any other write outside the
   `apojomovsky/epic-*` repositories, and no contact with upstream
