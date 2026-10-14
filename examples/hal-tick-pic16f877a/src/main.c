@@ -1,5 +1,5 @@
 /*
- * HAL integration proof: epic-tick (the 1 ms timebase) plus the GPIO
+ * HAL integration proof: tick (the 1 ms timebase) plus the GPIO
  * peripheral, toggling an LED on a 500 ms period. This is the real
  * integration test, the compiler path plus the epic-hal framework in one
  * build. `framework = epichal` and `-DEPIC_HAL_MODULES=tick` select the
