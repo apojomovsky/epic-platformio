@@ -251,9 +251,19 @@ def _framework(env, mcu, toolchain):
         )
         env.Exit(1)
     modules = manifest["modules"]
+    # Module ids are repo-relative paths since epic-hal#308 (lib/tick);
+    # users write the full id or bundlegen's short form (the last
+    # segment, tick). A leading epic- keeps pre-rename configs working.
+    shorts = {}
+    for key in modules:
+        seg = key.rsplit("/", 1)[-1]
+        shorts.setdefault(seg[5:] if seg.startswith("epic-") else seg, key)
     resolved = set()
     for name in selected:
-        key = name if name.startswith("epic-") else "epic-" + name
+        key = name
+        if key not in modules:
+            bare = name[5:] if name.startswith("epic-") else name
+            key = shorts.get(bare, name)
         if key not in modules:
             sys.stderr.write("Error: unknown epic-hal module %s\n" % name)
             env.Exit(1)

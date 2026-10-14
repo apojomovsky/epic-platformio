@@ -63,7 +63,7 @@ pio run
 ```
 
 The build produces `firmware.hex` in `.pio/build/epic8/`, toggling PB0
-every 500 ms off the 1 ms epic-tick timebase. That HEX is the
+every 500 ms off the 1 ms `tick` timebase. That HEX is the
 deliverable; see [Upload](#upload) for what the platform does and does
 not do with it.
 
@@ -113,8 +113,8 @@ Selecting the framework installs its package automatically through the
 platform's declared framework entry. The builder wires in the family
 HAL and the selected module sources.
 
-The module list is comma-separated and resolved transitively, so
-`-DEPIC_HAL_MODULES=tick` pulls in `epic-common` and the family HAL.
+The module list is comma-separated and resolved transitively. Names are
+the manifest short form (`tick` for `lib/tick`), the form every example uses.
 
 ## Worked examples
 
@@ -123,10 +123,10 @@ from a clean checkout:
 
 | Example | Board | What it proves |
 |---|---|---|
-| `hal-tick-pic16f877a` | PIC16F877A | epic-tick plus GPIO, the integration proof |
+| `hal-tick-pic16f877a` | PIC16F877A | `tick` plus GPIO, the integration proof |
 | `hal-tick-pic16f887` | PIC16F887 | the same on a second PIC14 part |
 | `hal-tick-pic18f4550` | PIC18F4550 | the same on the PIC18 backend |
-| `hal-tick-xc8-pic16f877a` | PIC16F877A | epic-tick plus GPIO under xc8 |
+| `hal-tick-xc8-pic16f877a` | PIC16F877A | `tick` plus GPIO under xc8 |
 | `blink-pic16f877a` | PIC16F877A | the bare-metal `EPIC_CONFIG` compiler path |
 | `blink-pic16f887` | PIC16F887 | a new device on a supported core |
 | `blink-pic18f4550` | PIC18F4550 | the PIC18 backend |

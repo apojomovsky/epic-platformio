@@ -71,7 +71,7 @@ pio run
 ```
 
 That produces `firmware.hex` in `.pio/build/epic8/`, toggling PB0 every
-500 ms off the 1 ms epic-tick timebase. The HAL is the recommended path,
+500 ms off the 1 ms `tick` timebase. The HAL is the recommended path,
 not an automatic one: PlatformIO has no default-framework setting, so a
 project without `framework = epichal` builds bare metal. Full walkthrough
 is in
