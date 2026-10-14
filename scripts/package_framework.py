@@ -2,8 +2,8 @@
 """Build a framework-epichal PlatformIO package from epic-hal family bundles.
 
 The framework package is the union of every supported family bundle: the
-shared modules (epic-common, epic-tick, ...) are copied once, each family's
-hal dir is kept separate, and each family's source manifest is renamed to
+shared trees (common/, hal/, lib/) are merged once, each family's HAL
+subtree is kept separate, and each family's source manifest is renamed to
 `epic-hal-sources-<family>.json` so the builder can pick the right one from
 the board's MCU. Every family slug (the manifest suffix)
 comes from each bundle's own epic-hal-sources.json "family" field, not a
@@ -220,7 +220,7 @@ def validate(tgz: pathlib.Path, slugs: list[str], family_entries: dict[str, list
             if not (td / f"epic-hal-sources-{slug}.json").exists():
                 raise SystemExit(f"framework package missing epic-hal-sources-{slug}.json")
         # ... and whatever top-level content was uniquely its own (its
-        # hal dir, typically) must have actually made it into the
+        # demos/ tree, typically) must have actually made it into the
         # tarball, not just its source manifest: a bug in the union copy
         # could otherwise drop a family's own content while its sidecar
         # JSON is still written independently.
