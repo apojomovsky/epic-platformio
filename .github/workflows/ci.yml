@@ -3,7 +3,8 @@ name: ci
 # Skeleton gate: lints the JSON manifests and byte-compiles the builder
 # Python. Both are conditional on the files existing, so master stays
 # green with the bootstrap scaffolding alone and the gate activates
-# automatically when PIO-1 lands the platform core.
+# automatically when PIO-1 lands the platform core. The docs-gen job
+# fails on stale generated pages or registry-manifest drift (#114).
 
 on:
   push:
@@ -100,3 +101,17 @@ jobs:
           else
             echo "no scripts/check_versions_consistent.py yet"
           fi
+
+  docs-gen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Regenerate generated docs
+        run: make docs-gen
+
+      - name: Fail on stale generated docs
+        run: git diff --exit-code -- docs/reference/boards.md README.md registry-README.md
+
+      - name: Registry manifest and link checks
+        run: python3 scripts/gen_docs.py --check
