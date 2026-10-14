@@ -219,12 +219,24 @@ fails the ritual and blocks the push.
 
 ## CI
 
-`.github/workflows/ci.yml` runs on every push/PR: it lints the JSON
-manifests (`platform.json`, `boards/*.json`) and byte-compiles the
-`builder/` Python, so the platform skeleton lands against a gate rather
-than adding one later. The gate is deliberately minimal until PIO-1
-brings a real build to gate on. It also runs
-`scripts/check_versions_consistent.py`, which fails the PR if
-`packages/versions.json`, a package's own `package.json` and
-`platform.json`'s download URL disagree about that package's current
-version (see `docs/packages.md`).
+Two jobs in `.github/workflows/ci.yml` run on every push to `master` and
+every pull request:
+
+- `lint` checks the JSON manifests (`platform.json`, `boards/*.json`,
+  `boards-experimental/*.json`, `packages/*/package.json`,
+  `packages/versions.json`), byte-compiles `builder/`, `platform.py` and
+  `scripts/`, runs `scripts/test_*.py`, syntax-checks `scripts/*.sh`, and runs
+  `scripts/check_versions_consistent.py`. That last check fails the PR if
+  `packages/versions.json`, a package's own `package.json` and `platform.json`'s
+  download URL disagree about that package's current version (see
+  `docs/packages.md`).
+- `docs-gen` runs `make docs-gen` and fails on stale generated pages
+  (`docs/reference/boards.md`, `README.md`, `registry-README.md`), then runs
+  `scripts/gen_docs.py --check` for registry-manifest and link checks.
+
+Other workflows run on narrower triggers: `compat` builds the epic-cc examples
+against the epic-cc and epic-hal pair `platform.json` pins, `windows-smoke`
+installs the platform from the registry and builds a blink on Windows,
+`xc8-ci` builds real targets through the xc8 toolchain path, `package` cuts
+packages from upstream release assets on manual dispatch, and `boards-refresh`
+regenerates `boards/*.json` nightly and opens a PR when they change.
