@@ -16,6 +16,18 @@
 #include "epic_tick.h"
 #include "peripherals/hal_gpio.h"
 
+/* XC8 spells its config words as #pragma config. The oscillator and the
+ * watchdog are named here: left unset, the chip runs on its RC default
+ * with the watchdog on and resets every timeout. */
+#pragma config FOSC = HS
+#pragma config WDTE = OFF
+#pragma config PWRTE = ON
+#pragma config BOREN = ON
+#pragma config LVP = OFF
+#pragma config CPD = OFF
+#pragma config WRT = OFF
+#pragma config CP = OFF
+
 #ifndef FOSC_HZ
 #define FOSC_HZ 4000000UL
 #endif

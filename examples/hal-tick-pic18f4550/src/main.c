@@ -13,12 +13,15 @@
 
 #include <stdint.h>
 
+#include <epic-cc.h>
 #include "epic_tick.h"
 #include "peripherals/hal_gpio.h"
 
-#ifndef FOSC_HZ
-#define FOSC_HZ 20000000UL
-#endif
+/* The oscillator and the watchdog are named here: left unset, the chip runs
+ * on its RC default with the watchdog on and resets every timeout. */
+EPIC_CONFIG("osc=hs, xtal_hz=20000000, cpudiv=div1, plldiv=noprescale, usbdiv=off, wdt=off, lvp=off");
+
+#define FOSC_HZ EPIC_FOSC_HZ
 
 #define BLINK_MS 500u
 
