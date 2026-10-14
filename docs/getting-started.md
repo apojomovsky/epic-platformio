@@ -10,7 +10,7 @@ supports [MPLAB XC8](#xc8) as a fully supported alternate toolchain:
 ## Install the platform
 
 The beta will publish to the PlatformIO registry as `apojomovsky/epic8`
-(compatibility table: [`README.md#compatibility`](../README.md#compatibility)).
+(package versions: [`docs/packages.md`](packages.md)).
 The registry publication lands on go-ahead after this change merges;
 until then the git URL below is the working install, used both to
 install and as the `platform` value:

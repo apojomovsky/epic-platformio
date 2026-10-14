@@ -18,7 +18,7 @@ The PlatformIO platform for 8-bit PIC microcontrollers: a fully open source, MIT
 - **The usual PlatformIO workflow.** A `platformio.ini` and `pio run`, with build, size check and upload targets. No Microchip download is needed on the default path.
 - **Complete on its own.** This page is the whole PlatformIO path; epic-cc and epic-hal document themselves without assuming PlatformIO.
 
-**Status:** ready for hobby projects on the supported boards. See [What's in 1.0](https://apojomovsky.github.io/epic-docs/status/).
+**Status:** building is ready for hobby projects; flashing is tested in the simulator and awaits sign-off on real chips. See [What's in 1.0](https://apojomovsky.github.io/epic-docs/status/).
 
 ## The shortest example
 
@@ -81,7 +81,7 @@ You get `firmware.hex` in `.pio/build/epic8/`. The first build downloads the com
 pio pkg install -g --platform apojomovsky/epic8
 ```
 
-Always write the platform as `apojomovsky/epic8`, with the owner. To flash a chip, connect a supported programmer and run:
+Always write the platform as `apojomovsky/epic8`, with the owner. The example expects a 4 MHz crystal and an LED on pin RB0. To flash a chip, connect a programmer and run the command below. It uses an XGecu T48 or TL866II Plus by default; for a PICkit or a K150, set `upload_protocol` in `platformio.ini` and install the udev rules, as the upload guide explains.
 
 ```bash
 pio run -t upload
