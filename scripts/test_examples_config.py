@@ -25,7 +25,7 @@ _PRAGMA_PAIR = re.compile(r"([A-Za-z0-9_]+)\s*=\s*([A-Za-z0-9_]+)")
 
 
 def _examples():
-    """Each example directory that holds a project (blink-p16f877a is empty)."""
+    """Each example directory that holds a project (no platformio.ini, no project)."""
     for path in sorted(EXAMPLES.iterdir()):
         if (path / "platformio.ini").is_file():
             yield path
@@ -107,6 +107,8 @@ class ExamplesDeclareConfigWords(unittest.TestCase):
             with self.subTest(example=example.name):
                 board_path = BOARDS / f"{_board(example)}.json"
                 f_cpu = json.loads(board_path.read_text(encoding="utf-8")).get("build", {}).get("f_cpu")
+                # Some boards (pic12f675, pic16f628a, pic16f1937) publish no f_cpu;
+                # there is no board clock to compare against, so they are skipped.
                 if f_cpu is None:
                     continue
                 expected = int(str(f_cpu).rstrip("uUlL"))

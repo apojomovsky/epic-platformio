@@ -17,8 +17,8 @@
 #include "epic_tick.h"
 #include "peripherals/hal_gpio.h"
 
-/* The oscillator and the watchdog are named here: left unset, the chip runs
- * on its RC default with the watchdog on and resets every timeout. */
+/* The oscillator and the watchdog are named here: left unset, the chip keeps
+ * its erased fuses, which on the PIC16F877A are RC with the watchdog on. */
 EPIC_CONFIG("osc=hs, xtal_hz=4000000, wdt=off, lvp=off");
 
 #define FOSC_HZ EPIC_FOSC_HZ

@@ -17,8 +17,8 @@
 #include "peripherals/hal_gpio.h"
 
 /* XC8 spells its config words as #pragma config. The oscillator and the
- * watchdog are named here: left unset, the chip runs on its RC default
- * with the watchdog on and resets every timeout. */
+ * watchdog are named here: left unset, the chip keeps its erased fuses,
+ * which on the PIC16F877A are RC with the watchdog on. */
 #pragma config FOSC = HS
 #pragma config WDTE = OFF
 #pragma config PWRTE = ON
