@@ -48,12 +48,15 @@ build_flags = -DEPIC_HAL_MODULES=tick
 
 #include <stdint.h>
 
+#include <epic-cc.h>
 #include "epic_tick.h"
 #include "peripherals/hal_gpio.h"
 
-#ifndef FOSC_HZ
-#define FOSC_HZ 4000000UL
-#endif
+/* The oscillator and the watchdog are named here: left unset, the chip keeps
+ * its erased fuses, which on the PIC16F877A are RC with the watchdog on. */
+EPIC_CONFIG("osc=hs, xtal_hz=4000000, wdt=off, lvp=off");
+
+#define FOSC_HZ EPIC_FOSC_HZ
 
 #define BLINK_MS 500u
 
