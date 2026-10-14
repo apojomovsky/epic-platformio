@@ -154,6 +154,22 @@ before downloading and packaging them, so a new family needs no change
 here (PIO-7, epic-platformio#25), only a `--tar` per family when calling
 `package_framework.py` by hand, as in the example above.
 
+## Registry surface
+
+The registry shows a snapshot taken at publish time, so three pages are
+generated instead of hand-kept (`scripts/gen_docs.py`, epic-platformio#114):
+`docs/reference/boards.md` from `boards/*.json`, `README.md` from
+`README.src.md` with `--8<--` includes resolved, and `registry-README.md`
+from the same source with relative links and images rewritten to absolute
+URLs. `make docs-gen` renders all three, and CI regenerates and fails on
+any diff, so a stale page fails the build.
+
+The same check (`gen_docs.py --check`, also in CI) covers the registry
+fields: at most 20 keywords per manifest, a licence and a readme field on
+every package manifest, and the owner-qualified platform
+`apojomovsky/epic8` in every example `platformio.ini`. Publishing itself
+stays the human's step at release time.
+
 ## Keeping the boards current
 
 A separate scheduled workflow, `boards-refresh.yml`, regenerates the

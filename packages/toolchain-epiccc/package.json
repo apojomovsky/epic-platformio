@@ -23,6 +23,7 @@
     "pic18f4550"
   ],
   "license": "MIT",
+  "readme": "README.md",
   "homepage": "https://github.com/apojomovsky/epic-cc",
   "repository": {
     "type": "git",
