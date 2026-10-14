@@ -8,7 +8,7 @@ Joins three inputs, none of which require linking either upstream repo:
                   [{"name": "p16f877a", "core": "pic14", "pack": ...}, ...]
   --parts-txt     epic-hal's release-bundle part-to-family map:
                   "16F877A pic16f87xa" per line (bundlegen.emit_parts_map)
-  --modules-toml  epic-hal's epic-common/manifest/modules.toml, read only
+  --modules-toml  epic-hal's common/manifest/modules.toml, read only
                   for which families declare an epiccc_sources key
 
 The join key is the bare device name (epic-hal's own spelling, "16F877A"),

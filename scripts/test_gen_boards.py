@@ -49,30 +49,30 @@ PARTS = {
 
 MODULES_TOML_BOTH_FAMILIES = """\
 [families.PIC16F87XA]
-hal_dir = "pic16f87xa-hal"
+hal_dir = "hal/pic14/16f87xa"
 fosc_hz = 20000000
 epiccc_sources = [
   "a.c",
 ]
 
 [families.PIC16F88X]
-hal_dir = "pic16f88x-hal"
+hal_dir = "hal/pic14/16f88x"
 fosc_hz = 20000000
 
 [families.PIC16F628A]
-hal_dir = "pic16f628a-hal"
+hal_dir = "hal/pic14/16f628a"
 epiccc_sources = [
   "a.c",
 ]
 
 [families.PIC16F193X]
-hal_dir = "pic16f193x-hal"
+hal_dir = "hal/pic14e/16f193x"
 epiccc_sources = [
   "a.c",
 ]
 
 [families.PIC18Fxx5x]
-hal_dir = "pic18fxx5x-hal"
+hal_dir = "hal/pic18/18fxx5x"
 epiccc_sources = [
   "a.c",
 ]
