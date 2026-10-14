@@ -263,7 +263,7 @@ jobs:
           done < /tmp/families.txt
           python3 scripts/package_framework.py \
             "${tar_args[@]}" \
-            --manifest /tmp/epic-hal-src/epic-common/manifest/modules.toml \
+            --manifest /tmp/epic-hal-src/common/manifest/modules.toml \
             --hal-repo /tmp/epic-hal-src \
             --version "$pkg_ver" \
             --out "dist/framework-epichal-${pkg_ver}.tar.gz"

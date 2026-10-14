@@ -262,7 +262,7 @@ def _framework(env, mcu, toolchain):
         sources += [join(fw_dir, s) for s in modules[key]["sources"]]
         includes += [join(fw_dir, d) for d in modules[key]["includes"]]
     # A module's own sources can repeat a file the family's base hal_sources
-    # already carries (epic-common/src/core/epic_harness_target.c, via the
+    # already carries (common/src/core/epic_harness_target.c, via the
     # "common" module): harmless as a second argument to epic-cc's single
     # invocation, but a hard SCons error as two per-object Command nodes
     # targeting the same object path under xc8. Dedup once, order-preserved.

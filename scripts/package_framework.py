@@ -5,7 +5,7 @@ The framework package is the union of every supported family bundle: the
 shared modules (epic-common, epic-tick, ...) are copied once, each family's
 hal dir is kept separate, and each family's source manifest is renamed to
 `epic-hal-sources-<family>.json` so the builder can pick the right one from
-the board's MCU. Every family slug (the hal dir name, the manifest suffix)
+the board's MCU. Every family slug (the manifest suffix)
 comes from each bundle's own epic-hal-sources.json "family" field, not a
 hardcoded list here: a new family bundle (PIO-7, epic-platformio#25) needs
 no change to this script, only an extra --tar.
@@ -30,7 +30,7 @@ TEMPLATE = pathlib.Path(__file__).resolve().parent.parent / "packages" / "framew
 # Top-level entries every bundle carries under the same name but with
 # genuinely per-family content (confirmed against a real v0.6.0 5-family
 # repack: MPLABX.md's own wiring steps differ per family, not a byte-for-
-# byte match the way epic-common/VERSION/etc are). builder/main.py never
+# byte match the way common/VERSION/etc are). builder/main.py never
 # reads any of these; they document manual MPLAB X project wiring, a
 # different audience than a PlatformIO package, so they are dropped
 # rather than reconciled or namespaced per family.
@@ -105,9 +105,10 @@ def build(tar_paths: list[pathlib.Path], version: str, out_path: pathlib.Path,
             bundles[slug] = (top, tar_path, manifest)
 
         # A top-level entry name owned by exactly one bundle is that
-        # family's own content (its hal dir, typically); a name shared by
-        # more than one is assumed identical everywhere (epic-common,
-        # epic-tick, ...) and copied once. family_entries lets validate()
+        # family's own content (its demos/ tree, typically; the family HAL
+        # itself nests under the shared hal/ tree); a name shared by
+        # more than one is assumed identical everywhere (common,
+        # hal, lib, ...) and copied once. family_entries lets validate()
         # below confirm each family's own content actually survived the
         # union, and the equality check during the copy itself catches a
         # same-name entry that turns out not to be identical, rather than
@@ -142,7 +143,7 @@ def build(tar_paths: list[pathlib.Path], version: str, out_path: pathlib.Path,
                 # checkout at the manifest's own path (builder/main.py
                 # resolves each entry as join(fw_dir, s)), not one rebuilt
                 # from a per-family hal dir, which broke once a family's
-                # slice moved into the shared pic14-midrange-core.
+                # slice moved into the shared hal/pic14/core.
                 if hal_repo:
                     for s in epiccc_sources[slug]:
                         if "/src/epiccc/" not in s:
@@ -183,10 +184,9 @@ def _copy(src: pathlib.Path, dst: pathlib.Path):
 def _merge_copy(src: pathlib.Path, dst: pathlib.Path, rel: str) -> None:
     """Copy src into dst, additively.
 
-    A shared core module bundled per family can carry a different,
-    family-pruned file subset (real epic-hal v0.6.0 data:
-    pic14-midrange-core differs this way between families, but every
-    file more than one ships is identical), so a repeated top-level name
+    The shared `hal/` tree ships a different, family-pruned file subset
+    per family bundle (each family's own files next to the byte-identical
+    overlap under `hal/pic14/core`), so a repeated top-level name
     is a partial overlap to merge, not an all-or-nothing match; any real
     disagreement on a shared file is still a hard error.
     """

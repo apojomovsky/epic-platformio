@@ -114,7 +114,7 @@ python3 scripts/package_framework.py \
   --tar epic-hal-pic16f87xa-v0.5.0.tar.gz \
   --tar epic-hal-pic16f88x-v0.5.0.tar.gz \
   --tar epic-hal-pic18fxx5x-v0.5.0.tar.gz \
-  --manifest /path/to/epic-hal/epic-common/manifest/modules.toml \
+  --manifest /path/to/epic-hal/common/manifest/modules.toml \
   --hal-repo /path/to/epic-hal \
   --version 0.5.0 \
   --out dist/framework-epichal-0.5.0.tar.gz
