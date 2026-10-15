@@ -545,11 +545,12 @@ def _find_tool(protocol, package, binary, env_var, homepage):
     found = shutil.which(binary)
     if not found:
         sys.stderr.write(
-            "Error: %s not found. It ships in the %s tool package "
-            "(selected automatically with upload_protocol=%s), or put it "
-            "on PATH, or point %s at the binary. %s. See "
+            "Error: %s not found. Fix: put %s on PATH, or set %s to the "
+            "binary. The %s package is installed for upload_protocol=%s "
+            "and for a board whose default protocol is %s, so a missing "
+            "package means the install did not complete. %s. See "
             "docs/getting-started.md#upload.\n"
-            % (binary, package, protocol, env_var, homepage)
+            % (binary, binary, env_var, package, protocol, protocol, homepage)
         )
         return None, None
     return found, None

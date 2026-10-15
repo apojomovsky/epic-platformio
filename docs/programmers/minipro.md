@@ -1,8 +1,9 @@
 # Flashing with minipro (XGecu T48, TL866II Plus)
 
-`upload_protocol = minipro` (the default) drives an XGecu universal
-programmer through [minipro](https://gitlab.com/DavidGriffith/minipro)
-0.7.4, packaged as `tool-minipro`. The TL866CS has no ICSP header and
+`upload_protocol = minipro` (the board default, so it needs no setting)
+drives an XGecu universal programmer through
+[minipro](https://gitlab.com/DavidGriffith/minipro) 0.7.4, packaged as
+`tool-minipro`. The TL866CS has no ICSP header and
 cannot be used.
 
 ## Wiring

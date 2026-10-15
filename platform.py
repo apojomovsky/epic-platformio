@@ -44,6 +44,10 @@ PROTOCOL_TOOL_PACKAGES = {
     "picpro": "tool-picpro",
 }
 
+# Targets that drive the programmer and so need its package. A plain build
+# is not one of them, so it never downloads a tool (docs/platform-decisions.md).
+UPLOAD_TARGETS = {"upload", "erase", "readback"}
+
 
 def host_asset_url(url: str, system: str) -> str:
     """The same release asset as `url`, for the host `system`.
@@ -93,12 +97,7 @@ class Epic8Platform(PlatformBase):
     def configure_default_packages(self, variables, targets):
         super().configure_default_packages(variables, targets)
 
-        # An explicit `upload_protocol` means the project drives that
-        # programmer. The board's own `upload.protocol` default does not
-        # count: every board names one, so treating it as a selection would
-        # make a plain `pio run` download a tool the user may already have
-        # on PATH (the bring-your-own-binary path, docs/platform-decisions.md).
-        selected = PROTOCOL_TOOL_PACKAGES.get(variables.get("upload_protocol"))
+        selected = PROTOCOL_TOOL_PACKAGES.get(self._selected_protocol(variables, targets))
         for tool_package in PROTOCOL_TOOL_PACKAGES.values():
             if tool_package not in self.packages:
                 continue
@@ -110,3 +109,20 @@ class Epic8Platform(PlatformBase):
                 # has to be turned back off here. A `tool`-typed entry was
                 # never enabled, so this branch leaves it alone.
                 self.packages[tool_package]["optional"] = True
+
+    def _selected_protocol(self, variables, targets):
+        """The programmer protocol this build needs a tool package for.
+
+        An explicit `upload_protocol` always wins. Without one, only a build
+        that flashes or reads the chip falls back to the board's default
+        protocol: a plain `pio run` compiles and downloads nothing, so a
+        user with the programmer already on PATH is not charged for a
+        package. Every board names a default, which is why the fallback is
+        gated on the targets rather than applied unconditionally.
+        """
+        explicit = variables.get("upload_protocol")
+        if explicit:
+            return explicit
+        if not UPLOAD_TARGETS.intersection(targets) or not variables.get("board"):
+            return None
+        return self.board_config(variables["board"]).get("upload", {}).get("protocol")
