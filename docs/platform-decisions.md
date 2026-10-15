@@ -146,14 +146,16 @@ host-specific fact is resolved. It does two jobs and refuses nothing:
   `board_build.toolchain = xc8`, which never needs the epic-cc toolchain.
   What stops the Linux artifact installing on a non-Linux host is the
   toolchain package's own `system` list.
-- **A programmer tool package is pulled only when the project selects its
-  protocol.** An explicit `upload_protocol` in the project's own
+- **A programmer tool package is pulled only when a build drives the
+  programmer.** An explicit `upload_protocol` in the project's own
   configuration activates the package `PROTOCOL_TOOL_PACKAGES` names for
-  it; the board's own `upload.protocol` default deliberately does not,
-  since every board names one and treating it as a selection would make a
-  plain `pio run` download a programmer the user may already have on PATH
-  (the bring-your-own-binary path, "Upload" below). `custom` maps to
-  nothing: it is the project's own `upload_command`.
+  it. Without one, an upload, erase or readback target activates the
+  board's own `upload.protocol` default (refined, epic-platformio#123: a
+  project with no `upload_protocol` still gets its board's programmer
+  package on `pio run -t upload`). A plain build names no upload target,
+  so `pio run` downloads nothing, and the bring-your-own-binary path
+  ("Upload" below) still works for a programmer already on PATH. `custom`
+  maps to nothing: it is the project's own `upload_command`.
 
 **The tool packages exist** (epic-tools' `tool-minipro`,
 `tool-pk2cmd`, `tool-picpro`; epic-platformio#40..#43) and

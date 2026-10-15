@@ -251,9 +251,8 @@ as its own source goes.
 
 **Never vendored** (docs/platform-decisions.md): Microchip's EULA forbids
 redistributing XC8, so `platform.json` carries no toolchain package for it,
-unlike the upload tools below, which download automatically once
-`upload_protocol` selects them. Install it yourself (the free tier is
-enough) from
+unlike the upload tools below, which download automatically when an
+upload runs. Install it yourself (the free tier is enough) from
 <https://www.microchip.com/en-us/tools-resources/develop/mplab-xc-compilers>
 and put its `bin/` on `PATH`, or point `EPIC8_XC8_PATH` at the `xc8-cc`
 binary directly.
@@ -269,10 +268,12 @@ one.
 
 ## Upload
 
-`pio run -t upload` flashes with the programmer named by `upload_protocol`.
-Each protocol resolves its tool from `EPIC8_*_PATH` first, then its tool
-package (installed automatically when the protocol is selected), then
-`PATH`.
+`pio run -t upload` flashes with the programmer named by `upload_protocol`,
+or, when that is unset, with the board's default protocol (`minipro` on
+every current board). Each protocol resolves its tool from `EPIC8_*_PATH`
+first, then its tool package, then `PATH`. The package installs when an
+upload, erase or readback runs, for the protocol named by `upload_protocol`
+or the board default; a plain `pio run` (build only) downloads nothing.
 
 | Protocol | Programmers | Tool package |
 |---|---|---|

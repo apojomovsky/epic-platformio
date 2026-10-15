@@ -57,6 +57,11 @@ class FakePlatformBase:
             packages[name].update(version=version or "*", optional=False)
         return packages
 
+    def board_config(self, board_id, key=None):
+        # The real PlatformBase reads the platform's own boards/ manifests.
+        with open(ROOT / "boards" / (board_id + ".json")) as handle:
+            return json.load(handle)
+
     def configure_default_packages(self, variables, targets):
         self.super_calls.append((variables, targets))
         if any("upload" in t for t in targets) or "program" in targets:
@@ -237,6 +242,36 @@ class ConfigureDefaultPackagesTests(unittest.TestCase):
     def test_a_boards_own_default_protocol_does_not_pull_a_tool(self):
         module, platform = self._platform("linux_x86_64", self.TOOLS)
         platform.configure_default_packages({"board": "pic16f877a"}, [])
+        self.assertTrue(platform.packages["tool-minipro"]["optional"])
+
+    def test_an_upload_target_pulls_the_boards_default_protocol(self):
+        # Without an explicit upload_protocol, flashing the board's default
+        # programmer (minipro for pic16f877a) must install its package.
+        for target in ("upload", "erase", "readback"):
+            with self.subTest(target=target):
+                module, platform = self._platform("linux_x86_64", self.TOOLS)
+                platform.configure_default_packages({"board": "pic16f877a"}, [target])
+                self.assertFalse(platform.packages["tool-minipro"]["optional"])
+                self.assertTrue(platform.packages["tool-pk2cmd"]["optional"])
+
+    def test_an_explicit_protocol_overrides_the_boards_default(self):
+        module, platform = self._platform("linux_x86_64", self.TOOLS)
+        platform.configure_default_packages(
+            {"board": "pic16f877a", "upload_protocol": "pk2cmd"}, ["upload"]
+        )
+        self.assertTrue(platform.packages["tool-minipro"]["optional"])
+        self.assertFalse(platform.packages["tool-pk2cmd"]["optional"])
+
+    def test_a_custom_upload_protocol_pulls_no_tool(self):
+        module, platform = self._platform("linux_x86_64", self.TOOLS)
+        platform.configure_default_packages(
+            {"board": "pic16f877a", "upload_protocol": "custom"}, ["upload"]
+        )
+        self.assertTrue(platform.packages["tool-minipro"]["optional"])
+
+    def test_a_plain_build_with_a_board_default_pulls_no_tool(self):
+        module, platform = self._platform("linux_x86_64", self.TOOLS)
+        platform.configure_default_packages({"board": "pic16f877a"}, ["buildprog"])
         self.assertTrue(platform.packages["tool-minipro"]["optional"])
 
     def test_delegates_to_the_base_class(self):
