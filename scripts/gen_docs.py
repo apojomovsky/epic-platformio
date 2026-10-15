@@ -24,6 +24,9 @@ import pathlib
 import re
 import sys
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import shared_includes
+
 REPO = pathlib.Path(__file__).resolve().parent.parent
 BOARDS_DIR = REPO / "boards"
 BOARDS_MD = REPO / "docs" / "reference" / "boards.md"
@@ -263,6 +266,11 @@ def main() -> int:
     parser.add_argument("--check", action="store_true",
                         help="verify manifests and links, write nothing")
     args = parser.parse_args()
+    problems = shared_includes.check(REPO)
+    if problems:
+        for problem in problems:
+            print(f"gen_docs: {problem}", file=sys.stderr)
+        return 1
     if args.check:
         errors = run_checks()
         for error in errors:
