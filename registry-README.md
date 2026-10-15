@@ -90,7 +90,7 @@ Always write the platform as `apojomovsky/epic8`, with the owner. The example ex
 pio run -t upload
 ```
 
-The [upload guide](https://github.com/apojomovsky/epic-platformio/blob/master/docs/getting-started.md#upload) covers the supported programmers, and the [boards reference](https://github.com/apojomovsky/epic-platformio/blob/master/docs/reference/boards.md) lists the boards you can name in `board = ...`.
+The [upload guide](https://github.com/apojomovsky/epic-platformio/blob/master/docs/getting-started.md#upload) covers the supported programmers, and the [boards reference](https://github.com/apojomovsky/epic-platformio/blob/master/docs/user/boards.md) lists the boards you can name in `board = ...`.
 
 ## Ways to use epic8
 
@@ -101,7 +101,7 @@ The [upload guide](https://github.com/apojomovsky/epic-platformio/blob/master/do
 
 - [Getting started](https://apojomovsky.github.io/epic-docs/getting-started/platformio/): your first blink, step by step.
 - [Guides](https://apojomovsky.github.io/epic-docs/guides/): bare metal projects, MPLAB XC8 as an alternate toolchain, programmers.
-- [Reference](https://github.com/apojomovsky/epic-platformio/blob/master/docs/reference/boards.md): every board, generated from the board definitions.
+- [Reference](https://github.com/apojomovsky/epic-platformio/blob/master/docs/user/boards.md): every board, generated from the board definitions.
 - [How it works](https://apojomovsky.github.io/epic-docs/explanation/): the design, for the curious.
 - [Examples](https://github.com/apojomovsky/epic-platformio/tree/master/examples/): one buildable project per supported part and style.
 

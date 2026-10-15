@@ -31,25 +31,52 @@ def make_board(board_id, mcu="pmcu", f_cpu="4000000L", protocol="minipro",
 
 
 class BoardsTest(unittest.TestCase):
-    def test_table_columns_and_sort(self):
+    def render(self, curated, experimental):
         with tempfile.TemporaryDirectory() as tmp:
-            boards = pathlib.Path(tmp)
-            (boards / "b-regular.json").write_text(json.dumps(make_board("b")))
-            (boards / "a-no-fcpu.json").write_text(
-                json.dumps(make_board("a", f_cpu=None, tools=("minipro",))))
-            old, gen_docs.BOARDS_DIR = gen_docs.BOARDS_DIR, boards
+            root = pathlib.Path(tmp)
+            (root / "boards").mkdir()
+            (root / "boards-experimental").mkdir()
+            for name, doc in curated.items():
+                (root / "boards" / f"{name}.json").write_text(json.dumps(doc))
+            for name, doc in experimental.items():
+                (root / "boards-experimental" / f"{name}.json").write_text(json.dumps(doc))
+            old = gen_docs.BOARDS_DIR, gen_docs.BOARDS_EXPERIMENTAL_DIR
+            gen_docs.BOARDS_DIR = root / "boards"
+            gen_docs.BOARDS_EXPERIMENTAL_DIR = root / "boards-experimental"
             try:
-                out = gen_docs.render_boards()
+                return gen_docs.render_boards()
             finally:
-                gen_docs.BOARDS_DIR = old
+                gen_docs.BOARDS_DIR, gen_docs.BOARDS_EXPERIMENTAL_DIR = old
+
+    def row(self, out, board):
+        return [l for l in out.splitlines() if l.startswith(f"| ") and f"`{board}`" in l][0]
+
+    def test_columns_order_and_values(self):
+        curated = {
+            "b-regular": make_board("b", mcu="p16f877a", f_cpu="4000000L"),
+            "a-no-fcpu": make_board("a", f_cpu=None, tools=("minipro",)),
+        }
+        curated["b-regular"]["name"] = "Microchip PIC16F877A"
+        curated["b-regular"]["build"]["epichal_family"] = "pic16f87xa"
+        experimental = {"p9-exp": {"name": "Microchip PIC9F9", "build": {"mcu": "p9f9"}}}
+        out = self.render(curated, experimental)
         self.assertTrue(out.startswith(gen_docs.GENERATED_BY + "\n# Boards\n"))
-        self.assertIn("| Board | MCU | Frequency | Upload | Support |", out)
-        a_line = [l for l in out.splitlines() if l.startswith("| `a-no-fcpu`")][0]
-        b_line = [l for l in out.splitlines() if l.startswith("| `b-regular`")][0]
+        self.assertIn("| Part | Board | Family | Clock | Support | Upload protocol |", out)
+        a_line = self.row(out, "a-no-fcpu")
+        b_line = self.row(out, "b-regular")
+        e_line = self.row(out, "p9-exp")
         self.assertLess(out.index(a_line), out.index(b_line))
-        self.assertIn("not set", a_line)
-        self.assertIn("`4000000L`", b_line)
-        self.assertIn("minipro (minipro, pk2cmd)", b_line)
+        self.assertLess(out.index(b_line), out.index(e_line))
+        self.assertEqual(a_line, "| A | `a-no-fcpu` | not set | not set | simulator | `minipro` |")
+        self.assertIn("| PIC16F877A | `b-regular` | `pic16f87xa` | 4 MHz | simulator | `minipro` |", out)
+        self.assertIn("| PIC9F9 | `p9-exp` | not set | not set | experimental | not set |", out)
+
+    def test_clock_formats(self):
+        self.assertEqual(gen_docs.format_clock("4000000L"), "4 MHz")
+        self.assertEqual(gen_docs.format_clock("20000000L"), "20 MHz")
+        self.assertEqual(gen_docs.format_clock("455000"), "455 kHz")
+        self.assertEqual(gen_docs.format_clock("32768"), "32768 Hz")
+        self.assertEqual(gen_docs.format_clock("${clock}"), "${clock}")
 
 
 class IncludesTest(unittest.TestCase):

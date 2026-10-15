@@ -111,7 +111,7 @@ jobs:
         run: make docs-gen
 
       - name: Fail on stale generated docs
-        run: git diff --exit-code -- docs/reference/boards.md README.md registry-README.md
+        run: git diff --exit-code -- docs/user/boards.md README.md registry-README.md
 
       - name: Registry manifest and link checks
         run: python3 scripts/gen_docs.py --check

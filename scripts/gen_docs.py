@@ -4,7 +4,7 @@
 One script renders every generated page from its source data, so prose
 never restates a fact that lives in a manifest:
 
-- `docs/reference/boards.md` from `boards/*.json`
+- `docs/user/boards.md` from `boards/*.json` and `boards-experimental/*.json`
 - `README.md` from `README.src.md` with `--8<--` includes resolved
 - `registry-README.md` from the same source with relative links and
   images rewritten to absolute URLs (the registry shows a snapshot,
@@ -29,7 +29,8 @@ import shared_includes
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 BOARDS_DIR = REPO / "boards"
-BOARDS_MD = REPO / "docs" / "reference" / "boards.md"
+BOARDS_EXPERIMENTAL_DIR = REPO / "boards-experimental"
+BOARDS_MD = REPO / "docs" / "user" / "boards.md"
 README_SRC = REPO / "README.src.md"
 README_MD = REPO / "README.md"
 REGISTRY_MD = REPO / "registry-README.md"
@@ -177,29 +178,60 @@ def render_registry_readme() -> str:
     return GENERATED_BY + "\n" + absolutize_markdown(resolve_includes(README_SRC.read_text()))
 
 
+def format_clock(f_cpu: str) -> str:
+    """Render an `f_cpu` such as `4000000L` as `4 MHz`; unknown forms pass through."""
+    match = re.fullmatch(r"(\d+)L?", f_cpu)
+    if not match:
+        return f_cpu
+    hz = int(match.group(1))
+    if hz % 1_000_000 == 0:
+        return f"{hz // 1_000_000} MHz"
+    if hz % 1_000 == 0:
+        return f"{hz // 1_000} kHz"
+    return f"{hz} Hz"
+
+
+def _code(value: str) -> str:
+    return value if value == "not set" else f"`{value}`"
+
+
+def board_row(path: pathlib.Path, experimental: bool) -> tuple:
+    doc = json.loads(path.read_text())
+    build = doc.get("build", {})
+    upload = doc.get("upload", {})
+    name = str(doc.get("name", ""))
+    part = name.removeprefix("Microchip ") or build.get("mcu", "").upper()
+    support = "experimental" if experimental else str(doc.get("support", "not set"))
+    clock = build.get("f_cpu")
+    return (
+        part,
+        path.stem,
+        str(build.get("epichal_family", "") or "not set"),
+        format_clock(str(clock)) if clock else "not set",
+        support,
+        str(upload.get("protocol", "") or "not set"),
+    )
+
+
 def render_boards() -> str:
-    rows = []
-    for path in sorted(BOARDS_DIR.glob("*.json")):
-        doc = json.loads(path.read_text())
-        build = doc.get("build", {})
-        upload = doc.get("upload", {})
-        tools = ", ".join(upload.get("devices", {}))
-        rows.append((
-            path.stem,
-            build.get("mcu", ""),
-            str(build.get("f_cpu", "") or "not set"),
-            f"{upload.get('protocol', '')} ({tools})",
-            str(doc.get("support", "")),
-        ))
+    # Curated boards first, then the experimental definitions, each by board id.
+    rows = [
+        *(board_row(p, experimental=False) for p in sorted(BOARDS_DIR.glob("*.json"))),
+        *(board_row(p, experimental=True)
+          for p in sorted(BOARDS_EXPERIMENTAL_DIR.glob("*.json"))),
+    ]
     lines = [
         GENERATED_BY,
         "# Boards",
         "",
-        "Every curated beta board, generated from `boards/*.json`.",
+        "Every board definition the platform ships. Boards marked `experimental` come",
+        "from `boards-experimental/`: they have a definition but no curated support",
+        "level or upload protocol yet.",
         "",
-        "| Board | MCU | Frequency | Upload | Support |",
-        "|---|---|---|---|---|",
-        *[f"| `{b}` | `{m}` | `{f}` | {u} | {s} |" for b, m, f, u, s in rows],
+        "| Part | Board | Family | Clock | Support | Upload protocol |",
+        "|---|---|---|---|---|---|",
+        *[f"| {part} | `{board}` | {_code(family)} | {clock} | {support} | {_code(upload)} |"
+          for part, board, family, clock, support, upload in rows],
     ]
     return "\n".join(lines) + "\n"
 
@@ -276,7 +308,7 @@ def main() -> int:
         for error in errors:
             print(f"gen_docs: {error}", file=sys.stderr)
         return 1 if errors else 0
-    for missing in (README_SRC, BOARDS_DIR):
+    for missing in (README_SRC, BOARDS_DIR, BOARDS_EXPERIMENTAL_DIR):
         if not missing.exists():
             print(f"gen_docs: missing source {missing}", file=sys.stderr)
             return 1
