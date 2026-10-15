@@ -117,5 +117,109 @@ class ExamplesDeclareConfigWords(unittest.TestCase):
                         self.assertEqual(int(pairs["xtal_hz"]), expected, example.name)
 
 
+# The oscillator words the examples name, by the clock they select. This is
+# the subset of each family's FOSC/osc fuse table the examples use; a word
+# outside it fails the test until it is added here with its class.
+_OSC_CLASS = {
+    "HS": "crystal",
+    "XT": "crystal",
+    "LP": "crystal",
+    "HSPLL": "crystal",
+    "XTPLL": "crystal",
+    "HSPLL_HS": "crystal",
+    "XTPLL_XT": "crystal",
+    "XT_XT": "crystal",
+    "INTRCIO": "internal",
+    "INTRCCLKOUT": "internal",
+    "INTOSC": "internal",
+    "INTOSCIO": "internal",
+    "RC": "rc",
+    "RCIO": "rc",
+    "EC": "external",
+    "ECIO": "external",
+}
+
+# The clock each board runs on. build.f_cpu is set only where an example fixed
+# a crystal (scripts/gen_boards.py), so it cannot name the class by itself:
+# the 12F675 has no f_cpu and runs on its internal oscillator, and the 16F628A
+# and 16F1937 publish no f_cpu at all. A frequency here is used only when the
+# board JSON declares none. Every board in boards/ must appear in this table.
+_BOARD_CLOCK = {
+    "pic12f675": ("internal", 4000000),
+    "pic16f628a": ("crystal", None),
+    "pic16f1937": ("crystal", None),
+    "pic16f877a": ("crystal", None),
+    "pic16f887": ("crystal", None),
+    "pic18f4550": ("crystal", None),
+}
+
+_XTAL_DEFINE = re.compile(r"#[ \t]*define[ \t]+_XTAL_FREQ[ \t]+(\d+)")
+_XTAL_FLAG = re.compile(r"-D_XTAL_FREQ=(\d+)")
+
+
+def _board_clock(board):
+    """(class, hz) of a board: hz is None when no frequency is known."""
+    clock_class, hz = _BOARD_CLOCK[board]
+    f_cpu = json.loads((BOARDS / f"{board}.json").read_text(encoding="utf-8")).get("build", {}).get("f_cpu")
+    if f_cpu is not None:
+        hz = int(str(f_cpu).rstrip("uUlL"))
+    return clock_class, hz
+
+
+def _oscillator_words(example):
+    """Oscillator word of each declaration, upper-cased: FOSC or osc=."""
+    words = []
+    for kind, pairs in _declarations(example):
+        if kind == "epic-config":
+            words.append(pairs["osc"].upper())
+        elif "FOSC" in pairs:
+            words.append(pairs["FOSC"])
+    return words
+
+
+def _xtal_defines(example):
+    """_XTAL_FREQ values from the sources and from platformio.ini build_flags."""
+    values = []
+    for src in _sources(example):
+        values += [int(v) for v in _XTAL_DEFINE.findall(_code(src.read_text(encoding="utf-8")))]
+    ini = (example / "platformio.ini").read_text(encoding="utf-8")
+    values += [int(v) for v in _XTAL_FLAG.findall(ini)]
+    return values
+
+
+class OscillatorWordsMatchBoardClock(unittest.TestCase):
+    def test_every_board_declares_its_clock(self):
+        for board in sorted(BOARDS.glob("*.json")):
+            with self.subTest(board=board.stem):
+                self.assertIn(board.stem, _BOARD_CLOCK, "add the board to _BOARD_CLOCK")
+
+    def test_every_example_names_an_oscillator(self):
+        for example in _examples():
+            with self.subTest(example=example.name):
+                self.assertTrue(_oscillator_words(example), f"{example.name} names no oscillator")
+
+    def test_oscillator_words_are_known(self):
+        for example in _examples():
+            for word in _oscillator_words(example):
+                with self.subTest(example=example.name, word=word):
+                    self.assertIn(word, _OSC_CLASS, "unknown oscillator word")
+
+    def test_oscillator_class_matches_the_board(self):
+        for example in _examples():
+            clock_class, _ = _board_clock(_board(example))
+            for word in _oscillator_words(example):
+                with self.subTest(example=example.name, word=word):
+                    self.assertEqual(_OSC_CLASS[word], clock_class, f"{word} on a {clock_class} board")
+
+    def test_xtal_define_matches_the_board_clock(self):
+        for example in _examples():
+            _, hz = _board_clock(_board(example))
+            if hz is None:
+                continue
+            for value in _xtal_defines(example):
+                with self.subTest(example=example.name):
+                    self.assertEqual(value, hz, "_XTAL_FREQ")
+
+
 if __name__ == "__main__":
     unittest.main()
