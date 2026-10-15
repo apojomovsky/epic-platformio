@@ -49,7 +49,7 @@ Always write the platform as `apojomovsky/epic8`, with the owner. The example ex
 pio run -t upload
 ```
 
-The [upload guide](docs/getting-started.md#upload) covers the supported programmers, and the [boards reference](docs/reference/boards.md) lists the boards you can name in `board = ...`.
+The [upload guide](docs/getting-started.md#upload) covers the supported programmers, and the [boards reference](docs/user/boards.md) lists the boards you can name in `board = ...`.
 
 --8<-- "docs/snippets/ways-to-use-epic8.md"
 
@@ -57,7 +57,7 @@ The [upload guide](docs/getting-started.md#upload) covers the supported programm
 
 - [Getting started](https://apojomovsky.github.io/epic-docs/getting-started/platformio/): your first blink, step by step.
 - [Guides](https://apojomovsky.github.io/epic-docs/guides/): bare metal projects, MPLAB XC8 as an alternate toolchain, programmers.
-- [Reference](docs/reference/boards.md): every board, generated from the board definitions.
+- [Reference](docs/user/boards.md): every board, generated from the board definitions.
 - [How it works](https://apojomovsky.github.io/epic-docs/explanation/): the design, for the curious.
 - [Examples](examples/): one buildable project per supported part and style.
 

@@ -1,6 +1,6 @@
 .PHONY: docs-gen sync-shared-includes
 
-docs-gen: ## Regenerate docs/reference/boards.md, README.md and registry-README.md
+docs-gen: ## Regenerate docs/user/boards.md, README.md and registry-README.md
 	python3 scripts/gen_docs.py
 
 # Refresh docs/snippets/ways-to-use-epic8.md from apojomovsky/epic-docs at REF (a

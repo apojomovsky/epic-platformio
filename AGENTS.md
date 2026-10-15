@@ -231,7 +231,7 @@ every pull request:
   download URL disagree about that package's current version (see
   `docs/packages.md`).
 - `docs-gen` runs `make docs-gen` and fails on stale generated pages
-  (`docs/reference/boards.md`, `README.md`, `registry-README.md`), then runs
+  (`docs/user/boards.md`, `README.md`, `registry-README.md`), then runs
   `scripts/gen_docs.py --check` for registry-manifest and link checks.
 
 Other workflows run on narrower triggers: `compat` builds the epic-cc examples

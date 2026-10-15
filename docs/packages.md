@@ -158,7 +158,7 @@ here (PIO-7, epic-platformio#25), only a `--tar` per family when calling
 
 The registry shows a snapshot taken at publish time, so three pages are
 generated instead of hand-kept (`scripts/gen_docs.py`, epic-platformio#114):
-`docs/reference/boards.md` from `boards/*.json`, `README.md` from
+`docs/user/boards.md` from `boards/*.json` and `boards-experimental/*.json`, `README.md` from
 `README.src.md` with `--8<--` includes resolved, and `registry-README.md`
 from the same source with relative links and images rewritten to absolute
 URLs. `make docs-gen` renders all three, and CI regenerates and fails on
