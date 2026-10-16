@@ -139,31 +139,24 @@ _OSC_CLASS = {
     "ECIO": "external",
 }
 
-# The clock each board runs on. build.f_cpu is set only where an example fixed
-# a crystal (scripts/gen_boards.py), so it cannot name the class by itself:
-# the 12F675 has no f_cpu and runs on its internal oscillator, and the 16F628A
-# and 16F1937 publish no f_cpu at all. A frequency here is used only when the
-# board JSON declares none. Every board in boards/ must appear in this table.
-_BOARD_CLOCK = {
-    "pic12f675": ("internal", 4000000),
-    "pic16f628a": ("crystal", None),
-    "pic16f1937": ("crystal", None),
-    "pic16f877a": ("crystal", None),
-    "pic16f887": ("crystal", None),
-    "pic18f4550": ("crystal", None),
-}
-
+# The clock class lives in the board JSON (scripts/gen_boards.py emits
+# build.oscillator from its CURATED table); the frequency still comes
+# from build.f_cpu where an example fixed a crystal. A board with
+# neither runs on its internal oscillator at 4 MHz, the factory
+# calibration the 12F675 ships with.
 _XTAL_DEFINE = re.compile(r"#[ \t]*define[ \t]+_XTAL_FREQ[ \t]+(\d+)")
 _XTAL_FLAG = re.compile(r"-D_XTAL_FREQ=(\d+)")
 
-
 def _board_clock(board):
     """(class, hz) of a board: hz is None when no frequency is known."""
-    clock_class, hz = _BOARD_CLOCK[board]
-    f_cpu = json.loads((BOARDS / f"{board}.json").read_text(encoding="utf-8")).get("build", {}).get("f_cpu")
+    build = json.loads((BOARDS / f"{board}.json").read_text(encoding="utf-8")).get("build", {})
+    clock_class = build["oscillator"]
+    f_cpu = build.get("f_cpu")
     if f_cpu is not None:
-        hz = int(str(f_cpu).rstrip("uUlL"))
-    return clock_class, hz
+        return clock_class, int(str(f_cpu).rstrip("uUlL"))
+    if clock_class == "internal":
+        return clock_class, 4000000
+    return clock_class, None
 
 
 def _oscillator_words(example):
@@ -191,7 +184,8 @@ class OscillatorWordsMatchBoardClock(unittest.TestCase):
     def test_every_board_declares_its_clock(self):
         for board in sorted(BOARDS.glob("*.json")):
             with self.subTest(board=board.stem):
-                self.assertIn(board.stem, _BOARD_CLOCK, "add the board to _BOARD_CLOCK")
+                build = json.loads(board.read_text(encoding="utf-8")).get("build", {})
+                self.assertIn(build.get("oscillator"), set(_OSC_CLASS.values()), "add build.oscillator to the board JSON")
 
     def test_every_example_names_an_oscillator(self):
         for example in _examples():
