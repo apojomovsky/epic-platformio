@@ -18,7 +18,7 @@ gdb: breakpoints, stepping, and typed variables. See [Debugging with
 
 ## Upload and programmers
 
-The boards list names the default upload protocol for each board. Programmer setup is covered on the [programmers page](https://apojomovsky.github.io/epic-docs/tools/programmers/).
+The boards list names the default upload protocol for each board. Programmer setup is covered on the [programmers page](https://apojomovsky.github.io/epic-docs/tools/programmers/). Boards reach the `hardware` level through the [hardware sign-off](hardware-signoff.md), which flashes each board's blink on every supported programmer.
 
 ## Source and issues
 

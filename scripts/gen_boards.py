@@ -152,6 +152,12 @@ CURATED = {
 CURATED_PROTOCOL = "minipro"
 CURATED_SUPPORT = "simulator"
 
+# Boards proven on silicon by the guided sign-off (scripts/hw_signoff.py,
+# epic-platformio#52). A green row promotes the board from simulator to
+# hardware. hw_signoff.py --apply edits this set, so the next regen keeps
+# the level instead of resetting it to CURATED_SUPPORT.
+HARDWARE_BOARDS: frozenset = frozenset()
+
 
 # Every pic14 board debugs through the simulator (#134, coordinator
 # option 2): epic-cc-gdbserver drives the PIC14 sim (epic-cc#259), and
@@ -320,7 +326,7 @@ def board_json(entry: dict, board_id: str, dest: pathlib.Path, curated: dict | N
             build["f_cpu"] = curated["f_cpu"]
         else:
             build.pop("f_cpu", None)
-        doc["support"] = CURATED_SUPPORT
+        doc["support"] = "hardware" if board_id in HARDWARE_BOARDS else CURATED_SUPPORT
         # Simulator debugging (#134) follows the core: every pic14 board
         # debugs through the sim, other cores wait for their own epic-cc
         # support. A board leaving pic14 drops the section rather than

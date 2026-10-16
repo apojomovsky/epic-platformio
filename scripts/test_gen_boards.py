@@ -218,6 +218,30 @@ class BoardJsonTests(unittest.TestCase):
         self.assertEqual(doc["support"], "simulator")
         self.assertEqual(doc["frameworks"], ["epichal"])
 
+    def test_hardware_proven_board_leaves_simulator(self):
+        # hw_signoff.py --apply records green boards in HARDWARE_BOARDS;
+        # the regen must keep their level instead of resetting it.
+        e = entry(
+            "p16f877a", ["epic-cc", "xc8"], ["epic-cc", "xc8"], family="pic16f87xa"
+        )
+        curated = {
+            "maximum_size": 16384,
+            "maximum_ram_size": 368,
+            "f_cpu": "4000000L",
+            "devices": {"minipro": "PIC16F877A@DIP40"},
+            "hazards": {},
+        }
+        previous = gen_boards.HARDWARE_BOARDS
+        gen_boards.HARDWARE_BOARDS = frozenset({"pic16f877a"})
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                doc = gen_boards.board_json(
+                    e, "pic16f877a", pathlib.Path(td), curated
+                )
+                self.assertEqual(doc["support"], "hardware")
+        finally:
+            gen_boards.HARDWARE_BOARDS = previous
+
     def test_curated_board_with_no_board_crystal_omits_f_cpu(self):
         # D-4's clock check treats board_build.f_cpu as the last source,
         # so a part whose curated entry records no crystal must not carry
