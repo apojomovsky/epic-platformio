@@ -150,7 +150,8 @@ _XTAL_FLAG = re.compile(r"-D_XTAL_FREQ=(\d+)")
 def _board_clock(board):
     """(class, hz) of a board: hz is None when no frequency is known."""
     build = json.loads((BOARDS / f"{board}.json").read_text(encoding="utf-8")).get("build", {})
-    clock_class = build["oscillator"]
+    clock_class = build.get("oscillator")
+    assert clock_class in _OSC_CLASS.values(), f"{board} declares no build.oscillator"
     f_cpu = build.get("f_cpu")
     if f_cpu is not None:
         return clock_class, int(str(f_cpu).rstrip("uUlL"))
