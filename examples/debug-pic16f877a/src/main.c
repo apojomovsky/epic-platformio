@@ -1,14 +1,11 @@
 /*
  * Debug demo for the PIC16F877A: locals and globals a simulator session
- * can break on, step across, and print. The program is straight-line
- * code with no calls: one volatile local, one global, one SFR write.
- * It runs to the end and sleeps, so `continue` finishes instead of
- * spinning. On hardware the PORTB write latches (pins stay inputs,
- * direction setup is omitted on purpose, see below) and the chip sleeps.
- *
- * The shape is deliberate: under the -Os line rows, calls, loops, and
- * bank-switched SFR setup misattribute the lines after them, so a first
- * session wants none of those (epic-cc#1316 tracks the row gaps).
+ * can break on, step across, and print. Straight-line code with no calls:
+ * one volatile local, one global, one bank-0 SFR write. It runs to the end
+ * and sleeps, so `continue` finishes instead of spinning. On hardware the
+ * PORTB write latches while pins stay inputs, direction setup is omitted
+ * because bank-switched SFR setup misattributes the lines after it
+ * (epic-cc#1316 tracks the row gaps).
  *
  * Config words are spelled with EPIC_CONFIG (docs/31 D-4), not #pragma
  * config. Everything unstated takes the device's documented default.

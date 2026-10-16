@@ -27,21 +27,21 @@ and sleeps. Copy it and start `pio debug --interface gdb`:
 (gdb) target remote :3333
 Remote debugging using :3333
 0x00000000 in ?? ()
-(gdb) break main.c:32
-Breakpoint 1 at 0x9: file main.c, line 32.
+(gdb) break main.c:29
+Breakpoint 1 at 0x9: file main.c, line 29.
 (gdb) continue
 Continuing.
 
-Breakpoint 1, ?? () at main.c:32
-32	    g_a = tmp + 1;
+Breakpoint 1, ?? () at main.c:29
+29	    g_a = tmp + 1;
 (gdb) print tmp
 $1 = 41
 (gdb) next
-33	    PORTB = (uint8_t)g_a;
+30	    PORTB = (uint8_t)g_a;
 (gdb) print g_a
 $2 = 42
 (gdb) info line
-Line 33 of "main.c" starts at address 0x19 and ends at 0x1a.
+Line 30 of "main.c" starts at address 0x19 and ends at 0x1a.
 (gdb) continue
 Continuing.
 
@@ -61,7 +61,7 @@ Uncomment the `debug_init_break` line in the example (or set your own) to
 stop at a C line as soon as the session opens:
 
 ```ini
-debug_init_break = thbreak main.c:32
+debug_init_break = thbreak main.c:29
 ```
 
 The value is one gdb command, so `file:line` is the shape that resolves.
@@ -96,6 +96,6 @@ and exits.
   emits no sidecar, so there is nothing for the server to load.
 - Troubleshooting: `No gdb on PATH` means install gdb above. A
   `Permission denied` launching the server means the installed toolchain
-  package predates the executable-bit fix (tracked on epic-platformio#134):
-  until the repack lands, `chmod +x` the `epic-cc-gdbserver` binary in the
-  toolchain package dir and retry.
+  package predates the executable-bit fix, which rides releases cut after
+  0.4.0+pio1: until the update lands, `chmod +x` the `epic-cc-gdbserver`
+  binary in the toolchain package dir and retry.

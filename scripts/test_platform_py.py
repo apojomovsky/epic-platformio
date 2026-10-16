@@ -325,16 +325,27 @@ class DebugSessionTests(unittest.TestCase):
         module = _load_platform_module("linux_x86_64")
         return module, module.Epic8Platform(ROOT / "platform.json")
 
-    def _config(self, port=":3333", toolchain=None, gdb="/usr/bin/gdb"):
+    def _config(
+        self, port=":3333", toolchain=None, gdb="/usr/bin/gdb",
+        init_break=None, server_args=None,
+    ):
         board = {}
+        env_options = {}
         if toolchain is not None:
-            board["build.toolchain"] = toolchain
+            # Production reads the project option, not the manifest: the
+            # raw manifest never defines build.toolchain, only the SCons
+            # board_build.* merge puts it where the builder looks.
+            env_options["board_build.toolchain"] = toolchain
+        if init_break is not None:
+            env_options["debug_init_break"] = init_break
+        if server_args is None:
+            server_args = ["hex", "elf", "--port", "3333"]
         return types.SimpleNamespace(
             board_config=board,
             client_executable_path=gdb,
             load_cmds=["load"],
-            env_options={},
-            server={"arguments": ["hex", "elf", "--port", "3333"]},
+            env_options=env_options,
+            server=None if server_args is False else {"arguments": server_args},
             port=port,
         )
 
@@ -354,6 +365,15 @@ class DebugSessionTests(unittest.TestCase):
         self.assertEqual(
             config.server["arguments"], ["hex", "elf", "--port", "3333"]
         )
+
+    def test_a_users_own_init_break_survives(self):
+        # Unconditional clearing would silently drop the documented
+        # debug_init_break override, and a truthy value also re-arms the
+        # launch auto-continue the empty default suppresses.
+        _, platform = self._platform()
+        config = self._config(init_break="thbreak main.c:32")
+        platform.configure_debug_session(config)
+        self.assertEqual(config.env_options["debug_init_break"], "thbreak main.c:32")
 
     def test_a_custom_debug_port_reaches_the_server_in_digits(self):
         _, platform = self._platform()
@@ -375,10 +395,21 @@ class DebugSessionTests(unittest.TestCase):
 
     def test_arguments_without_a_port_flag_are_left_alone(self):
         _, platform = self._platform()
-        config = self._config()
-        config.server = {"arguments": ["hex", "elf"]}
+        config = self._config(server_args=["hex", "elf"])
         platform.configure_debug_session(config)
         self.assertEqual(config.server["arguments"], ["hex", "elf"])
+
+    def test_a_disabled_server_and_a_dangling_port_flag_do_not_crash(self):
+        # A user `debug_server` of their own (or none) leaves server None;
+        # a custom server ending in a bare --port has no value slot. Both
+        # must degrade to no rewrite, not TypeError/IndexError.
+        _, platform = self._platform()
+        config = self._config(server_args=False)
+        platform.configure_debug_session(config)
+        self.assertIsNone(config.server)
+        config = self._config(server_args=["hex", "elf", "--port"])
+        platform.configure_debug_session(config)
+        self.assertEqual(config.server["arguments"], ["hex", "elf", "--port"])
 
 
 if __name__ == "__main__":

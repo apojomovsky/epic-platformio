@@ -363,5 +363,5 @@ three mid-range PIC14 boards prove their session first. The 12F675 stays
 out even though its core reads pic14, because the baseline is a separate
 epic-cc child; other cores follow theirs. Depending on a repack:
 `epic-cc-gdbserver` ships in `toolchain-epiccc` 0.4.0+pio1 without its
-executable bit, so debug needs a +pioN repack (a release action), and
-`scripts/package_toolchain.py` already sets the bit for the next cut.
+executable bit, so debug needs a repack (a release action), and
+`scripts/package_toolchain.py` sets the bit on the packed binary.

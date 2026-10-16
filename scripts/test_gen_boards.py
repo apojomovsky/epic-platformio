@@ -297,16 +297,19 @@ class DebugSectionTests(unittest.TestCase):
             )
 
     def test_allowlisted_board_advertises_epic_sim(self):
-        server = self._doc("pic16f877a")["debug"]["tools"]["epic-sim"]["server"]
+        tool = self._doc("pic16f877a")["debug"]["tools"]["epic-sim"]
         self.assertEqual(
             self._doc("pic16f877a")["debug"]["default_tools"], ["epic-sim"]
         )
+        server = tool["server"]
         self.assertEqual(server["package"], "toolchain-epiccc")
         self.assertEqual(server["executable"], "epic-cc-gdbserver")
+        # The server consumes positionally (hex, sidecar, --port value),
+        # so the order is the contract, not just the membership.
         self.assertEqual(
-            server["arguments"][:2], ["$PROG_DIR/$PROG_NAME.hex", "$PROG_PATH"]
+            server["arguments"],
+            ["$PROG_DIR/$PROG_NAME.hex", "$PROG_PATH", "--port", "3333"],
         )
-        self.assertIn("--port", server["arguments"])
         self.assertTrue(server["ready_pattern"])
 
     def test_debug_init_is_plain_remote_with_no_monitor(self):

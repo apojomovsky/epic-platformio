@@ -132,7 +132,13 @@ class Epic8Platform(PlatformBase):
         session halted at the reset vector, and the --port value follows the
         live port in the bare digits the board file cannot spell.
         """
-        toolchain = debug_config.board_config.get("build.toolchain", "epic-cc")
+        # The toolchain lives in the project options here, not the board
+        # manifest: the manifest never defines build.toolchain, the SCons
+        # merge is what lets board_build.toolchain=xc8 reach the builder,
+        # and only the manifest is what board_config reads.
+        toolchain = debug_config.env_options.get("board_build.toolchain") or (
+            debug_config.board_config.get("build.toolchain", "epic-cc")
+        )
         if toolchain != "epic-cc":
             raise DebugInvalidOptionsError(
                 "Debug tool epic-sim runs the epic-cc simulator, but this "
@@ -146,9 +152,11 @@ class Epic8Platform(PlatformBase):
                 "Install it (Debian/Ubuntu: apt install gdb) and retry."
             )
         debug_config.load_cmds = []
-        debug_config.env_options["debug_init_break"] = ""
-        args = debug_config.server["arguments"]
-        if "--port" in args:
+        # Only when the user set none: theirs wins over the empty default,
+        # which is also what stops the launch auto-continue.
+        debug_config.env_options.setdefault("debug_init_break", "")
+        args = (debug_config.server or {}).get("arguments") or []
+        if "--port" in args and args.index("--port") + 1 < len(args):
             port = str(debug_config.port).split(":")[-1] or "3333"
             args[args.index("--port") + 1] = port
 
