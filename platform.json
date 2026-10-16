@@ -77,6 +77,7 @@
     "examples/hal-tick-pic18f4550",
     "examples/hal-tick-xc8-pic16f877a",
     "examples/blink-pic16f877a",
+    "examples/debug-pic16f877a",
     "examples/blink-pic16f887",
     "examples/blink-pic18f4550",
     "examples/blink-tutorial-pic12f675",

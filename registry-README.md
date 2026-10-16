@@ -102,6 +102,7 @@ The [upload guide](https://github.com/apojomovsky/epic-platformio/blob/master/do
 - [Getting started](https://apojomovsky.github.io/epic-docs/getting-started/platformio/): your first blink, step by step.
 - [Guides](https://apojomovsky.github.io/epic-docs/guides/): bare metal projects, MPLAB XC8 as an alternate toolchain, programmers.
 - [Reference](https://github.com/apojomovsky/epic-platformio/blob/master/docs/user/boards.md): every board, generated from the board definitions.
+- [Debugging](https://github.com/apojomovsky/epic-platformio/blob/master/docs/user/debugging.md): breakpoints, stepping, and typed variables with `pio debug`.
 - [How it works](https://apojomovsky.github.io/epic-docs/explanation/): the design, for the curious.
 - [Examples](https://github.com/apojomovsky/epic-platformio/tree/master/examples/): one buildable project per supported part and style.
 

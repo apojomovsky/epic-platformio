@@ -55,6 +55,12 @@ def build(zip_path: pathlib.Path, system: str, version: str, out_path: pathlib.P
         for bin_file in [top / "epic-cc", top / "epic-cc.exe"]:
             if bin_file.exists():
                 bin_file.chmod(bin_file.stat().st_mode | 0o111)
+        # The debug server launches from the package (#134); the zip
+        # carries no exec bit, so set it here. Absent on bundles predating
+        # the debugger, which still pack fine without it.
+        for bin_file in [top / "epic-cc-gdbserver", top / "epic-cc-gdbserver.exe"]:
+            if bin_file.exists():
+                bin_file.chmod(bin_file.stat().st_mode | 0o111)
         clang_bin = top / "clang" / "bin"
         if clang_bin.exists():
             for p in clang_bin.iterdir():
@@ -96,6 +102,9 @@ def validate(tgz: pathlib.Path):
         if not binary.exists():
             raise SystemExit(f"validation failed: {tgz} missing epic-cc")
         binary.chmod(binary.stat().st_mode | 0o111)
+        for server in [td / "epic-cc-gdbserver", td / "epic-cc-gdbserver.exe"]:
+            if server.exists():
+                server.chmod(server.stat().st_mode | 0o111)
         clang_bin = td / "clang" / "bin"
         if clang_bin.exists():
             for p in clang_bin.iterdir():

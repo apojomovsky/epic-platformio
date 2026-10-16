@@ -1,6 +1,6 @@
 """PlatformIO platform class for epic8 (PIO-1, epic-platformio#44).
 
-Two facts `platform.json` cannot express by itself:
+Three facts `platform.json` cannot express by itself:
 
 - epic-cc ships one bundle per host. `platform.json` pins the registry
   version, which needs no remap; a URL pin (a project's own
@@ -10,6 +10,9 @@ Two facts `platform.json` cannot express by itself:
   Community-PIO-CH32V's `configure_default_packages` uses).
 - A programmer tool package is worth downloading only for a project that
   asked for the protocol needing it (D-5).
+- A simulator debug session needs per-launch shaping the board manifest
+  cannot spell: no load step, no init-break, and the server port in bare
+  digits, so `configure_debug_session` applies them (#134).
 
 Why the URL pin is remapped rather than duplicated per host: `platform.json`
 stays the single place a version is pinned (D-5, docs/packages.md), and the
@@ -19,6 +22,7 @@ two versions the way two hand-kept pins would.
 Design: docs/platform-decisions.md, epic-cc docs/46 D-5 and D-10.
 """
 
+from platformio.debug.exception import DebugInvalidOptionsError
 from platformio.public import PlatformBase, get_systype
 
 TOOLCHAIN_PACKAGE = "toolchain-epiccc"
@@ -109,6 +113,52 @@ class Epic8Platform(PlatformBase):
                 # has to be turned back off here. A `tool`-typed entry was
                 # never enabled, so this branch leaves it alone.
                 self.packages[tool_package]["optional"] = True
+
+    def is_embedded(self):
+        """Always true: epic8 targets microcontrollers, and the flag routes
+        `pio debug` to the GDB-server session instead of the native one.
+        No uploader-typed package exists to trip the base check, so the
+        base implementation answers False for this platform.
+        """
+        return True
+
+    def configure_debug_session(self, debug_config):
+        """Shape the generic GDB session around epic-cc-gdbserver (#134).
+
+        The server preloads the HEX and the sim starts halted, so the stock
+        load step and init-break have nothing to do: `load` pushes flash
+        packets the server does not implement, and the default `tbreak main`
+        names a symbol these sidecars do not carry. Clearing both keeps the
+        session halted at the reset vector, and the --port value follows the
+        live port in the bare digits the board file cannot spell.
+        """
+        # The toolchain lives in the project options here, not the board
+        # manifest: the manifest never defines build.toolchain, the SCons
+        # merge is what lets board_build.toolchain=xc8 reach the builder,
+        # and only the manifest is what board_config reads.
+        toolchain = debug_config.env_options.get("board_build.toolchain") or (
+            debug_config.board_config.get("build.toolchain", "epic-cc")
+        )
+        if toolchain != "epic-cc":
+            raise DebugInvalidOptionsError(
+                "Debug tool epic-sim runs the epic-cc simulator, but this "
+                "project builds with toolchain %r, which emits no sidecar "
+                "for the server. Debugging needs the epic-cc toolchain "
+                "(the default)." % toolchain
+            )
+        if not debug_config.client_executable_path:
+            raise DebugInvalidOptionsError(
+                "No gdb on PATH, and the debug client is stock gdb. "
+                "Install it (Debian/Ubuntu: apt install gdb) and retry."
+            )
+        debug_config.load_cmds = []
+        # Only when the user set none: theirs wins over the empty default,
+        # which is also what stops the launch auto-continue.
+        debug_config.env_options.setdefault("debug_init_break", "")
+        args = (debug_config.server or {}).get("arguments") or []
+        if "--port" in args and args.index("--port") + 1 < len(args):
+            port = str(debug_config.port).split(":")[-1] or "3333"
+            args[args.index("--port") + 1] = port
 
     def _selected_protocol(self, variables, targets):
         """The programmer protocol this build needs a tool package for.

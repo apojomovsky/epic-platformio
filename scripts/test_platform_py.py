@@ -2,8 +2,8 @@
 test substitutes a minimal platformio stub before loading platform.py, so
 the suite runs in CI where PlatformIO Core is not installed.
 
-The stub reproduces the two PlatformIO behaviors the class depends on, both
-read from PlatformIO 6.1.19's own source, because a stub that gets either
+The stub reproduces the three PlatformIO behaviors the class depends on, all
+read from PlatformIO 6.1.19's own source, because a stub that gets any
 wrong would hide a real defect:
 
 - `packages` is a property that rebuilds the dict from the manifest and
@@ -13,6 +13,8 @@ wrong would hide a real defect:
   shape catches.
 - `configure_default_packages` enables every `uploader`-typed package for
   an upload/program target (platformio/platform/base.py:199-203).
+- `platformio.debug.exception` carries `DebugInvalidOptionsError`, which
+  `configure_debug_session` raises for a wrong toolchain or a missing gdb.
 
 Imports are stubbed; the real factory loading the real class is verified by
 hand against PlatformIO 6.1.19, not here.
@@ -74,10 +76,19 @@ class PlatformioException(Exception):
     pass
 
 
+class DebugInvalidOptionsError(PlatformioException):
+    pass
+
+
 def _load_platform_module(systype, packages=None):
     fake_public = types.ModuleType("platformio.public")
     fake_exception = types.ModuleType("platformio.exception")
     fake_exception.PlatformioException = PlatformioException
+    fake_exception.UserSideException = PlatformioException
+    fake_debug = types.ModuleType("platformio.debug")
+    fake_debug_exception = types.ModuleType("platformio.debug.exception")
+    fake_debug_exception.DebugInvalidOptionsError = DebugInvalidOptionsError
+    fake_debug.exception = fake_debug_exception
 
     class WithPackages(FakePlatformBase):
         BASE_PACKAGES = dict(FakePlatformBase.BASE_PACKAGES)
@@ -88,11 +99,14 @@ def _load_platform_module(systype, packages=None):
     fake_root = types.ModuleType("platformio")
     fake_root.public = fake_public
     fake_root.exception = fake_exception
+    fake_root.debug = fake_debug
 
     stubbed = {
         "platformio": fake_root,
         "platformio.public": fake_public,
         "platformio.exception": fake_exception,
+        "platformio.debug": fake_debug,
+        "platformio.debug.exception": fake_debug_exception,
     }
     saved = {name: sys.modules.get(name) for name in stubbed}
     sys.modules.update(stubbed)
@@ -304,6 +318,99 @@ class MappingContractTests(unittest.TestCase):
             {"board": "pic16f877a", "upload_protocol": "picpro"}, ["upload"]
         )
         self.assertFalse(platform.packages["tool-picpro"]["optional"])
+
+
+class DebugSessionTests(unittest.TestCase):
+    def _platform(self):
+        module = _load_platform_module("linux_x86_64")
+        return module, module.Epic8Platform(ROOT / "platform.json")
+
+    def _config(
+        self, port=":3333", toolchain=None, gdb="/usr/bin/gdb",
+        init_break=None, server_args=None,
+    ):
+        board = {}
+        env_options = {}
+        if toolchain is not None:
+            # Production reads the project option, not the manifest: the
+            # raw manifest never defines build.toolchain, only the SCons
+            # board_build.* merge puts it where the builder looks.
+            env_options["board_build.toolchain"] = toolchain
+        if init_break is not None:
+            env_options["debug_init_break"] = init_break
+        if server_args is None:
+            server_args = ["hex", "elf", "--port", "3333"]
+        return types.SimpleNamespace(
+            board_config=board,
+            client_executable_path=gdb,
+            load_cmds=["load"],
+            env_options=env_options,
+            server=None if server_args is False else {"arguments": server_args},
+            port=port,
+        )
+
+    def test_platform_is_embedded_for_the_gdb_server_session(self):
+        # Without this, `pio debug` picks the native config and starts no
+        # server; the base answers False because no uploader-typed package
+        # exists to trip its check.
+        _, platform = self._platform()
+        self.assertTrue(platform.is_embedded())
+
+    def test_happy_path_clears_load_and_init_break_and_port(self):
+        _, platform = self._platform()
+        config = self._config()
+        platform.configure_debug_session(config)
+        self.assertEqual(config.load_cmds, [])
+        self.assertEqual(config.env_options["debug_init_break"], "")
+        self.assertEqual(
+            config.server["arguments"], ["hex", "elf", "--port", "3333"]
+        )
+
+    def test_a_users_own_init_break_survives(self):
+        # Unconditional clearing would silently drop the documented
+        # debug_init_break override, and a truthy value also re-arms the
+        # launch auto-continue the empty default suppresses. tbreak, not
+        # thbreak: the server offers software breakpoints only.
+        _, platform = self._platform()
+        config = self._config(init_break="tbreak main.c:29")
+        platform.configure_debug_session(config)
+        self.assertEqual(config.env_options["debug_init_break"], "tbreak main.c:29")
+
+    def test_a_custom_debug_port_reaches_the_server_in_digits(self):
+        _, platform = self._platform()
+        config = self._config(port=":4444")
+        platform.configure_debug_session(config)
+        self.assertEqual(config.server["arguments"][-1], "4444")
+
+    def test_an_xc8_build_is_refused_before_it_starts(self):
+        # An XC8 HEX has no sidecar, so the server would fail on a missing
+        # file; refuse with the toolchain named instead.
+        _, platform = self._platform()
+        with self.assertRaises(DebugInvalidOptionsError):
+            platform.configure_debug_session(self._config(toolchain="xc8"))
+
+    def test_a_missing_gdb_names_the_install(self):
+        _, platform = self._platform()
+        with self.assertRaises(DebugInvalidOptionsError):
+            platform.configure_debug_session(self._config(gdb=None))
+
+    def test_arguments_without_a_port_flag_are_left_alone(self):
+        _, platform = self._platform()
+        config = self._config(server_args=["hex", "elf"])
+        platform.configure_debug_session(config)
+        self.assertEqual(config.server["arguments"], ["hex", "elf"])
+
+    def test_a_disabled_server_and_a_dangling_port_flag_do_not_crash(self):
+        # A user `debug_server` of their own (or none) leaves server None;
+        # a custom server ending in a bare --port has no value slot. Both
+        # must degrade to no rewrite, not TypeError/IndexError.
+        _, platform = self._platform()
+        config = self._config(server_args=False)
+        platform.configure_debug_session(config)
+        self.assertIsNone(config.server)
+        config = self._config(server_args=["hex", "elf", "--port"])
+        platform.configure_debug_session(config)
+        self.assertEqual(config.server["arguments"], ["hex", "elf", "--port"])
 
 
 if __name__ == "__main__":

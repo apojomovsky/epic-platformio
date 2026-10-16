@@ -10,6 +10,12 @@ Set `board` in `platformio.ini` to one of the ids in the [boards list](boards.md
 
 Boards marked `experimental` have a definition but no curated support level or upload protocol yet. They may compile, but expect to check the result yourself.
 
+## Debugging
+
+The simulator boards debug through `pio debug` and VS Code with stock
+gdb: breakpoints, stepping, and typed variables. See [Debugging with
+`pio debug`](debugging.md).
+
 ## Upload and programmers
 
 The boards list names the default upload protocol for each board. Programmer setup is covered on the [programmers page](https://apojomovsky.github.io/epic-docs/tools/programmers/).

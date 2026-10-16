@@ -336,3 +336,32 @@ Platforms"):
 - The builder is `builder/main.py`, loaded by PlatformIO's SCons wrapper;
   `env.BoardConfig()`, `env.PioPlatform().get_package_dir()` and
   `env.MatchSourceFiles()` are the documented extension points.
+
+## Debug: `pio debug` through epic-cc-gdbserver on the sim (epic-platformio#134)
+
+One tool, `epic-sim`: `epic-cc-gdbserver` from the toolchain package on
+the built HEX plus the ELF+DWARF sidecar, driven by stock gdb. The server
+preloads the HEX at startup and the sim starts halted, so the session has
+no load step and starts at the reset vector; the user breaks on file:line.
+`target remote` is the init line because `extended-remote` auto-runs the
+target on attach. The default `tbreak main` never resolves (sidecars carry
+no subprogram entries), so the platform hook clears it, which also stops
+PlatformIO from auto-continuing past it on launch.
+
+The board manifest carries the tool (`scripts/gen_boards.py` emits the
+`debug` section), the builder always emits the sidecar and points PROGPATH
+at it, and `platform.py` shapes the session: `is_embedded()` is forced
+true (no uploader-typed package exists to trip the base check, and without
+it `pio debug` picks the native config and starts no server),
+`configure_debug_session` refuses an XC8 build and a missing gdb, empties
+the load commands, and rewrites the `--port` value in bare digits from the
+live port. The client stays system gdb; a packaged gdb is a separate
+epic-cc child, not this ticket.
+
+Scope follows the core (`DEBUG_CORE`), not a board list: every pic14
+board debugs through the sim, including the 12F675, a mid-range part whose core
+reads pic14. Other cores follow their own epic-cc children.
+
+`epic-cc-gdbserver` ships in `toolchain-epiccc` 0.4.0+pio1 without its
+executable bit, so debug needs a repack (a release action), and
+`scripts/package_toolchain.py` sets the bit on the packed binary.
