@@ -364,6 +364,12 @@ def _epiccc(target, source, env):
     if OPT_LEVEL != "Os":
         cmd += ["-" + OPT_LEVEL]
     cmd += ["-o", str(target[0])]
+    # The ELF+DWARF sidecar is the debug session's symbol file: gdb loads
+    # it, never the HEX. Always emitted, not only for debug builds, so the
+    # server arguments stay one shape and a stale release tree still has
+    # the file a later session needs. Needs a toolchain past epic-cc#259;
+    # the pinned toolchain-epiccc has it (platform.json).
+    cmd += ["--sidecar", str(target[1])]
     cmd += ["--report", REPORT_PATH]
     if F_CPU:
         cmd += ["--f-cpu", F_CPU]
@@ -442,6 +448,12 @@ def _xc8_link(target, source, env):
 if env.get("PROGNAME", "program") == "program":
     env.Replace(PROGNAME="firmware")
 
+# Stock gdb is the debug client (a packaged gdb is a separate epic-cc
+# child), so the build metadata records its path for the session. A bare
+# name when absent: the session then fails naming the install, instead of
+# the build failing for users who never debug.
+env.Replace(GDB=shutil.which("gdb") or "gdb")
+
 xc8_objs = []
 if toolchain == "xc8":
     # One SCons node per object, not one Command looping over every
@@ -456,13 +468,24 @@ if toolchain == "xc8":
         xc8_objs.append(env.Command(obj_path, src, _xc8_compile_action(src_path, xc8_cflags)))
     firmware = env.Command(join("$BUILD_DIR", "${PROGNAME}.hex"), xc8_objs, _xc8_link)
 else:
-    # The report is a second product of the same compile, so it is a
-    # second target: an up-to-date HEX with the report gone (a partial
+    # The report and the sidecar are products of the same compile, so
+    # they are targets too: an up-to-date HEX with either gone (a partial
     # .pio build wipe) must rebuild rather than let the size check read a
-    # missing file and pass the over-max gate silently.
+    # missing report or the debug server load a missing sidecar.
     firmware = env.Command(
-        [join("$BUILD_DIR", "${PROGNAME}.hex"), REPORT_PATH], sources, _epiccc
+        [
+            join("$BUILD_DIR", "${PROGNAME}.hex"),
+            join("$BUILD_DIR", "${PROGNAME}.elf"),
+            REPORT_PATH,
+        ],
+        sources,
+        _epiccc,
     )
+    # The debug client's symbol file is the sidecar, never the HEX, and
+    # the server takes both paths from $PROG_DIR/$PROG_NAME: point the
+    # program path at the ELF. XC8 builds keep the default; a session on
+    # that toolchain is refused before it ever reads this.
+    env.Replace(PROGPATH=join("$BUILD_DIR", "${PROGNAME}.elf"))
 
 # Header edits must rebuild the HEX: SCons only tracks listed sources, and
 # epic-cc reads headers through -I, so depend on every header under the
