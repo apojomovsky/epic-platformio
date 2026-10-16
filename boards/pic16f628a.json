@@ -6,6 +6,7 @@
       "xc8"
     ],
     "mcu": "p16f628a",
+    "oscillator": "crystal",
     "toolchains": [
       "epic-cc",
       "xc8"

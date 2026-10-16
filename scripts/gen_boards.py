@@ -44,11 +44,15 @@ EXPERIMENTAL_DIR = REPO / "boards-experimental"
 # region), device names from each tool's own database (picpro has no
 # 16F887 or 16F1xxx row), hazards from the DFP's config and pin data.
 # f_cpu is where an example fixed a crystal; D-4 reads the code first.
+# oscillator is the board's clock class (crystal, internal, rc,
+# external): the examples prove it, FOSC = HS on the crystal boards and
+# INTRCIO on the 12F675, and the test reads it from the board JSON.
 CURATED = {
     "pic16f877a": {
         "maximum_size": 16384,
         "maximum_ram_size": 368,
         "f_cpu": "4000000L",
+        "oscillator": "crystal",
         "devices": {
             # Same per-package naming as the 1937 below: no bare 877A row.
             "minipro": "PIC16F877A@DIP40",
@@ -66,6 +70,7 @@ CURATED = {
         "maximum_size": 16384,
         "maximum_ram_size": 368,
         "f_cpu": "4000000L",
+        "oscillator": "crystal",
         "devices": {
             # No bare 887 row either, same per-package naming as the 1937.
             "minipro": "PIC16F887@DIP40",
@@ -82,6 +87,7 @@ CURATED = {
         "maximum_size": 4096,
         "maximum_ram_size": 224,
         "f_cpu": None,
+        "oscillator": "crystal",
         "devices": {
             # The 628A is an 18-pin part: DIP18 is its minipro token.
             "minipro": "PIC16F628A@DIP18",
@@ -101,6 +107,7 @@ CURATED = {
         "maximum_size": 2046,
         "maximum_ram_size": 64,
         "f_cpu": None,
+        "oscillator": "internal",
         "devices": {
             "minipro": "PIC12F675",
             "pk2cmd": "PIC12F675",
@@ -117,6 +124,7 @@ CURATED = {
         "maximum_size": 16384,
         "maximum_ram_size": 512,
         "f_cpu": None,
+        "oscillator": "crystal",
         "devices": {
             # minipro's database has no bare 16F1937 row, only per-package
             # ones, so the DIP40 token is the name it accepts.
@@ -134,6 +142,7 @@ CURATED = {
         "maximum_size": 32768,
         "maximum_ram_size": 2048,
         "f_cpu": "20000000L",
+        "oscillator": "crystal",
         "devices": {
             # No bare 4550 row, same per-package naming as the 1937 above.
             "minipro": "PIC18F4550@DIP40",
@@ -326,6 +335,9 @@ def board_json(entry: dict, board_id: str, dest: pathlib.Path, curated: dict | N
             build["f_cpu"] = curated["f_cpu"]
         else:
             build.pop("f_cpu", None)
+        # The clock class always ships: unlike the frequency, it is known
+        # for every beta board, so the config test reads it from here.
+        build["oscillator"] = curated["oscillator"]
         doc["support"] = "hardware" if board_id in HARDWARE_BOARDS else CURATED_SUPPORT
         # Simulator debugging (#134) follows the core: every pic14 board
         # debugs through the sim, other cores wait for their own epic-cc

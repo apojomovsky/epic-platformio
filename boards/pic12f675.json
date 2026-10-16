@@ -2,6 +2,7 @@
   "build": {
     "framework_epichal_toolchains": [],
     "mcu": "p12f675",
+    "oscillator": "internal",
     "toolchains": [
       "epic-cc"
     ]

@@ -195,6 +195,7 @@ class BoardJsonTests(unittest.TestCase):
             "maximum_size": 16384,
             "maximum_ram_size": 368,
             "f_cpu": "4000000L",
+            "oscillator": "crystal",
             "devices": {"minipro": "PIC16F877A", "pk2cmd": "PIC16F877A"},
             "hazards": {
                 "pgm_pin": "RB3",
@@ -211,6 +212,7 @@ class BoardJsonTests(unittest.TestCase):
         self.assertEqual(doc["name"], "Microchip PIC16F877A")
         self.assertEqual(doc["build"]["mcu"], "p16f877a")
         self.assertEqual(doc["build"]["f_cpu"], "4000000L")
+        self.assertEqual(doc["build"]["oscillator"], "crystal")
         self.assertEqual(doc["upload"]["maximum_size"], 16384)
         self.assertEqual(doc["upload"]["maximum_ram_size"], 368)
         self.assertEqual(doc["upload"]["devices"]["minipro"], "PIC16F877A")
@@ -228,6 +230,7 @@ class BoardJsonTests(unittest.TestCase):
             "maximum_size": 16384,
             "maximum_ram_size": 368,
             "f_cpu": "4000000L",
+            "oscillator": "crystal",
             "devices": {"minipro": "PIC16F877A@DIP40"},
             "hazards": {},
         }
@@ -251,6 +254,7 @@ class BoardJsonTests(unittest.TestCase):
             "maximum_size": 4096,
             "maximum_ram_size": 224,
             "f_cpu": None,
+            "oscillator": "crystal",
             "devices": {"minipro": "PIC16F628A"},
             "hazards": {
                 "pgm_pin": "RB4",
@@ -266,6 +270,7 @@ class BoardJsonTests(unittest.TestCase):
             )
             doc = gen_boards.board_json(e, "pic16f628a", dest, curated)
         self.assertNotIn("f_cpu", doc["build"])
+        self.assertEqual(doc["build"]["oscillator"], "crystal")
 
     def test_existing_board_keeps_hand_authored_fields(self):
         existing = {
@@ -314,6 +319,7 @@ class DebugSectionTests(unittest.TestCase):
         "maximum_size": 16384,
         "maximum_ram_size": 368,
         "f_cpu": "4000000L",
+        "oscillator": "crystal",
         "devices": {"minipro": "PIC16F877A@DIP40"},
         "hazards": {
             "pgm_pin": "RB3",
@@ -405,6 +411,7 @@ class CuratedTableTests(unittest.TestCase):
             self.assertIsInstance(facts["maximum_size"], int)
             self.assertIsInstance(facts["maximum_ram_size"], int)
             self.assertTrue(facts["devices"], board_id)
+            self.assertIn(facts["oscillator"], ("crystal", "internal", "rc", "external"), board_id)
             self.assertIn(facts["hazards"]["lvp_scheme"], ("pgm_pin", "key_sequence", "none"))
             # A part with a PGM pin names it; the others do not.
             if facts["hazards"]["lvp_scheme"] == "pgm_pin":
