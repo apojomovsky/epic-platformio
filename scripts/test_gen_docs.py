@@ -54,11 +54,12 @@ class BoardsTest(unittest.TestCase):
     def test_columns_order_and_values(self):
         curated = {
             "b-regular": make_board("b", mcu="p16f877a", f_cpu="4000000L"),
-            "a-no-fcpu": make_board("a", f_cpu=None, tools=("minipro",)),
+            "a-no-fcpu": make_board("a", mcu="p12f675", f_cpu=None, tools=("minipro",)),
         }
         curated["b-regular"]["name"] = "Microchip PIC16F877A"
         curated["b-regular"]["build"]["epichal_family"] = "pic16f87xa"
-        experimental = {"p9-exp": {"name": "Microchip PIC9F9", "build": {"mcu": "p9f9"}}}
+        curated["a-no-fcpu"]["name"] = "Microchip PIC12F675"
+        experimental = {"p9-exp": {"name": "Microchip PIC16F887", "build": {"mcu": "p16f887"}}}
         out = self.render(curated, experimental)
         self.assertTrue(out.startswith(gen_docs.GENERATED_BY + "\n# Boards\n"))
         self.assertIn("| Part | Board | Family | Clock | Support | Upload protocol |", out)
@@ -67,9 +68,14 @@ class BoardsTest(unittest.TestCase):
         e_line = self.row(out, "p9-exp")
         self.assertLess(out.index(a_line), out.index(b_line))
         self.assertLess(out.index(b_line), out.index(e_line))
-        self.assertEqual(a_line, "| A | `a-no-fcpu` | not set | not set | simulator | `minipro` |")
-        self.assertIn("| PIC16F877A | `b-regular` | `pic16f87xa` | 4 MHz | simulator | `minipro` |", out)
-        self.assertIn("| PIC9F9 | `p9-exp` | not set | not set | experimental | not set |", out)
+        hub = "https://apojomovsky.github.io/epic-docs/devices/families/"
+        self.assertEqual(a_line, f"| [PIC12F675]({hub}pic12f-pic14/) | `a-no-fcpu` | not set | not set | simulator | `minipro` |")
+        self.assertIn(f"| [PIC16F877A]({hub}pic16f-pic14/) | `b-regular` | `pic16f87xa` | 4 MHz | simulator | `minipro` |", out)
+        self.assertIn(f"| [PIC16F887]({hub}pic16f-pic14/) | `p9-exp` | not set | not set | experimental | not set |", out)
+
+    def test_unknown_mcu_fails_loudly(self):
+        with self.assertRaises(KeyError):
+            self.render({"b": make_board("b", mcu="p9f9")}, {})
 
     def test_clock_formats(self):
         self.assertEqual(gen_docs.format_clock("4000000L"), "4 MHz")
