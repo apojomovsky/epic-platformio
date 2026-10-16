@@ -79,10 +79,12 @@ epiccc_sources = [
 """
 
 
-def entry(mcu, toolchains, framework_toolchains, family=None, cc_name=None):
+def entry(mcu, toolchains, framework_toolchains, family=None, cc_name=None,
+          core=None):
     return {
         "mcu": mcu,
         "cc_name": cc_name or mcu,
+        "core": core,
         "family": family,
         "toolchains": toolchains,
         "framework_toolchains": framework_toolchains,
@@ -159,6 +161,14 @@ class BuildMatrixTests(unittest.TestCase):
         self.assertEqual(e["toolchains"], ["epic-cc", "xc8"])
         self.assertEqual(e["framework_toolchains"], ["xc8"])
 
+
+    def test_matrix_carries_the_device_core(self):
+        # The debug section follows the core, so the matrix must carry it
+        # from the device manifest; an xc8-only part has no core at all.
+        matrix = gen_boards.build_matrix(DEVICES, PARTS, self.epiccc_families)
+        self.assertEqual(matrix["16F877A"]["core"], "pic14")
+        self.assertEqual(matrix["16F1937"]["core"], "pic14e")
+        self.assertIsNone(matrix["16F882"]["core"])
 
 class BoardJsonTests(unittest.TestCase):
     def test_experimental_board_is_capability_only(self):
@@ -289,14 +299,15 @@ class DebugSectionTests(unittest.TestCase):
         },
     }
 
-    def _doc(self, board_id, mcu="p16f877a"):
-        e = entry(mcu, ["epic-cc", "xc8"], ["epic-cc", "xc8"], family="pic16f87xa")
+    def _doc(self, board_id, mcu="p16f877a", core="pic14"):
+        e = entry(mcu, ["epic-cc", "xc8"], ["epic-cc", "xc8"],
+                  family="pic16f87xa", core=core)
         with tempfile.TemporaryDirectory() as td:
             return gen_boards.board_json(
                 e, board_id, pathlib.Path(td), dict(self.CURATED_FACTS)
             )
 
-    def test_allowlisted_board_advertises_epic_sim(self):
+    def test_pic14_board_advertises_epic_sim(self):
         tool = self._doc("pic16f877a")["debug"]["tools"]["epic-sim"]
         self.assertEqual(
             self._doc("pic16f877a")["debug"]["default_tools"], ["epic-sim"]
@@ -317,16 +328,29 @@ class DebugSectionTests(unittest.TestCase):
         self.assertEqual(tool["init_cmds"], ["target remote $DEBUG_PORT"])
         self.assertEqual(tool["port"], ":3333")
 
-    def test_non_allowlisted_curated_board_carries_no_debug(self):
-        self.assertNotIn("debug", self._doc("pic12f675", mcu="p12f675"))
-        self.assertNotIn("debug", self._doc("pic18f4550", mcu="p18f4550"))
+    def test_pic12f675_rides_its_pic14_core(self):
+        # Coordinator option 2: the baseline is a mid-range PIC14 core,
+        # so it debugs with the rest; other cores wait for their own
+        # epic-cc children.
+        self.assertIn(
+            "epic-sim", self._doc("pic12f675", mcu="p12f675")["debug"]["tools"]
+        )
 
-    def test_leaving_the_allowlist_drops_a_stale_debug_section(self):
+    def test_other_cores_carry_no_debug(self):
+        self.assertNotIn(
+            "debug", self._doc("pic16f1937", mcu="p16f1937", core="pic14e")
+        )
+        self.assertNotIn(
+            "debug", self._doc("pic18f4550", mcu="p18f4550", core="pic18")
+        )
+
+    def test_leaving_pic14_drops_a_stale_debug_section(self):
         e = entry(
             "p16f1937",
             ["epic-cc", "xc8"],
             ["epic-cc", "xc8"],
             family="pic16f193x",
+            core="pic14e",
         )
         with tempfile.TemporaryDirectory() as td:
             dest = pathlib.Path(td)
@@ -339,7 +363,9 @@ class DebugSectionTests(unittest.TestCase):
         self.assertNotIn("debug", doc)
 
     def test_experimental_board_never_carries_debug(self):
-        e = entry("p10f320", ["epic-cc"], [], cc_name="p10f320")
+        # Even on a pic14 core: experimental boards are capability-only,
+        # and the debug section is a curated advertisement.
+        e = entry("p10f320", ["epic-cc"], [], cc_name="p10f320", core="pic14")
         with tempfile.TemporaryDirectory() as td:
             doc = gen_boards.board_json(e, "p10f320", pathlib.Path(td), None)
         self.assertNotIn("debug", doc)

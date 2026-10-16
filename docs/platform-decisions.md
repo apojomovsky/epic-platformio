@@ -358,10 +358,10 @@ the load commands, and rewrites the `--port` value in bare digits from the
 live port. The client stays system gdb; a packaged gdb is a separate
 epic-cc child, not this ticket.
 
-Scope rides an explicit allowlist (`DEBUG_BOARDS`), not the core: the
-three mid-range PIC14 boards prove their session first. The 12F675 stays
-out even though its core reads pic14, because the baseline is a separate
-epic-cc child; other cores follow theirs. Depending on a repack:
+Scope follows the core (`DEBUG_CORE`), not a board list: every pic14
+board debugs through the sim, including the 12F675, whose baseline core
+reads pic14. Other cores follow their own epic-cc children.
+
 `epic-cc-gdbserver` ships in `toolchain-epiccc` 0.4.0+pio1 without its
 executable bit, so debug needs a repack (a release action), and
 `scripts/package_toolchain.py` sets the bit on the packed binary.

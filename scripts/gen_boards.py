@@ -153,12 +153,12 @@ CURATED_PROTOCOL = "minipro"
 CURATED_SUPPORT = "simulator"
 
 
-# Boards with a proven simulator debug session (#134): epic-cc-gdbserver
-# drives the PIC14 sim (epic-cc#259), and the stock-gdb recipe is verified
-# per board. Other cores follow their own epic-cc children; the 12F675
-# stays out because the baseline is a separate epic-cc child, even though
-# devices.json spells its core pic14.
-DEBUG_BOARDS = {"pic16f877a", "pic16f887", "pic16f628a"}
+# Every pic14 board debugs through the simulator (#134, coordinator
+# option 2): epic-cc-gdbserver drives the PIC14 sim (epic-cc#259), and
+# the stock-gdb recipe is verified per core. The 12F675 is in scope with
+# the rest because devices.json spells its core pic14. Other cores follow
+# their own epic-cc children.
+DEBUG_CORE = "pic14"
 
 
 def debug_section() -> dict:
@@ -241,6 +241,7 @@ def build_matrix(
     """bare device name -> capability facts, per docs/platform-decisions.md's
     "Boards: generated from epic-cc/epic-hal's own registries" section."""
     cc_by_bare = {cc_name_to_bare(d["name"]): d["name"] for d in devices}
+    core_by_bare = {cc_name_to_bare(d["name"]): d["core"] for d in devices}
     entries = {}
     for bare in sorted(set(cc_by_bare) | set(parts)):
         cc_name = cc_by_bare.get(bare)
@@ -259,6 +260,7 @@ def build_matrix(
         entries[bare] = {
             "mcu": "p" + bare.lower(),
             "cc_name": cc_name,
+            "core": core_by_bare.get(bare),
             "family": family,
             "toolchains": toolchains,
             "framework_toolchains": framework_toolchains,
@@ -319,11 +321,11 @@ def board_json(entry: dict, board_id: str, dest: pathlib.Path, curated: dict | N
         else:
             build.pop("f_cpu", None)
         doc["support"] = CURATED_SUPPORT
-        # Simulator debugging (#134) rides an explicit allowlist, not the
-        # core: a board proves its gdb session before it advertises one.
-        # A board leaving the set drops the section rather than keeping
-        # a stale one the merge above would otherwise preserve.
-        if board_id in DEBUG_BOARDS:
+        # Simulator debugging (#134) follows the core: every pic14 board
+        # debugs through the sim, other cores wait for their own epic-cc
+        # support. A board leaving pic14 drops the section rather than
+        # keeping a stale one the merge above would otherwise preserve.
+        if entry.get("core") == DEBUG_CORE:
             doc["debug"] = debug_section()
         else:
             doc.pop("debug", None)
