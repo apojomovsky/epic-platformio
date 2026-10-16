@@ -22,10 +22,12 @@ python3 scripts/hw_signoff.py
 ```
 
 For each row the script names the chip and programmer to fit, runs
-`pio run -t upload` in the board's `blink-tutorial-*` example with the
-row's protocol, then asks `did it blink? y/n/skip`. Rows run grouped by
-programmer, so you swap hardware as rarely as possible. For K150 rows it
-asks for the serial port once (default `/dev/ttyUSB0`) and reuses it.
+`pio run -e <env> -t upload` in the board's `blink-tutorial-*` example
+with the row's protocol (the env comes from the example's own
+`platformio.ini`, currently `epic8` in all six), then asks
+`did it blink? y/n/skip`. Rows run grouped by programmer, so you swap
+hardware as rarely as possible. For K150 rows it asks for the serial port
+once (default `/dev/ttyUSB0`) and reuses it.
 
 Verdicts accumulate in `signoff-results.json` in the working directory.
 Rerunning resumes where you stopped: decided rows are skipped, `skip`

@@ -116,12 +116,14 @@ class WalkTest(unittest.TestCase):
         return out, runner, script
 
     def all_rows_answers(self, verdict="y"):
-        # Every row costs one Enter plus one verdict; picpro rows add a
-        # port answer each on a fresh session.
+        # Every row costs one Enter plus one verdict; the first K150 row
+        # adds the serial port answer, reused by the rest.
         answers = []
+        port_asked = False
         for board, protocol in hw_signoff.matrix():
-            if protocol == "picpro":
+            if protocol == "picpro" and not port_asked:
                 answers.append("")
+                port_asked = True
             answers += ["", verdict]
         return answers
 
@@ -136,13 +138,17 @@ class WalkTest(unittest.TestCase):
     def test_upload_runs_in_the_example_with_the_row_protocol(self):
         with tempfile.TemporaryDirectory() as td:
             root = make_repo(pathlib.Path(td))
-            out, runner, _ = self.drive(root, self.all_rows_answers("y"))
-            by_row = {}
-            for cmd, cwd, extra in runner.calls:
-                by_row[cwd.name] = extra["PLATFORMIO_UPLOAD_PROTOCOL"]
-            self.assertEqual(cmd[:3], ["pio", "run", "-e"])
-            self.assertIn("upload", cmd)
-            self.assertEqual(by_row["blink-tutorial-pic16f877a"], "picpro")
+            _, runner, script = self.drive(root, self.all_rows_answers("y"))
+            self.assertEqual(len(runner.calls), len(hw_signoff.matrix()))
+            for (board, protocol), (cmd, cwd, extra) in zip(
+                hw_signoff.matrix(), runner.calls
+            ):
+                self.assertEqual(cmd[:3], ["pio", "run", "-e"])
+                self.assertIn("upload", cmd)
+                self.assertEqual(cwd, root / "examples" / f"blink-tutorial-{board}")
+                self.assertEqual(extra["PLATFORMIO_UPLOAD_PROTOCOL"], protocol)
+            ports = [line for line in script.said if "serial port" in line]
+            self.assertEqual(len(ports), 1)
 
     def test_resume_skips_decided_rows_and_reasks_skips(self):
         with tempfile.TemporaryDirectory() as td:
@@ -153,12 +159,14 @@ class WalkTest(unittest.TestCase):
             rows["pic16f877a/minipro"] = "pass"
             rows["pic16f887/minipro"] = "fail"
             answers = []
+            port_asked = False
             for board, protocol in hw_signoff.matrix():
                 key = hw_signoff.row_key(board, protocol)
                 if rows[key] in ("pass", "fail"):
                     continue
-                if protocol == "picpro":
+                if protocol == "picpro" and not port_asked:
                     answers.append("")
+                    port_asked = True
                 answers += ["", "y"]
             out, runner, _ = self.drive(root, answers, {"version": 1, "rows": rows})
             self.assertEqual(out["rows"]["pic16f877a/minipro"], "pass")

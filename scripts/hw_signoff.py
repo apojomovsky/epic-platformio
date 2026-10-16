@@ -4,7 +4,8 @@
 Walks the board-by-programmer matrix from the ticket: T48 (minipro) and
 PICkit 3.5 (pk2cmd) for all six boards, K150 (picpro) for the four parts
 picpro knows. Each row prompts the human to fit the chip and programmer,
-runs `pio run -t upload` on the blink example with the row's protocol,
+runs `pio run -e <env> -t upload` on the blink example with the row's
+protocol (the env comes from the example's own platformio.ini),
 then asks whether the LED blinked. Answers accumulate in
 signoff-results.json, so an interrupted session resumes where it stopped.
 
@@ -182,7 +183,7 @@ def walk(
             continue
         example = example_dir(repo, board)
         env_name = project_env(example)
-        if protocol == "picpro":
+        if protocol == "picpro" and port is None:
             port = ask_port(readline, port)
             results["picpro_port"] = port
         cmd = upload_command(env_name)
