@@ -7,17 +7,17 @@
 
 # epic-platformio
 
-The PlatformIO platform for 8-bit PIC microcontrollers: a fully open source, MIT licensed path from C to hex file, for hobbyists who want `pio run` instead of a vendor IDE.
+Build, simulate and flash 8-bit PIC microcontrollers from PlatformIO. Open
+source (MIT), from the compiler to the programmer tools.
 
 [![CI](https://github.com/apojomovsky/epic-platformio/actions/workflows/ci.yml/badge.svg)](https://github.com/apojomovsky/epic-platformio/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/apojomovsky/epic-platformio/blob/master/LICENSE) [![Release](https://img.shields.io/github/v/release/apojomovsky/epic-platformio)](https://github.com/apojomovsky/epic-platformio/releases)
 
 ## Why epic-platformio
 
-- **Fully open source, MIT licensed.** The platform, the [epic-cc](https://github.com/apojomovsky/epic-cc) compiler and the [epic-hal](https://github.com/apojomovsky/epic-hal) hardware abstraction layer (HAL) share one licence, so you can read and audit every stage.
 - **The usual PlatformIO workflow.** A `platformio.ini` and `pio run`, with build, size check and upload targets. No Microchip download is needed on the default path.
 - **Complete on its own.** This page is the whole PlatformIO path; epic-cc and epic-hal document themselves without assuming PlatformIO.
 
-**Status:** building is ready for hobby projects; flashing is tested in the simulator and awaits sign-off on real chips. See [What's in 1.0](https://apojomovsky.github.io/epic-docs/status/).
+**Status:** building is ready for projects; flashing is tested in the simulator and awaits sign-off on real chips. See [What's in 1.0](https://apojomovsky.github.io/epic-docs/status/).
 
 ## The shortest example
 
