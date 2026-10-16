@@ -128,6 +128,7 @@ from a clean checkout:
 | `hal-tick-pic18f4550` | PIC18F4550 | the same on the PIC18 backend |
 | `hal-tick-xc8-pic16f877a` | PIC16F877A | `tick` plus GPIO under xc8 |
 | `blink-pic16f877a` | PIC16F877A | the bare-metal `EPIC_CONFIG` compiler path |
+| `debug-pic16f877a` | PIC16F877A | the `pio debug` simulator session ([debugging](user/debugging.md)) |
 | `blink-pic16f887` | PIC16F887 | a new device on a supported core |
 | `blink-pic18f4550` | PIC18F4550 | the PIC18 backend |
 | `blink-tutorial-pic16f877a` | PIC16F877A | XC8 tutorial source (`#pragma config`, `__delay_ms`) compiles unchanged |
