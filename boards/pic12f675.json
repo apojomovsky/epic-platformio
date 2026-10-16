@@ -6,7 +6,6 @@
       "epic-cc"
     ]
   },
-  "frameworks": [],
   "name": "Microchip PIC12F675",
   "support": "simulator",
   "upload": {

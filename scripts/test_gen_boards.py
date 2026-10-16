@@ -275,6 +275,73 @@ class BoardJsonTests(unittest.TestCase):
         self.assertEqual(doc["frameworks"], ["epichal"])
 
 
+class DebugSectionTests(unittest.TestCase):
+    CURATED_FACTS = {
+        "maximum_size": 16384,
+        "maximum_ram_size": 368,
+        "f_cpu": "4000000L",
+        "devices": {"minipro": "PIC16F877A@DIP40"},
+        "hazards": {
+            "pgm_pin": "RB3",
+            "lvp_scheme": "pgm_pin",
+            "osccal_word": None,
+            "bandgap_bits": None,
+        },
+    }
+
+    def _doc(self, board_id, mcu="p16f877a"):
+        e = entry(mcu, ["epic-cc", "xc8"], ["epic-cc", "xc8"], family="pic16f87xa")
+        with tempfile.TemporaryDirectory() as td:
+            return gen_boards.board_json(
+                e, board_id, pathlib.Path(td), dict(self.CURATED_FACTS)
+            )
+
+    def test_allowlisted_board_advertises_epic_sim(self):
+        server = self._doc("pic16f877a")["debug"]["tools"]["epic-sim"]["server"]
+        self.assertEqual(
+            self._doc("pic16f877a")["debug"]["default_tools"], ["epic-sim"]
+        )
+        self.assertEqual(server["package"], "toolchain-epiccc")
+        self.assertEqual(server["executable"], "epic-cc-gdbserver")
+        self.assertEqual(
+            server["arguments"][:2], ["$PROG_DIR/$PROG_NAME.hex", "$PROG_PATH"]
+        )
+        self.assertIn("--port", server["arguments"])
+        self.assertTrue(server["ready_pattern"])
+
+    def test_debug_init_is_plain_remote_with_no_monitor(self):
+        tool = self._doc("pic16f887")["debug"]["tools"]["epic-sim"]
+        self.assertEqual(tool["init_cmds"], ["target remote $DEBUG_PORT"])
+        self.assertEqual(tool["port"], ":3333")
+
+    def test_non_allowlisted_curated_board_carries_no_debug(self):
+        self.assertNotIn("debug", self._doc("pic12f675", mcu="p12f675"))
+        self.assertNotIn("debug", self._doc("pic18f4550", mcu="p18f4550"))
+
+    def test_leaving_the_allowlist_drops_a_stale_debug_section(self):
+        e = entry(
+            "p16f1937",
+            ["epic-cc", "xc8"],
+            ["epic-cc", "xc8"],
+            family="pic16f193x",
+        )
+        with tempfile.TemporaryDirectory() as td:
+            dest = pathlib.Path(td)
+            (dest / "pic16f1937.json").write_text(
+                json.dumps({"debug": {"tools": {"epic-sim": {}}}})
+            )
+            doc = gen_boards.board_json(
+                e, "pic16f1937", dest, dict(self.CURATED_FACTS)
+            )
+        self.assertNotIn("debug", doc)
+
+    def test_experimental_board_never_carries_debug(self):
+        e = entry("p10f320", ["epic-cc"], [], cc_name="p10f320")
+        with tempfile.TemporaryDirectory() as td:
+            doc = gen_boards.board_json(e, "p10f320", pathlib.Path(td), None)
+        self.assertNotIn("debug", doc)
+
+
 class CuratedTableTests(unittest.TestCase):
     """The curated table is data the generator does not derive, so its own
     internal consistency is what keeps it honest."""

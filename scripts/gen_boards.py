@@ -153,6 +153,46 @@ CURATED_PROTOCOL = "minipro"
 CURATED_SUPPORT = "simulator"
 
 
+# Boards with a proven simulator debug session (#134): epic-cc-gdbserver
+# drives the PIC14 sim (epic-cc#259), and the stock-gdb recipe is verified
+# per board. Other cores follow their own epic-cc children; the 12F675
+# stays out because the baseline is a separate epic-cc child, even though
+# devices.json spells its core pic14.
+DEBUG_BOARDS = {"pic16f877a", "pic16f887", "pic16f628a"}
+
+
+def debug_section() -> dict:
+    """The `pio debug` wiring for a simulator-proven board (#134).
+
+    One tool, epic-sim: epic-cc-gdbserver from the toolchain package on
+    the built HEX plus the sidecar the builder always emits, driven by
+    stock gdb. The init script is one line: the generic script's
+    `monitor` lines have no server side here, and the default init-break
+    names a symbol these sidecars do not carry, so the session starts
+    halted at the reset vector and the user breaks on file:line.
+    """
+    return {
+        "default_tools": ["epic-sim"],
+        "tools": {
+            "epic-sim": {
+                "server": {
+                    "package": "toolchain-epiccc",
+                    "executable": "epic-cc-gdbserver",
+                    "arguments": [
+                        "$PROG_DIR/$PROG_NAME.hex",
+                        "$PROG_PATH",
+                        "--port",
+                        "3333",
+                    ],
+                    "ready_pattern": "waiting for gdb",
+                },
+                "port": ":3333",
+                "init_cmds": ["target remote $DEBUG_PORT"],
+            }
+        },
+    }
+
+
 def load_devices(path: pathlib.Path) -> list[dict]:
     return json.loads(path.read_text())
 
@@ -279,6 +319,14 @@ def board_json(entry: dict, board_id: str, dest: pathlib.Path, curated: dict | N
         else:
             build.pop("f_cpu", None)
         doc["support"] = CURATED_SUPPORT
+        # Simulator debugging (#134) rides an explicit allowlist, not the
+        # core: a board proves its gdb session before it advertises one.
+        # A board leaving the set drops the section rather than keeping
+        # a stale one the merge above would otherwise preserve.
+        if board_id in DEBUG_BOARDS:
+            doc["debug"] = debug_section()
+        else:
+            doc.pop("debug", None)
         upload = doc.setdefault("upload", {})
         upload["maximum_size"] = curated["maximum_size"]
         upload["maximum_ram_size"] = curated["maximum_ram_size"]
