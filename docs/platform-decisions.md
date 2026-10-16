@@ -359,7 +359,7 @@ live port. The client stays system gdb; a packaged gdb is a separate
 epic-cc child, not this ticket.
 
 Scope follows the core (`DEBUG_CORE`), not a board list: every pic14
-board debugs through the sim, including the 12F675, whose baseline core
+board debugs through the sim, including the 12F675, a mid-range part whose core
 reads pic14. Other cores follow their own epic-cc children.
 
 `epic-cc-gdbserver` ships in `toolchain-epiccc` 0.4.0+pio1 without its
