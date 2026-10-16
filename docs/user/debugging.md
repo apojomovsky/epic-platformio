@@ -1,15 +1,17 @@
 # Debugging with `pio debug`
 
 This page is for you if your project builds on one of the simulator boards
-(`pic16f877a`, `pic16f887`, `pic16f628a`) and you want breakpoints, stepping,
-and typed variables instead of LEDs. Debugging runs the program in epic-cc's
-own simulator on your machine, not on the chip: no programmer involved.
+(`pic16f877a`, `pic16f887`, `pic16f628a`, `pic12f675`) and you want
+breakpoints, stepping, and typed variables instead of LEDs. Debugging runs
+the program in epic-cc's own simulator on your machine, not on the chip:
+no programmer involved.
 
 ## Prerequisites
 
-- A simulator board: `pic16f877a`, `pic16f887`, or `pic16f628a`. Other
-  parts follow their own epic-cc debugger support; a board without a
-  debug section fails with PlatformIO's "does not support debugging".
+- A simulator board: `pic16f877a`, `pic16f887`, `pic16f628a`, or
+  `pic12f675`. Other parts follow their own epic-cc debugger support;
+  a board without a debug section fails with PlatformIO's "does not
+  support debugging".
 - Stock gdb on PATH (`apt install gdb` on Debian/Ubuntu). A packaged gdb
   is a separate child; until it lands, the client is the system one.
 - `toolchain-epiccc` 0.4.0+pio1 or newer, which ships `epic-cc-gdbserver`.
@@ -61,13 +63,15 @@ Uncomment the `debug_init_break` line in the example (or set your own) to
 stop at a C line as soon as the session opens:
 
 ```ini
-debug_init_break = thbreak main.c:29
+debug_init_break = tbreak main.c:29
 ```
 
 The value is one gdb command, so `file:line` is the shape that resolves.
-Function names do not: the sidecar carries line rows and typed variables
-but no subprogram entries, so `tbreak main` never resolves and the
-default stays empty on purpose.
+Use `tbreak`, not `thbreak`: the server offers software breakpoints only,
+so a hardware breakpoint is rejected. Function names do not resolve
+either: the sidecar carries line rows and typed variables but no
+subprogram entries, so `tbreak main` never resolves and the default stays
+empty on purpose.
 
 ## Which code debugs cleanly
 

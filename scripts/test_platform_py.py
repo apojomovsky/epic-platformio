@@ -369,11 +369,12 @@ class DebugSessionTests(unittest.TestCase):
     def test_a_users_own_init_break_survives(self):
         # Unconditional clearing would silently drop the documented
         # debug_init_break override, and a truthy value also re-arms the
-        # launch auto-continue the empty default suppresses.
+        # launch auto-continue the empty default suppresses. tbreak, not
+        # thbreak: the server offers software breakpoints only.
         _, platform = self._platform()
-        config = self._config(init_break="thbreak main.c:32")
+        config = self._config(init_break="tbreak main.c:29")
         platform.configure_debug_session(config)
-        self.assertEqual(config.env_options["debug_init_break"], "thbreak main.c:32")
+        self.assertEqual(config.env_options["debug_init_break"], "tbreak main.c:29")
 
     def test_a_custom_debug_port_reaches_the_server_in_digits(self):
         _, platform = self._platform()
