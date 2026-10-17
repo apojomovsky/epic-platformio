@@ -14,7 +14,8 @@ no programmer involved.
   support debugging".
 - Stock gdb on PATH (`apt install gdb` on Debian/Ubuntu). A packaged gdb
   is a separate child; until it lands, the client is the system one.
-- `toolchain-epiccc` 0.4.0+pio1 or newer, which ships `epic-cc-gdbserver`.
+- A current `toolchain-epiccc` ([package versions](../packages.md)),
+  which ships `epic-cc-gdbserver`.
 
 No `platformio.ini` setup is needed: the board selects `debug_tool =
 epic-sim` by default.
@@ -81,7 +82,7 @@ a breakpoint there lands on a word that never executes, so `continue`
 runs past it. Keep first sessions to the example's shape; the row gaps
 are tracked in epic-cc#1316.
 
-## VS Code
+## PlatformIO IDE
 
 Open the project in VS Code with the PlatformIO IDE extension and run
 Start Debugging. It drives the same server and the same init script as
@@ -93,13 +94,13 @@ and exits.
 ## Reference
 
 - The server is `epic-cc-gdbserver` from the toolchain package, run on
-  the built HEX plus the ELF+DWARF sidecar the builder always emits next
-  to it (`firmware.elf` beside `firmware.hex` in the build dir). gdb
-  loads the sidecar, never the HEX.
+  the built hex file plus the ELF+DWARF sidecar the builder always emits
+  next to it (`firmware.elf` beside `firmware.hex` in the build dir). gdb
+  loads the sidecar, never the hex file.
 - An XC8 build (`board_build.toolchain = xc8`) is refused up front: it
   emits no sidecar, so there is nothing for the server to load.
 - Troubleshooting: `No gdb on PATH` means install gdb above. A
   `Permission denied` launching the server means the installed toolchain
-  package predates the executable-bit fix, which rides releases cut after
-  0.4.0+pio1: until the update lands, `chmod +x` the `epic-cc-gdbserver`
-  binary in the toolchain package dir and retry.
+  package predates the executable-bit fix shipped in [later
+  packages](../packages.md): until the update lands, `chmod +x` the
+  `epic-cc-gdbserver` binary in the toolchain package dir and retry.
