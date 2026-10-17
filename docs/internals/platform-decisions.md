@@ -340,7 +340,9 @@ Platforms"):
 ## Debug: `pio debug` through epic-cc-gdbserver on the sim (epic-platformio#134)
 
 One tool, `epic-sim`: `epic-cc-gdbserver` from the toolchain package on
-the built HEX plus the ELF+DWARF sidecar, driven by stock gdb. The server
+the built HEX plus the ELF+DWARF sidecar, driven by stock gdb. A board
+off the default pic14 sim passes `--device <mcu>`: without it the server
+assumes pic14 and misparses any other core's HEX (#145). The server
 preloads the HEX at startup and the sim starts halted, so the session has
 no load step and starts at the reset vector; the user breaks on file:line.
 `target remote` is the init line because `extended-remote` auto-runs the
@@ -358,9 +360,10 @@ the load commands, and rewrites the `--port` value in bare digits from the
 live port. The client stays system gdb; a packaged gdb is a separate
 epic-cc child, not this ticket.
 
-Scope follows the core (`DEBUG_CORE`), not a board list: every pic14
-board debugs through the sim, including the 12F675, a mid-range part whose core
-reads pic14. Other cores follow their own epic-cc children.
+Scope follows the core (`DEBUG_CORES`), not a board list: pic14 and pic18
+boards debug through the sim, including the 12F675, a mid-range part whose
+core reads pic14. pic18 joined with epic-cc#1312 (epic-platformio#145).
+Remaining cores follow their own epic-cc children.
 
 `epic-cc-gdbserver` ships in `toolchain-epiccc` 0.4.0+pio1 without its
 executable bit, so debug needs a repack (a release action), and

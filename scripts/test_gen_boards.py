@@ -346,7 +346,9 @@ class DebugSectionTests(unittest.TestCase):
         self.assertEqual(server["package"], "toolchain-epiccc")
         self.assertEqual(server["executable"], "epic-cc-gdbserver")
         # The server consumes positionally (hex, sidecar, --port value),
-        # so the order is the contract, not just the membership.
+        # so the order is the contract, not just the membership. pic14 is
+        # the server's default sim, so its boards spell no --device, which
+        # is also what keeps them working on pre-0.5.0 servers (#145).
         self.assertEqual(
             server["arguments"],
             ["$PROG_DIR/$PROG_NAME.hex", "$PROG_PATH", "--port", "3333"],
@@ -366,15 +368,32 @@ class DebugSectionTests(unittest.TestCase):
             "epic-sim", self._doc("pic12f675", mcu="p12f675")["debug"]["tools"]
         )
 
-    def test_other_cores_carry_no_debug(self):
+    def test_pic18_board_advertises_epic_sim(self):
+        # pic18 joined the debug set with epic-cc#1312 (#145): the pic14
+        # recipe plus --device, so the server picks the pic18 sim instead
+        # of the pic14 default. Older servers reject the flag, which is
+        # why pic14 boards stay without it and pic18 needs 0.5.0+.
+        args = self._doc("pic18f4550", mcu="p18f4550", core="pic18")["debug"][
+            "tools"
+        ]["epic-sim"]["server"]["arguments"]
+        self.assertEqual(
+            args,
+            [
+                "$PROG_DIR/$PROG_NAME.hex",
+                "$PROG_PATH",
+                "--port",
+                "3333",
+                "--device",
+                "p18f4550",
+            ],
+        )
+
+    def test_cores_without_sim_support_carry_no_debug(self):
         self.assertNotIn(
             "debug", self._doc("pic16f1937", mcu="p16f1937", core="pic14e")
         )
-        self.assertNotIn(
-            "debug", self._doc("pic18f4550", mcu="p18f4550", core="pic18")
-        )
 
-    def test_leaving_pic14_drops_a_stale_debug_section(self):
+    def test_leaving_debug_cores_drops_a_stale_debug_section(self):
         e = entry(
             "p16f1937",
             ["epic-cc", "xc8"],
