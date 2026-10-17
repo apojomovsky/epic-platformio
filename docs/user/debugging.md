@@ -1,21 +1,23 @@
 # Debugging with `pio debug`
 
 This page is for you if your project builds on one of the simulator boards
-(`pic16f877a`, `pic16f887`, `pic16f628a`, `pic12f675`) and you want
-breakpoints, stepping, and typed variables instead of LEDs. Debugging runs
-the program in epic-cc's own simulator on your machine, not on the chip:
-no programmer involved.
+(`pic16f877a`, `pic16f887`, `pic16f628a`, `pic12f675`, `pic18f4550`) and
+you want breakpoints, stepping, and typed variables instead of LEDs.
+Debugging runs the program in epic-cc's own simulator on your machine,
+not on the chip: no programmer involved.
 
 ## Prerequisites
 
-- A simulator board: `pic16f877a`, `pic16f887`, `pic16f628a`, or
-  `pic12f675`. Other parts follow their own epic-cc debugger support;
-  a board without a debug section fails with PlatformIO's "does not
-  support debugging".
+- A simulator board: `pic16f877a`, `pic16f887`, `pic16f628a`,
+  `pic12f675`, or `pic18f4550`. Other parts follow their own epic-cc
+  debugger support; a board without a debug section fails with
+  PlatformIO's "does not support debugging".
 - Stock gdb on PATH (`apt install gdb` on Debian/Ubuntu). A packaged gdb
   is a separate child; until it lands, the client is the system one.
 - A current `toolchain-epiccc` ([package versions](../packages.md)),
-  which ships `epic-cc-gdbserver`.
+  which ships `epic-cc-gdbserver`. `pic18f4550` needs one built from
+  epic-cc 0.5.0 or later: older servers predate `--device` and fail at
+  server start on a pic18 board.
 
 No `platformio.ini` setup is needed: the board selects `debug_tool =
 epic-sim` by default.
@@ -95,8 +97,10 @@ and exits.
 
 - The server is `epic-cc-gdbserver` from the toolchain package, run on
   the built hex file plus the ELF+DWARF sidecar the builder always emits
-  next to it (`firmware.elf` beside `firmware.hex` in the build dir). gdb
-  loads the sidecar, never the hex file.
+  next to it (`firmware.elf` beside `firmware.hex` in the build dir). A
+  board off the default pic14 sim (today, `pic18f4550`) adds
+  `--device <mcu>`; pic14 boards spell none. gdb loads the sidecar,
+  never the hex file.
 - An XC8 build (`board_build.toolchain = xc8`) is refused up front: it
   emits no sidecar, so there is nothing for the server to load.
 - Troubleshooting: `No gdb on PATH` means install gdb above. A

@@ -13,6 +13,32 @@
       "xc8"
     ]
   },
+  "debug": {
+    "default_tools": [
+      "epic-sim"
+    ],
+    "tools": {
+      "epic-sim": {
+        "init_cmds": [
+          "target remote $DEBUG_PORT"
+        ],
+        "port": ":3333",
+        "server": {
+          "arguments": [
+            "$PROG_DIR/$PROG_NAME.hex",
+            "$PROG_PATH",
+            "--port",
+            "3333",
+            "--device",
+            "p18f4550"
+          ],
+          "executable": "epic-cc-gdbserver",
+          "package": "toolchain-epiccc",
+          "ready_pattern": "waiting for gdb"
+        }
+      }
+    }
+  },
   "frameworks": [
     "epichal"
   ],

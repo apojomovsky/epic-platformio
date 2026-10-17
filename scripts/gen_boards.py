@@ -168,15 +168,15 @@ CURATED_SUPPORT = "simulator"
 HARDWARE_BOARDS: frozenset = frozenset()
 
 
-# Every pic14 board debugs through the simulator (#134, coordinator
-# option 2): epic-cc-gdbserver drives the PIC14 sim (epic-cc#259), and
+# Simulator-proven cores (#134, coordinator option 2, #145): epic-cc-gdbserver
+# drives the PIC14 sim (epic-cc#259) and the PIC18 sim (epic-cc#1312), and
 # the stock-gdb recipe is verified per core. The 12F675 is in scope with
-# the rest because devices.json spells its core pic14. Other cores follow
-# their own epic-cc children.
-DEBUG_CORE = "pic14"
+# the rest because devices.json spells its core pic14. Remaining cores
+# follow their own epic-cc children.
+DEBUG_CORES = frozenset({"pic14", "pic18"})
 
 
-def debug_section() -> dict:
+def debug_section(mcu: str | None = None) -> dict:
     """The `pio debug` wiring for a simulator-proven board (#134).
 
     One tool, epic-sim: epic-cc-gdbserver from the toolchain package on
@@ -184,8 +184,18 @@ def debug_section() -> dict:
     stock gdb. The init script is one line: the generic script's
     `monitor` lines have no server side here, and the default init-break
     names a symbol these sidecars do not carry, so the session starts
-    halted at the reset vector and the user breaks on file:line.
+    halted at the reset vector and the user breaks on file:line. `mcu`
+    selects a non-default sim core: without it the server assumes pic14,
+    which misparses any other core's HEX (#145).
     """
+    args = [
+        "$PROG_DIR/$PROG_NAME.hex",
+        "$PROG_PATH",
+        "--port",
+        "3333",
+    ]
+    if mcu is not None:
+        args += ["--device", mcu]
     return {
         "default_tools": ["epic-sim"],
         "tools": {
@@ -193,12 +203,7 @@ def debug_section() -> dict:
                 "server": {
                     "package": "toolchain-epiccc",
                     "executable": "epic-cc-gdbserver",
-                    "arguments": [
-                        "$PROG_DIR/$PROG_NAME.hex",
-                        "$PROG_PATH",
-                        "--port",
-                        "3333",
-                    ],
+                    "arguments": args,
                     "ready_pattern": "waiting for gdb",
                 },
                 "port": ":3333",
@@ -339,12 +344,16 @@ def board_json(entry: dict, board_id: str, dest: pathlib.Path, curated: dict | N
         # for every beta board, so the config test reads it from here.
         build["oscillator"] = curated["oscillator"]
         doc["support"] = "hardware" if board_id in HARDWARE_BOARDS else CURATED_SUPPORT
-        # Simulator debugging (#134) follows the core: every pic14 board
-        # debugs through the sim, other cores wait for their own epic-cc
-        # support. A board leaving pic14 drops the section rather than
-        # keeping a stale one the merge above would otherwise preserve.
-        if entry.get("core") == DEBUG_CORE:
-            doc["debug"] = debug_section()
+        # Simulator debugging (#134, #145) follows the core: pic14 and pic18
+        # boards debug through the sim, other cores wait for their own
+        # epic-cc support. Only boards off the server's default pic14 sim
+        # spell --device: the flag postdates the pinned toolchain, which
+        # rejects unknown options, so flagging pic14 would break its
+        # proven sessions. A board leaving the set drops the section
+        # rather than keeping a stale one the merge above would preserve.
+        if entry.get("core") in DEBUG_CORES:
+            mcu = entry["mcu"] if entry.get("core") != "pic14" else None
+            doc["debug"] = debug_section(mcu)
         else:
             doc.pop("debug", None)
         upload = doc.setdefault("upload", {})
