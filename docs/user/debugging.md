@@ -16,7 +16,7 @@ not on the chip: no programmer involved.
   is a separate child; until it lands, the client is the system one.
 - A current `toolchain-epiccc` ([package versions](https://github.com/apojomovsky/epic-platformio/blob/master/docs/internals/packages.md)),
   which ships `epic-cc-gdbserver`. `pic18f4550` needs one built from
-  epic-cc 0.5.0 or later: older servers predate `--device` and fail at
+  epic-cc `v0.5.0` or later: older servers predate `--device` and fail at
   server start on a pic18 board.
 
 No `platformio.ini` setup is needed: the board selects `debug_tool =
