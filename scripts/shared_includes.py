@@ -4,12 +4,14 @@
 The "Ways to use epic8" card is owned by apojomovsky/epic-docs and copied
 into docs/snippets/ so README.src.md can include it. docs/snippets/SHARED-INCLUDES
 records the hub commit the copy came from and the sha256 of the copy.
+HUB_SHA256 pins the hub file bytes at that commit, so editing the copy and
+recomputing the record still fails `check`. `sync` refreshes all three together.
 
 `check` runs from gen_docs.py (make docs-gen and the CI docs job) and fails
 when the copy no longer matches its recorded checksum, which means it was
 edited here. It is local and never touches the network. `sync` fetches the
-hub file at a commit and rewrites the copy and the record; only that
-make target needs the network.
+hub file at a commit and rewrites the copy, the record and the pin below;
+only that make target needs the network.
 """
 
 from __future__ import annotations
@@ -27,10 +29,15 @@ HUB = "apojomovsky/epic-docs"
 HUB_FILE = "includes/ways-to-use-epic8.md"
 COPY = "docs/snippets/ways-to-use-epic8.md"
 RECORD = "docs/snippets/SHARED-INCLUDES"
+SCRIPT = "scripts/shared_includes.py"
+# Digest of the hub file at the recorded commit. Compared against the copy by
+# check(), so a recomputed record alone cannot hide a local edit of the copy.
+HUB_SHA256 = "0a54fe1e12c604163cf3ab0533bd04f1593818c0607f59fa566bb874ae31eb40"
 RAW_URL = "https://raw.githubusercontent.com/{hub}/{commit}/{path}"
 
 _COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 _DIGEST_RE = re.compile(r"^[0-9a-f]{64}$")
+_PIN_RE = re.compile(r'^HUB_SHA256 = "([0-9a-f]{64})"$', re.MULTILINE)
 _SYNC_HINT = "run make sync-shared-includes REF=<epic-docs commit sha>"
 
 
@@ -62,6 +69,20 @@ def render_record(commit: str, digest: str) -> str:
     )
 
 
+def read_pin(text: str) -> str:
+    """The HUB_SHA256 value in a copy of this script; "" when absent."""
+    match = _PIN_RE.search(text)
+    return match.group(1) if match else ""
+
+
+def render_pin(script_text: str, digest: str) -> str:
+    """The script with its HUB_SHA256 line set to `digest`."""
+    updated, count = _PIN_RE.subn(f'HUB_SHA256 = "{digest}"', script_text, count=1)
+    if not count:
+        raise ValueError(f"{SCRIPT}: HUB_SHA256 pin line missing or malformed")
+    return updated
+
+
 def check(root: pathlib.Path) -> list[str]:
     """Problems with the vendored copy; an empty list means it is clean."""
     record_path = root / RECORD
@@ -81,6 +102,10 @@ def check(root: pathlib.Path) -> list[str]:
     digest_ok = bool(_DIGEST_RE.match(digest))
     if not digest_ok:
         problems.append(f"{RECORD}: sha256 must be 64 lowercase hex digits")
+    script_path = root / SCRIPT
+    pin = read_pin(script_path.read_text()) if script_path.is_file() else ""
+    if not pin:
+        problems.append(f"{SCRIPT}: HUB_SHA256 pin missing or malformed")
     if not copy_path.is_file():
         problems.append(f"{COPY} missing; {_SYNC_HINT}")
     elif digest_ok and sha256_hex(copy_path.read_bytes()) != digest:
@@ -88,6 +113,12 @@ def check(root: pathlib.Path) -> list[str]:
             f"{COPY} does not match its recorded sha256: it was edited here."
             f" Restore it with git checkout, or change {HUB}:{HUB_FILE}"
             f" and {_SYNC_HINT}"
+        )
+    elif pin and sha256_hex(copy_path.read_bytes()) != pin:
+        problems.append(
+            f"{COPY} does not match the pinned hub sha256: it was edited here"
+            f" and the record recomputed. Restore it with git checkout,"
+            f" or change {HUB}:{HUB_FILE} and {_SYNC_HINT}"
         )
     return problems
 
@@ -108,9 +139,13 @@ def sync(root: pathlib.Path, commit: str, fetch=fetch_hub) -> str:
     if not data:
         raise ValueError(f"{HUB}:{HUB_FILE} at {commit} is empty")
     digest = sha256_hex(data)
+    script_path = root / SCRIPT
+    # Render the pin first, so a broken script fails before the tree is touched.
+    pinned_script = render_pin(script_path.read_text(), digest)
     (root / COPY).parent.mkdir(parents=True, exist_ok=True)
     (root / COPY).write_bytes(data)
     (root / RECORD).write_text(render_record(commit, digest))
+    script_path.write_text(pinned_script)
     return digest
 
 
