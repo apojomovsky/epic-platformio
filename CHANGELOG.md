@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here, generated from
 Conventional Commits. Dates are UTC.
+## [epic8-v0.1.2] - 2026-10-17
+
+### Fixes
+
+- Ship the toolchain-epiccc 0.5.0 pin under a fresh platform version: 0.1.1 is already published with the 0.4.0+pio1 pin and registry versions are immutable (#163)
+
 ## [toolchain-epiccc-v0.5.0] - 2026-10-17
 
 ### Documentation
