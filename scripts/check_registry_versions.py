@@ -80,7 +80,7 @@ def extract_manifest(tarball, member, url):
             if extracted is None:
                 raise RegistryError(f"{url} has no {member}")
             return json.loads(extracted.read())
-    except tarfile.TarError as exc:
+    except (tarfile.TarError, EOFError) as exc:
         raise RegistryError(f"cannot unpack {url}: {exc}") from exc
     except ValueError as exc:
         raise RegistryError(

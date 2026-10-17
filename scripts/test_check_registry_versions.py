@@ -177,6 +177,16 @@ class OutageTests(unittest.TestCase):
             any("epic8" in e and "refusing to pass silently" in e for e in errors),
             errors)
 
+    def test_malformed_listing_fails_loudly(self):
+        tmp = pathlib.Path(tempfile.mkdtemp())
+        incident_repo(tmp)
+        mapping = fixture_mapping()
+        mapping[LISTING_URLS["epic8"]] = b'{"versions": [{"name": "0.1.1"}]}'
+        notes, errors = gate.check_tree(tmp, fetch=fake_fetch(mapping))
+        self.assertTrue(
+            any("epic8" in e and "refusing to pass silently" in e for e in errors),
+            errors)
+
     def test_tarball_outage_fails_loudly(self):
         tmp = pathlib.Path(tempfile.mkdtemp())
         pins = {name: entry["version"] if isinstance(entry, dict) else entry
@@ -188,6 +198,23 @@ class OutageTests(unittest.TestCase):
         mapping = fixture_mapping()
         mapping["https://dl.registry.platformio.org/download/apojomovsky/platform/"
                "epic8/0.1.1/epic8-0.1.1.tar.gz"] = gate.RegistryError("truncated")
+        notes, errors = gate.check_tree(tmp, fetch=fake_fetch(mapping))
+        self.assertTrue(
+            any("epic8" in e and "refusing to pass silently" in e for e in errors),
+            errors)
+
+    def test_truncated_tarball_fails_loudly(self):
+        tmp = pathlib.Path(tempfile.mkdtemp())
+        pins = {name: entry["version"] if isinstance(entry, dict) else entry
+                for name, entry in published_platform_pins().items()}
+        write_repo(tmp, "0.1.1", pins, {
+            "toolchain-epiccc": {"name": "toolchain-epiccc", "version": "0.5.0"},
+            "framework-epichal": {"name": "framework-epichal", "version": "0.6.0+pio1"},
+        })
+        mapping = fixture_mapping()
+        mapping["https://dl.registry.platformio.org/download/apojomovsky/platform/"
+               "epic8/0.1.1/epic8-0.1.1.tar.gz"] = (
+            FIXTURES / "platform_0_1_1.tar.gz").read_bytes()[:60]
         notes, errors = gate.check_tree(tmp, fetch=fake_fetch(mapping))
         self.assertTrue(
             any("epic8" in e and "refusing to pass silently" in e for e in errors),
@@ -215,6 +242,12 @@ class SkipTests(unittest.TestCase):
     def test_skip_refused_in_ci(self):
         os.environ["REGISTRY_CHECK"] = "skip"
         os.environ["GITHUB_ACTIONS"] = "true"
+        self.assertEqual(gate.main(), 1)
+
+    def test_skip_refused_under_plain_ci_env(self):
+        os.environ["REGISTRY_CHECK"] = "skip"
+        os.environ.pop("GITHUB_ACTIONS", None)
+        os.environ["CI"] = "true"
         self.assertEqual(gate.main(), 1)
 
 
