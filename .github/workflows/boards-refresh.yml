@@ -119,6 +119,7 @@ jobs:
           fi
 
       - name: Fetch epic-hal parts map and manifest
+        id: hal
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HAL_TAG: ${{ steps.tags.outputs.hal_tag }}
@@ -126,12 +127,30 @@ jobs:
           hal_tag="$HAL_TAG"
           gh release download "$hal_tag" --repo apojomovsky/epic-hal \
             --pattern "parts.txt" --dir /tmp --clobber
-          gh api "repos/apojomovsky/epic-hal/contents/common/manifest/modules.toml?ref=${hal_tag}" \
-            --jq '.content' | base64 -d > /tmp/modules.toml
+          # modules.toml moved in the epic-hal restructure: common/ on
+          # master, epic-common/ at v0.6.0 and older. Try the current
+          # layout first, then the legacy one.
+          hal_layout=""
+          for candidate in common/manifest/modules.toml epic-common/manifest/modules.toml; do
+            payload="$(gh api "repos/apojomovsky/epic-hal/contents/${candidate}?ref=${hal_tag}" \
+              --jq '.content' 2>/dev/null)" || continue
+            if [ -n "$payload" ] && printf '%s' "$payload" | base64 -d > /tmp/modules.toml \
+                && [ -s /tmp/modules.toml ]; then
+              hal_layout="$candidate"
+              break
+            fi
+          done
           test -s /tmp/parts.txt
-          test -s /tmp/modules.toml
+          if [ -z "$hal_layout" ]; then
+            echo "hal_layout=" >> "$GITHUB_OUTPUT"
+            echo "::notice::epic-hal ${hal_tag} carries no modules.toml at either layout, skipping regeneration"
+          else
+            echo "hal_layout=${hal_layout}" >> "$GITHUB_OUTPUT"
+            echo "resolved modules.toml at ${hal_layout}"
+          fi
 
       - name: Regenerate boards
+        if: steps.hal.outputs.hal_layout != ''
         run: |
           python3 scripts/gen_boards.py \
             --devices-json /tmp/devices.json \
