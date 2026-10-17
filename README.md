@@ -8,8 +8,9 @@
 
 # epic-platformio
 
-Build, simulate and flash 8-bit PIC microcontrollers from PlatformIO. Open
-source (MIT), from the compiler to the programmer tools.
+Build, simulate and flash 8-bit PIC microcontrollers from PlatformIO. Fully
+open source and MIT licensed: an auditable path from C to hex, with the
+compiler, the HAL and the platform under the same licence.
 
 [![CI](https://github.com/apojomovsky/epic-platformio/actions/workflows/ci.yml/badge.svg)](https://github.com/apojomovsky/epic-platformio/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/apojomovsky/epic-platformio/blob/master/LICENSE) [![Release](https://img.shields.io/github/v/release/apojomovsky/epic-platformio)](https://github.com/apojomovsky/epic-platformio/releases)
 
