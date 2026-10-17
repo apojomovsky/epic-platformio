@@ -234,7 +234,7 @@ every pull request:
   `scripts/check_versions_consistent.py`. That last check fails the PR if
   `packages/versions.json`, a package's own `package.json` and `platform.json`'s
   download URL disagree about that package's current version (see
-  `docs/packages.md`).
+  `docs/internals/packages.md`).
 - `docs-gen` runs `make docs-gen` and fails on stale generated pages
   (`docs/user/boards.md`, `README.md`, `registry-README.md`), then runs
   `scripts/gen_docs.py --check` for registry-manifest and link checks.

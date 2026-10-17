@@ -8,7 +8,7 @@ packaged as `tool-pk2cmd`. That fork is the maintained one;
 
 The package ships Microchip's own `PK2DeviceFile.dat` 1.62.14, not
 jaka-fi's, which jaka-fi withdrew after a copyright claim from the
-PICkitPlus team (`docs/platform-decisions.md`). It covers every board in
+PICkitPlus team (`docs/internals/platform-decisions.md`). It covers every board in
 `boards/`. Newer MSB-first (MSB1st) parts, such as the PIC16F18xxx and
 PIC18 Q families, are not in it; see "Parts outside the bundled device
 file" below.

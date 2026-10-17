@@ -253,7 +253,7 @@ def cc_name_to_bare(name: str) -> str:
 def build_matrix(
     devices: list[dict], parts: dict[str, str], epiccc_families: dict[str, bool]
 ) -> dict[str, dict]:
-    """bare device name -> capability facts, per docs/platform-decisions.md's
+    """bare device name -> capability facts, per docs/internals/platform-decisions.md's
     "Boards: generated from epic-cc/epic-hal's own registries" section."""
     cc_by_bare = {cc_name_to_bare(d["name"]): d["name"] for d in devices}
     core_by_bare = {cc_name_to_bare(d["name"]): d["core"] for d in devices}

@@ -15,11 +15,11 @@ Three facts `platform.json` cannot express by itself:
   digits, so `configure_debug_session` applies them (#134).
 
 Why the URL pin is remapped rather than duplicated per host: `platform.json`
-stays the single place a version is pinned (D-5, docs/packages.md), and the
+stays the single place a version is pinned (D-5, docs/internals/packages.md), and the
 remap is a pure function of the URL pin, so the two hosts cannot drift to
 two versions the way two hand-kept pins would.
 
-Design: docs/platform-decisions.md, epic-cc docs/46 D-5 and D-10.
+Design: docs/internals/platform-decisions.md, epic-cc docs/46 D-5 and D-10.
 """
 
 from platformio.debug.exception import DebugInvalidOptionsError
@@ -49,7 +49,7 @@ PROTOCOL_TOOL_PACKAGES = {
 }
 
 # Targets that drive the programmer and so need its package. A plain build
-# is not one of them, so it never downloads a tool (docs/platform-decisions.md).
+# is not one of them, so it never downloads a tool (docs/internals/platform-decisions.md).
 UPLOAD_TARGETS = {"upload", "erase", "readback"}
 
 

@@ -11,7 +11,7 @@ Usage:
   package_toolchain.py --zip epic-cc-0.0.3-x86_64-windows.zip --system windows_amd64 --version 0.0.3 --out toolchain-epiccc-windows_amd64-0.0.3.tar.gz
 
 The caller decides version mapping. By default it equals the upstream tag
-stripped of leading v. See packages/versions.json and packages/README.
+stripped of leading v. See packages/versions.json and docs/internals/packages/README.md.
 """
 
 import argparse

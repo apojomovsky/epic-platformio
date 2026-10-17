@@ -4,7 +4,7 @@ Maintainer notes for the registry packages this repo publishes: what
 each tarball contains and how its version maps to upstream. The
 user-facing copy lives in each package's own `README.md`. The release
 flow (building the tarballs, publishing, the consistency checker) is in
-[`docs/packages.md`](../docs/packages.md).
+[`docs/internals/packages.md`](../packages.md).
 
 ## toolchain-epiccc layout
 
