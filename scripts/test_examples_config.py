@@ -117,9 +117,11 @@ class ExamplesDeclareConfigWords(unittest.TestCase):
                         self.assertEqual(int(pairs["xtal_hz"]), expected, example.name)
 
 
-# The oscillator words the examples name, by the clock they select. This is
-# the subset of each family's FOSC/osc fuse table the examples use; a word
-# outside it fails the test until it is added here with its class.
+# The oscillator words the examples name, by the clock they select. The word
+# universe comes from scripts/osc_snapshot.json (each curated device's osc
+# words at the recorded epic-cc tag); the class column is this repo's own
+# taxonomy matching build.oscillator, so it stays hand-written. A word
+# outside the table fails the test until it is added here with its class.
 _OSC_CLASS = {
     "HS": "crystal",
     "XT": "crystal",
@@ -138,6 +140,14 @@ _OSC_CLASS = {
     "EC": "external",
     "ECIO": "external",
 }
+
+_SNAPSHOT = json.loads((ROOT / "scripts" / "osc_snapshot.json").read_text(encoding="utf-8"))
+_OSC_UNIVERSE = {word for words in _SNAPSHOT["devices"].values() for word in words}
+
+# Words no example names that epic-cc spells differently: INTRCCLKOUT is the
+# XC8 spelling of the 12F675 clock-out internal mode (epic-cc: INTRCCLK),
+# and RCIO is the XC8 spelling of RC with I/O (epic-cc: EXTRCIO).
+_OSC_ALLOWLIST = frozenset({"INTRCCLKOUT", "RCIO"})
 
 # The clock class lives in the board JSON (scripts/gen_boards.py emits
 # build.oscillator from its CURATED table); the frequency still comes
@@ -198,6 +208,11 @@ class OscillatorWordsMatchBoardClock(unittest.TestCase):
             for word in _oscillator_words(example):
                 with self.subTest(example=example.name, word=word):
                     self.assertIn(word, _OSC_CLASS, "unknown oscillator word")
+
+    def test_oscillator_words_come_from_family_data(self):
+        for word in _OSC_CLASS:
+            with self.subTest(word=word):
+                self.assertIn(word, _OSC_UNIVERSE | _OSC_ALLOWLIST, "not in the family snapshot or the XC8 allowlist")
 
     def test_oscillator_class_matches_the_board(self):
         for example in _examples():

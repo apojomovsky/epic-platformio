@@ -1,0 +1,90 @@
+{
+  "_header": {
+    "epic_cc_sha": "b4ec9a4fae219ce0b6e93fcbcec96f874ec20aa8",
+    "epic_cc_tag": "v0.5.0",
+    "extract": "tag=v0.5.0; sha=b4ec9a4fae219ce0b6e93fcbcec96f874ec20aa8; for d in p12f675 p16f628a p16f877a p16f887 p16f1937 p18f4550; do gh api \"repos/apojomovsky/epic-cc/contents/crates/device/devices/$d.toml?ref=$tag\" --jq .content | base64 -d > \"$d.toml\"; done; TAG=$tag SHA=$sha python3 - <<'EOF'\nimport json, os, tomllib\npath = \"scripts/osc_snapshot.json\"\nsnapshot = json.load(open(path))\ndevices = {}\nfor name in [\"p12f675\", \"p16f628a\", \"p16f877a\", \"p16f887\", \"p16f1937\", \"p18f4550\"]:\n    doc = tomllib.load(open(f\"{name}.toml\", \"rb\"))\n    for field in doc[\"config\"][\"fields\"]:\n        if field[\"name\"] == \"osc\" or \"FOSC\" in field.get(\"aliases\", []):\n            words = {v[\"name\"].upper() for v in field[\"values\"]}\n            words |= {a.upper() for v in field[\"values\"] for a in v.get(\"aliases\", [])}\n            devices[name] = sorted(words)\nsnapshot[\"_header\"][\"epic_cc_tag\"] = os.environ[\"TAG\"]\nsnapshot[\"_header\"][\"epic_cc_sha\"] = os.environ[\"SHA\"]\nsnapshot[\"devices\"] = devices\njson.dump(snapshot, open(path, \"w\"), indent=2, sort_keys=True)\nopen(path, \"a\").write(\"\\n\")\nEOF"
+  },
+  "devices": {
+    "p12f675": [
+      "EC",
+      "EXTRCCLK",
+      "EXTRCIO",
+      "HS",
+      "INTOSCCLK",
+      "INTOSCIO",
+      "INTRCCLK",
+      "INTRCIO",
+      "LP",
+      "XT"
+    ],
+    "p16f1937": [
+      "ECH",
+      "ECL",
+      "ECM",
+      "EXTRC",
+      "HS",
+      "INTOSC",
+      "LP",
+      "XT"
+    ],
+    "p16f628a": [
+      "EC",
+      "ECIO",
+      "EXTRCCLK",
+      "EXTRCIO",
+      "EXTRC_CLKOUT",
+      "EXTRC_NOCLKOUT",
+      "HS",
+      "INTOSCCLK",
+      "INTOSCIO",
+      "INTOSC_CLKOUT",
+      "INTOSC_NOCLKOUT",
+      "LP",
+      "XT"
+    ],
+    "p16f877a": [
+      "EXTRC",
+      "HS",
+      "LP",
+      "RC",
+      "XT"
+    ],
+    "p16f887": [
+      "EC",
+      "EXTRC_CLKOUT",
+      "EXTRC_NOCLKOUT",
+      "HS",
+      "INTOSC_CLKOUT",
+      "INTOSC_NOCLKOUT",
+      "INTRC_CLKOUT",
+      "INTRC_NOCLKOUT",
+      "LP",
+      "XT"
+    ],
+    "p18f4550": [
+      "EC",
+      "ECIO",
+      "ECIO_EC",
+      "ECPIO",
+      "ECPLL",
+      "ECPLLIO_EC",
+      "ECPLL_EC",
+      "EC_EC",
+      "HS",
+      "HSPLL",
+      "HSPLL_HS",
+      "INTCKO",
+      "INTHS",
+      "INTIO",
+      "INTOSCIO_EC",
+      "INTOSC_EC",
+      "INTOSC_HS",
+      "INTOSC_XT",
+      "INTXT",
+      "XT",
+      "XTPLL",
+      "XTPLL_XT",
+      "XT_XT"
+    ]
+  }
+}
