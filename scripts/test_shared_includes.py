@@ -1,9 +1,11 @@
-"""The vendored epic-docs copy must match its recorded checksum.
+"""The vendored epic-docs copy must match its record and the hub pin.
 
 docs/snippets/ways-to-use-epic8.md is copied from apojomovsky/epic-docs;
 docs/snippets/SHARED-INCLUDES records the hub commit and the sha256 of the
-copy. These tests run check() against temporary repos, so no network is
-touched: the fetch used by sync() is injected.
+copy, and scripts/shared_includes.py pins the hub file digest in HUB_SHA256
+so a recomputed record cannot hide a local edit. These tests run check()
+against temporary repos, so no network is touched: the fetch used by sync()
+is injected, and the script copy carrying the pin is a stub.
 """
 
 import pathlib
@@ -18,6 +20,7 @@ import shared_includes
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 COMMIT = "2ad7d851c1d39888dda84adcbf9fa8d0667453c8"
 HUB_TEXT = b"## Ways to use epic8\n\n- **Command line:** one line.\n"
+STUB_PIN = "0" * 64
 
 
 def _write(root, rel, data):
@@ -26,7 +29,12 @@ def _write(root, rel, data):
     path.write_bytes(data)
 
 
+def _write_stub_script(root, pin=STUB_PIN):
+    _write(root, shared_includes.SCRIPT, f'HUB_SHA256 = "{pin}"\n'.encode())
+
+
 def _synced_root(root):
+    _write_stub_script(root)
     shared_includes.sync(root, COMMIT, fetch=lambda commit: HUB_TEXT)
     return root
 
@@ -49,6 +57,29 @@ class TestCheck(unittest.TestCase):
             problems = shared_includes.check(root)
             self.assertEqual(len(problems), 1)
             self.assertIn("edited here", problems[0])
+
+    def test_edited_copy_with_recomputed_record_fails_on_pin(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = _synced_root(pathlib.Path(tmp))
+            edited = HUB_TEXT + b"edited here\n"
+            _write(root, shared_includes.COPY, edited)
+            _write(
+                root,
+                shared_includes.RECORD,
+                shared_includes.render_record(
+                    COMMIT, shared_includes.sha256_hex(edited)
+                ).encode(),
+            )
+            problems = shared_includes.check(root)
+            self.assertEqual(len(problems), 1)
+            self.assertIn("pinned", problems[0])
+
+    def test_missing_pin_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = _synced_root(pathlib.Path(tmp))
+            _write(root, shared_includes.SCRIPT, b"# no pin here\n")
+            problems = shared_includes.check(root)
+            self.assertTrue(any("HUB_SHA256" in p for p in problems))
 
     def test_missing_copy_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -101,6 +132,7 @@ class TestSync(unittest.TestCase):
     def test_sync_writes_copy_and_record(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
+            _write_stub_script(root)
             digest = shared_includes.sync(root, COMMIT, fetch=lambda commit: HUB_TEXT)
             self.assertEqual(digest, shared_includes.sha256_hex(HUB_TEXT))
             self.assertEqual((root / shared_includes.COPY).read_bytes(), HUB_TEXT)
@@ -109,6 +141,33 @@ class TestSync(unittest.TestCase):
             )
             self.assertEqual(fields["commit"], COMMIT)
             self.assertEqual(fields["sha256"], digest)
+
+    def test_sync_refreshes_the_pin(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            _write_stub_script(root)
+            digest = shared_includes.sync(root, COMMIT, fetch=lambda commit: HUB_TEXT)
+            pin = shared_includes.read_pin(
+                (root / shared_includes.SCRIPT).read_text()
+            )
+            self.assertEqual(pin, digest)
+            self.assertEqual(shared_includes.check(root), [])
+
+    def test_sync_without_script_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(OSError):
+                shared_includes.sync(
+                    pathlib.Path(tmp), COMMIT, fetch=lambda commit: HUB_TEXT
+                )
+
+    def test_sync_rejects_a_script_without_a_pin_line(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            _write(root, shared_includes.SCRIPT, b"# no pin here\n")
+            with self.assertRaises(ValueError):
+                shared_includes.sync(
+                    root, COMMIT, fetch=lambda commit: HUB_TEXT
+                )
 
     def test_sync_rewrites_an_edited_copy(self):
         with tempfile.TemporaryDirectory() as tmp:
