@@ -66,7 +66,7 @@ covers is the package's own `system` list. A URL pin (a project's own
 `platform_packages` override) still names one host's asset, and
 `platform.py` remaps that pin to the running host's asset at build time
 (the reasoning is in
-[`docs/platform-decisions.md`](platform-decisions.md#distribution-platformpy-picks-the-hosts-toolchain-tools-arrive-on-selection)).
+[`docs/internals/platform-decisions.md`](platform-decisions.md#distribution-platformpy-picks-the-hosts-toolchain-tools-arrive-on-selection)).
 
 Consequences for a release:
 
@@ -177,7 +177,7 @@ curated `boards/` set and `boards-experimental/` (`scripts/gen_boards.py`)
 against the latest epic-cc and epic-hal releases and opens a pull request
 when the result differs from what's committed (PIO-7,
 epic-platformio#25); see
-[`docs/platform-decisions.md`](platform-decisions.md) for the design.
+[`docs/internals/platform-decisions.md`](platform-decisions.md) for the design.
 It runs independently of `package.yml` above: a board can list a
 toolchain/family combination before that family's package is actually
 cut, and the builder's own validation is what catches that gap at build

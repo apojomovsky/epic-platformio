@@ -10,7 +10,7 @@ supports [MPLAB XC8](#xc8) as a fully supported alternate toolchain:
 ## Install the platform
 
 The beta will publish to the PlatformIO registry as `apojomovsky/epic8`
-(package versions: [`docs/packages.md`](packages.md)).
+(package versions: [`docs/internals/packages.md`](internals/packages.md)).
 The registry publication lands on go-ahead after this change merges;
 until then the git URL below is the working install, used both to
 install and as the `platform` value:
@@ -250,7 +250,7 @@ Unlike epic-cc, config words are spelled the ordinary XC8 way
 translate between the two, so an xc8 project is a plain XC8 project as far
 as its own source goes.
 
-**Never vendored** (docs/platform-decisions.md): Microchip's EULA forbids
+**Never vendored** (docs/internals/platform-decisions.md): Microchip's EULA forbids
 redistributing XC8, so `platform.json` carries no toolchain package for it,
 unlike the upload tools below, which download automatically when an
 upload runs. Install it yourself (the free tier is enough) from
@@ -323,7 +323,7 @@ are correct by construction, but they have not been confirmed against real
 silicon at this point; if `minipro -l` or `pk2cmd` reports a different
 spelling for your device, that is the bug to file. The full history,
 including the rejected `ipecmd` alternative and the license discussion, is
-in [`docs/platform-decisions.md`](platform-decisions.md).
+in [`docs/internals/platform-decisions.md`](internals/platform-decisions.md).
 
 ## Supported parts
 

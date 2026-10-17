@@ -5,7 +5,7 @@ goes into one invocation, so there are no per-object compile rules and no
 linker. XC8 is a fully supported alternate toolchain (`board_build.toolchain
 = xc8`, default `epic-cc`): the ordinary compile-then-link shape, one object
 per source file. XC8 is never vendored (Microchip's EULA forbids
-redistribution, docs/platform-decisions.md), so this script finds a binary
+redistribution, docs/internals/platform-decisions.md), so this script finds a binary
 the user already installed, on PATH or via EPIC8_XC8_PATH. The upload tools
 below use that lookup only as a fallthrough before their own tool package;
 for XC8 it is the only path.

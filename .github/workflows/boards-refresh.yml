@@ -3,7 +3,7 @@ name: boards-refresh
 # Keeps boards/*.json (scripts/gen_boards.py, PIO-6) in sync with
 # epic-cc/epic-hal releases (PIO-7, epic-platformio#25): regenerates and
 # opens a PR on a diff, never commits to master directly. See
-# docs/platform-decisions.md for the design and the [VERIFY] note on the
+# docs/internals/platform-decisions.md for the design and the [VERIFY] note on the
 # repo's own "Allow GitHub Actions to create pull requests" setting.
 
 on:
