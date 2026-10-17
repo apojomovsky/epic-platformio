@@ -2,7 +2,7 @@ name: xc8-ci
 
 # Real-target build validation for the xc8 toolchain path (PIO-4,
 # epic-platformio#22). Reuses epic-hal's existing epic-hal-ci GHCR image
-# rather than building a second one (docs/platform-decisions.md); never
+# rather than building a second one (docs/internals/platform-decisions.md); never
 # built here, human-triggered only in epic-hal via `make ci-image-push`.
 # If a PR fails to pull it, that or the cross-repo package grant is why.
 

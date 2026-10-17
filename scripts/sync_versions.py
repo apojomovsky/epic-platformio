@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Write back a just-published package version to the three places that
-must agree: packages/versions.json (the D-6 mapping, docs/packages.md),
+must agree: packages/versions.json (the D-6 mapping, docs/internals/packages.md),
 packages/<name>/package.json, and platform.json's registry pin. Before
 this script existed those were hand-edited in a separate PR, which is
 exactly how they drifted (stale platform.json version, stale package.json
@@ -20,7 +20,7 @@ packaging revision: --upstream-tag v0.1.1 --pkg-version 0.1.1+pio1. The
 programmer tools are outside this script: epic-tools versions and
 publishes them, so platform.json pins their bare upstream and
 packages/versions.json records the exact build as provenance
-(epic-platformio#104, docs/packages.md).
+(epic-platformio#104, docs/internals/packages.md).
 
 Prints "old_upstream_tag=<value>" (empty if this is the package's first
 entry) to stdout, the range start the changelog rollup needs, before this

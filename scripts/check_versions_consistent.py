@@ -2,7 +2,7 @@
 """Fail the PR if packages/versions.json, packages/<name>/package.json and
 platform.json disagree about a package's current version.
 
-packages/versions.json is the single source of truth (docs/packages.md,
+packages/versions.json is the single source of truth (docs/internals/packages.md,
 D-6): its newest version per package must match the
 package.json in that package's dir, and platform.json's registry pin for
 that package must name the same version under owner apojomovsky.
@@ -51,7 +51,7 @@ def check_tree(root: pathlib.Path, versions: dict, platform: dict) -> list:
     if not PLATFORM_VERSION_RE.match(str(platform_version)):
         errors.append(
             f"platform.json version {platform_version!r} is not X.Y.Z "
-            f"(the platform's source of truth, docs/packages.md)"
+            f"(the platform's source of truth, docs/internals/packages.md)"
         )
 
     for package, entries in versions.items():

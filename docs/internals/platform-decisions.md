@@ -123,7 +123,7 @@ host-specific fact is resolved. It does two jobs and refuses nothing:
   `platform_packages` override) still names one host's asset, so
   `platform.py` swaps the host token in that asset's file name for the
   running machine's, the shape Community-PIO-CH32V uses. `platform.json`
-  stays the only place a version is pinned (D-5, `docs/packages.md`) and
+  stays the only place a version is pinned (D-5, `docs/internals/packages.md`) and
   the remap is a pure function of the URL pin, so the two hosts cannot
   drift to two versions the way two hand-kept pins would. Both Windows
   spellings PlatformIO can report (`windows_amd64`, `windows_x86_64`)
