@@ -44,7 +44,7 @@
     "toolchain-epiccc": {
       "type": "toolchain",
       "owner": "apojomovsky",
-      "version": "0.4.0+pio1"
+      "version": "0.5.0"
     },
     "framework-epichal": {
       "type": "framework",

@@ -103,8 +103,4 @@ and exits.
   never the hex file.
 - An XC8 build (`board_build.toolchain = xc8`) is refused up front: it
   emits no sidecar, so there is nothing for the server to load.
-- Troubleshooting: `No gdb on PATH` means install gdb above. A
-  `Permission denied` launching the server means the installed toolchain
-  package predates the executable-bit fix shipped in [later
-  packages](https://github.com/apojomovsky/epic-platformio/blob/master/docs/internals/packages.md): until the update lands, `chmod +x` the
-  `epic-cc-gdbserver` binary in the toolchain package dir and retry.
+- Troubleshooting: `No gdb on PATH` means install gdb above.
