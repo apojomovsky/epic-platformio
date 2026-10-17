@@ -14,7 +14,7 @@ no programmer involved.
   support debugging".
 - Stock gdb on PATH (`apt install gdb` on Debian/Ubuntu). A packaged gdb
   is a separate child; until it lands, the client is the system one.
-- A current `toolchain-epiccc` ([package versions](../packages.md)),
+- A current `toolchain-epiccc` ([package versions](https://github.com/apojomovsky/epic-platformio/blob/master/docs/packages.md)),
   which ships `epic-cc-gdbserver`.
 
 No `platformio.ini` setup is needed: the board selects `debug_tool =
@@ -102,5 +102,5 @@ and exits.
 - Troubleshooting: `No gdb on PATH` means install gdb above. A
   `Permission denied` launching the server means the installed toolchain
   package predates the executable-bit fix shipped in [later
-  packages](../packages.md): until the update lands, `chmod +x` the
+  packages](https://github.com/apojomovsky/epic-platformio/blob/master/docs/packages.md): until the update lands, `chmod +x` the
   `epic-cc-gdbserver` binary in the toolchain package dir and retry.
