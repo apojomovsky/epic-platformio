@@ -102,6 +102,9 @@ jobs:
             echo "no scripts/check_versions_consistent.py yet"
           fi
 
+      - name: Check registry versions
+        run: python3 scripts/check_registry_versions.py
+
   docs-gen:
     runs-on: ubuntu-latest
     steps:

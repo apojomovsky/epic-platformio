@@ -1,0 +1,15 @@
+{
+  "type": "tool",
+  "owner": "apojomovsky",
+  "name": "framework-epichal",
+  "versions": [
+    {
+      "name": "0.6.0+pio1",
+      "files": [
+        {
+          "download_url": "https://dl.registry.platformio.org/download/apojomovsky/tool/framework-epichal/0.6.0+pio1/framework-epichal-0.6.0+pio1.tar.gz"
+        }
+      ]
+    }
+  ]
+}

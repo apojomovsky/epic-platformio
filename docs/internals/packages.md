@@ -56,6 +56,31 @@ The platform pins the exact epic-cc and epic-hal pair its CI proved: the
 `compat` workflow builds the examples against those pins, and a platform
 release follows only on green.
 
+## Registry immutability
+
+Published versions are immutable: once `epic8 X.Y.Z` is on the registry,
+no manifest change ships under that version again. #159 moved the
+toolchain pin to `0.5.0` while `platform.json` still said `0.1.1`, which
+the registry already held with the `0.4.0+pio1` pin, so the new pin
+could not reach registry users and the `epic8-v0.1.1` GitHub release
+named different content from the registry's `0.1.1`
+(epic-platformio#163). Any manifest change therefore bumps the version
+first, here `0.1.2`, and the human publishes only after the pinned
+toolchain is approved on the registry.
+
+`scripts/check_registry_versions.py` enforces this in CI on every PR
+and on master. For `platform/epic8`, `tool/toolchain-epiccc` and
+`tool/framework-epichal` under owner `apojomovsky` it reads the
+registry listing; when the repo's platform version is already published
+the published `platform.json` must carry the same version and every
+`packages.*` pin, while tool listings check version identity only (the
+registry derives version names from the published manifests, and the
+artifacts are 100MB+ with per-artifact system stamping, so downloading
+them buys nothing). A version not yet on the registry passes. A
+registry outage fails the build loudly, never silently.
+`REGISTRY_CHECK=skip` bypasses the gate for offline local runs only
+and is refused inside CI.
+
 ## Host selection (PIO-1, epic-platformio#44)
 
 The upstream bundles are per host, and so are the packages built from them

@@ -1,0 +1,15 @@
+{
+  "type": "platform",
+  "owner": "apojomovsky",
+  "name": "epic8",
+  "versions": [
+    {
+      "name": "0.1.1",
+      "files": [
+        {
+          "download_url": "https://dl.registry.platformio.org/download/apojomovsky/platform/epic8/0.1.1/epic8-0.1.1.tar.gz"
+        }
+      ]
+    }
+  ]
+}

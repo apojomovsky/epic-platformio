@@ -1,0 +1,15 @@
+{
+  "type": "tool",
+  "owner": "apojomovsky",
+  "name": "toolchain-epiccc",
+  "versions": [
+    {
+      "name": "0.4.0+pio1",
+      "files": [
+        {
+          "download_url": "https://dl.registry.platformio.org/download/apojomovsky/tool/toolchain-epiccc/0.4.0+pio1/toolchain-epiccc-linux_x86_64-0.4.0+pio1.tar.gz"
+        }
+      ]
+    }
+  ]
+}
