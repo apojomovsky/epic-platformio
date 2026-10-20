@@ -6,6 +6,7 @@
       "epic-cc"
     ]
   },
+  "frameworks": [],
   "name": "Microchip PIC18F4620",
   "url": "https://www.microchip.com/en-us/product/PIC18F4620",
   "vendor": "Microchip"

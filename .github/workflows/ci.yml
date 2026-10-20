@@ -105,6 +105,9 @@ jobs:
       - name: Check registry versions
         run: python3 scripts/check_registry_versions.py
 
+      - name: Check board JSON schema keys
+        run: python3 scripts/check_board_schema.py
+
   docs-gen:
     runs-on: ubuntu-latest
     steps:

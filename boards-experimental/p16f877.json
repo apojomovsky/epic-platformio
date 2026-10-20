@@ -6,6 +6,7 @@
       "epic-cc"
     ]
   },
+  "frameworks": [],
   "name": "Microchip PIC16F877",
   "url": "https://www.microchip.com/en-us/product/PIC16F877",
   "vendor": "Microchip"
