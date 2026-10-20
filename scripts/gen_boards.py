@@ -161,6 +161,19 @@ CURATED = {
 CURATED_PROTOCOL = "minipro"
 CURATED_SUPPORT = "simulator"
 
+# Tool-driven upload protocols in builder/main.py dispatch order
+# (UPLOAD_PROTOCOLS there). The per-board list keeps only the tools with
+# a devices entry, so a part missing from a tool's database never
+# advertises that protocol; custom always trails, it is the project's
+# own upload_command and needs no entry.
+TOOL_PROTOCOLS = ("minipro", "pk2cmd", "picpro")
+
+
+def upload_protocols(devices: dict) -> list[str]:
+    """The board's upload.protocols from its devices map."""
+    return [p for p in TOOL_PROTOCOLS if p in devices] + ["custom"]
+
+
 # Boards proven on silicon by the guided sign-off (scripts/hw_signoff.py,
 # epic-platformio#52). A green row promotes the board from simulator to
 # hardware. hw_signoff.py --apply edits this set, so the next regen keeps
@@ -360,6 +373,11 @@ def board_json(entry: dict, board_id: str, dest: pathlib.Path, curated: dict | N
         upload["maximum_size"] = curated["maximum_size"]
         upload["maximum_ram_size"] = curated["maximum_ram_size"]
         upload["protocol"] = CURATED_PROTOCOL
+        upload["protocols"] = upload_protocols(curated["devices"])
+        # The default flow is USB tools needing no port; picpro's serial
+        # port need is enforced per protocol in the builder instead, a
+        # board-level flag cannot vary by protocol.
+        upload["require_upload_port"] = False
         upload["devices"] = dict(curated["devices"])
         upload["hazards"] = dict(curated["hazards"])
     return doc

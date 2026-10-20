@@ -7,7 +7,6 @@
       "epic-cc"
     ]
   },
-  "frameworks": [],
   "debug": {
     "default_tools": [
       "epic-sim"
@@ -32,6 +31,7 @@
       }
     }
   },
+  "frameworks": [],
   "name": "Microchip PIC12F675",
   "support": "simulator",
   "upload": {
@@ -48,7 +48,14 @@
     },
     "maximum_ram_size": 64,
     "maximum_size": 2046,
-    "protocol": "minipro"
+    "protocol": "minipro",
+    "protocols": [
+      "minipro",
+      "pk2cmd",
+      "picpro",
+      "custom"
+    ],
+    "require_upload_port": false
   },
   "url": "https://www.microchip.com/en-us/product/PIC12F675",
   "vendor": "Microchip"
