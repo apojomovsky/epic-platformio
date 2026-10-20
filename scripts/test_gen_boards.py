@@ -8,6 +8,7 @@ against a real epic-cc/epic-hal join).
 import importlib.util
 import json
 import pathlib
+import re
 import subprocess
 import sys
 import tempfile
@@ -216,6 +217,11 @@ class BoardJsonTests(unittest.TestCase):
         self.assertEqual(doc["build"]["oscillator"], "crystal")
         self.assertEqual(doc["upload"]["maximum_size"], 16384)
         self.assertEqual(doc["upload"]["maximum_ram_size"], 368)
+        self.assertEqual(doc["upload"]["protocol"], "minipro")
+        # Two device-backed tools plus the project's own command; the
+        # default leads and no port is required for the USB flow.
+        self.assertEqual(doc["upload"]["protocols"], ["minipro", "pk2cmd", "custom"])
+        self.assertFalse(doc["upload"]["require_upload_port"])
         self.assertEqual(doc["upload"]["devices"]["minipro"], "PIC16F877A")
         self.assertEqual(doc["upload"]["hazards"]["pgm_pin"], "RB3")
         self.assertEqual(doc["support"], "simulator")
@@ -458,6 +464,26 @@ class CuratedTableTests(unittest.TestCase):
             self.assertNotIn("picpro", gen_boards.CURATED[board_id]["devices"])
         for board_id in ("pic12f675", "pic16f877a", "pic16f628a", "pic18f4550"):
             self.assertIn("picpro", gen_boards.CURATED[board_id]["devices"])
+
+    def test_protocols_list_only_device_backed_tools_then_custom(self):
+        # The per-board protocols list reconciles the picpro asymmetry:
+        # a part picpro's database does not carry must not advertise it
+        # (the builder would refuse it naming the tools that do).
+        for board_id, facts in gen_boards.CURATED.items():
+            expected = [p for p in ("minipro", "pk2cmd", "picpro")
+                        if p in facts["devices"]] + ["custom"]
+            protocols = gen_boards.upload_protocols(facts["devices"])
+            self.assertEqual(protocols, expected, board_id)
+            self.assertEqual(protocols[0], gen_boards.CURATED_PROTOCOL, board_id)
+
+    def test_tool_protocols_match_what_the_builder_dispatches(self):
+        # upload_protocols() filters by TOOL_PROTOCOLS, so a protocol the
+        # builder dispatches but the generator does not know would never
+        # be advertised. custom dispatches but needs no tool or entry.
+        builder = (ROOT / "builder" / "main.py").read_text()
+        block = re.search(r"UPLOAD_PROTOCOLS = \{(.*?)\}", builder, re.S).group(1)
+        dispatched = set(re.findall(r'"(\w+)":', block))
+        self.assertEqual(set(gen_boards.TOOL_PROTOCOLS), dispatched - {"custom"})
 
 
 class RealDataJoinTests(unittest.TestCase):

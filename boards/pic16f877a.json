@@ -56,7 +56,14 @@
     },
     "maximum_ram_size": 368,
     "maximum_size": 16384,
-    "protocol": "minipro"
+    "protocol": "minipro",
+    "protocols": [
+      "minipro",
+      "pk2cmd",
+      "picpro",
+      "custom"
+    ],
+    "require_upload_port": false
   },
   "url": "https://www.microchip.com/en-us/product/PIC16F877A",
   "vendor": "Microchip"

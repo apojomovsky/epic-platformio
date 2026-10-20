@@ -55,7 +55,14 @@
     },
     "maximum_ram_size": 224,
     "maximum_size": 4096,
-    "protocol": "minipro"
+    "protocol": "minipro",
+    "protocols": [
+      "minipro",
+      "pk2cmd",
+      "picpro",
+      "custom"
+    ],
+    "require_upload_port": false
   },
   "url": "https://www.microchip.com/en-us/product/PIC16F628A",
   "vendor": "Microchip"
