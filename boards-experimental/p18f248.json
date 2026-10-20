@@ -6,6 +6,7 @@
       "epic-cc"
     ]
   },
+  "frameworks": [],
   "name": "Microchip PIC18F248",
   "url": "https://www.microchip.com/en-us/product/PIC18F248",
   "vendor": "Microchip"

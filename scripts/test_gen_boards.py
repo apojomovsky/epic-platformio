@@ -173,7 +173,8 @@ class BuildMatrixTests(unittest.TestCase):
 class BoardJsonTests(unittest.TestCase):
     def test_experimental_board_is_capability_only(self):
         # No curated facts: no sizes, no devices, no hazards, no support
-        # tier. A user copying one out gets the capability fields alone.
+        # tier. A user copying one out gets the capability fields alone,
+        # plus the frameworks key CLion requires, empty with no HAL (#168).
         e = entry("p10f320", ["epic-cc"], [], cc_name="p10f320")
         with tempfile.TemporaryDirectory() as td:
             doc = gen_boards.board_json(e, "p10f320", pathlib.Path(td), None)
@@ -182,7 +183,7 @@ class BoardJsonTests(unittest.TestCase):
         self.assertNotIn("epichal_family", doc["build"])
         self.assertNotIn("upload", doc)
         self.assertNotIn("support", doc)
-        self.assertNotIn("frameworks", doc)
+        self.assertEqual(doc["frameworks"], [])
         self.assertEqual(doc["name"], "Microchip PIC10F320")
         self.assertEqual(doc["vendor"], "Microchip")
         self.assertIn("PIC10F320", doc["url"])
@@ -293,9 +294,10 @@ class BoardJsonTests(unittest.TestCase):
         self.assertEqual(doc["build"]["toolchains"], ["epic-cc", "xc8"])
         self.assertEqual(doc["frameworks"], ["epichal"])
 
-    def test_board_without_hal_content_carries_no_frameworks_key(self):
-        # The PIC12F675 shape: epic-cc only, no HAL family. The registry
-        # and wizards must not offer a framework the board cannot build.
+    def test_board_without_hal_content_declares_empty_frameworks(self):
+        # The PIC12F675 shape: epic-cc only, no HAL family. CLion and
+        # the registry need the key present, so bare-metal-only boards
+        # declare an empty list instead of dropping it (#168).
         e = entry("p12f675", ["epic-cc"], [], cc_name="p12f675")
         with tempfile.TemporaryDirectory() as td:
             dest = pathlib.Path(td)
@@ -303,7 +305,7 @@ class BoardJsonTests(unittest.TestCase):
                 json.dumps({"frameworks": ["epichal"]})
             )
             doc = gen_boards.board_json(e, "pic12f675", dest, None)
-        self.assertNotIn("frameworks", doc)
+        self.assertEqual(doc["frameworks"], [])
 
     def test_experimental_board_with_hal_family_declares_epichal(self):
         # An xc8-only part epic-hal covers: framework support under the

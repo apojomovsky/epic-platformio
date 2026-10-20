@@ -6,6 +6,7 @@
       "epic-cc"
     ]
   },
+  "frameworks": [],
   "name": "Microchip PIC16F83",
   "url": "https://www.microchip.com/en-us/product/PIC16F83",
   "vendor": "Microchip"

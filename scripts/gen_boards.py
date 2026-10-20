@@ -313,13 +313,14 @@ def board_json(entry: dict, board_id: str, dest: pathlib.Path, curated: dict | N
     else:
         build.pop("epichal_family", None)
     # Registry, wizards and `pio boards` read the top-level frameworks
-    # list, not build.framework_epichal_toolchains, so a board whose
-    # family ships HAL content declares epichal here. A bare-metal-only
-    # board carries no key at all rather than an empty list.
+    # list, not build.framework_epichal_toolchains, so every board
+    # declares it: ["epichal"] where the family ships HAL content, []
+    # where the board is bare-metal-only. CLion refuses a board without
+    # the key (#125, #167), so omitting it is never an option.
     if entry["framework_toolchains"]:
         doc["frameworks"] = ["epichal"]
     else:
-        doc.pop("frameworks", None)
+        doc["frameworks"] = []
     bare = curated_bare(board_id) if curated else cc_name_to_bare(entry["mcu"])
     doc.setdefault("name", f"Microchip PIC{bare}")
     doc.setdefault("vendor", "Microchip")

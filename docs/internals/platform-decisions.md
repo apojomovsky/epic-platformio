@@ -53,9 +53,12 @@ correctly.
 
 **Declared, not just built (epic-platformio#102).** `platform.json`
 names `epichal` under `frameworks` with its package, and every board
-whose family ships HAL content lists it under top-level `frameworks`,
-so the registry page, PIO Home and `pio boards` advertise the HAL path
-instead of leaving `framework = epichal` as builder-only knowledge.
+declares top-level `frameworks`: the HAL family where one applies, an
+empty list on bare-metal-only boards. The key is always present
+because CLion refuses a board without it (#125, #167,
+epic-platformio#168), so the registry page, PIO Home and `pio boards`
+advertise the HAL path instead of leaving `framework = epichal` as
+builder-only knowledge.
 The script entry points at `builder/frameworks/epichal.py`, a no-op
 that exists so the entry resolves per PlatformIO's convention. The real
 build stays in `builder/main.py`, which already serves both paths and
