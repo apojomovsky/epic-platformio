@@ -1,12 +1,19 @@
 {
   "build": {
-    "framework_epichal_toolchains": [],
+    "epichal_family": "pic16f63x_67x_68x",
+    "framework_epichal_toolchains": [
+      "epic-cc",
+      "xc8"
+    ],
     "mcu": "p16f676",
     "toolchains": [
-      "epic-cc"
+      "epic-cc",
+      "xc8"
     ]
   },
-  "frameworks": [],
+  "frameworks": [
+    "epichal"
+  ],
   "name": "Microchip PIC16F676",
   "url": "https://www.microchip.com/en-us/product/PIC16F676",
   "vendor": "Microchip"
