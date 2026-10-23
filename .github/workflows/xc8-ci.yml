@@ -86,7 +86,7 @@ jobs:
 
             build_example() {
               example="$1"; dfp="$2"
-              sed "s#platform = epic8#platform = file:///repo#" \
+              sed "s#platform = apojomovsky/epic8#platform = file:///repo#" \
                 "examples/${example}/platformio.ini" > /tmp/pio.ini
               EPIC8_XC8_PATH="$xc8_bin" EPIC8_XC8_DFP_DIR="${packs}/${dfp}/xc8" \
                 pio run -d "examples/${example}" --project-conf /tmp/pio.ini

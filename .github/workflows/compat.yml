@@ -57,7 +57,7 @@ jobs:
 
           build_example() {
             example="$1"
-            sed "s#platform = epic8#platform = file://$GITHUB_WORKSPACE#" \
+            sed "s#platform = apojomovsky/epic8#platform = file://$GITHUB_WORKSPACE#" \
               "examples/${example}/platformio.ini" > /tmp/pio.ini
             pio run -d "examples/${example}" --project-conf /tmp/pio.ini
           }
