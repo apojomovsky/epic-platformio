@@ -1,0 +1,18 @@
+{
+  "build": {
+    "epichal_family": "pic16f87xa",
+    "framework_epichal_toolchains": [
+      "xc8"
+    ],
+    "mcu": "p16f873",
+    "toolchains": [
+      "xc8"
+    ]
+  },
+  "frameworks": [
+    "epichal"
+  ],
+  "name": "Microchip PIC16F873",
+  "url": "https://www.microchip.com/en-us/product/PIC16F873",
+  "vendor": "Microchip"
+}
