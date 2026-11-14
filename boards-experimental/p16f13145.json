@@ -1,0 +1,13 @@
+{
+  "build": {
+    "framework_epichal_toolchains": [],
+    "mcu": "p16f13145",
+    "toolchains": [
+      "epic-cc"
+    ]
+  },
+  "frameworks": [],
+  "name": "Microchip PIC16F13145",
+  "url": "https://www.microchip.com/en-us/product/PIC16F13145",
+  "vendor": "Microchip"
+}
