@@ -1,0 +1,18 @@
+{
+  "build": {
+    "epichal_family": "pic16f5x",
+    "framework_epichal_toolchains": [
+      "xc8"
+    ],
+    "mcu": "p16f506",
+    "toolchains": [
+      "xc8"
+    ]
+  },
+  "frameworks": [
+    "epichal"
+  ],
+  "name": "Microchip PIC16F506",
+  "url": "https://www.microchip.com/en-us/product/PIC16F506",
+  "vendor": "Microchip"
+}
