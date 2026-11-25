@@ -1,0 +1,18 @@
+{
+  "build": {
+    "epichal_family": "pic16f188xx",
+    "framework_epichal_toolchains": [
+      "xc8"
+    ],
+    "mcu": "p16f18857",
+    "toolchains": [
+      "xc8"
+    ]
+  },
+  "frameworks": [
+    "epichal"
+  ],
+  "name": "Microchip PIC16F18857",
+  "url": "https://www.microchip.com/en-us/product/PIC16F18857",
+  "vendor": "Microchip"
+}
